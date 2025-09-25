@@ -1,0 +1,110 @@
+pipelines:
+  pull-requests:
+    develop:
+      - step:
+          name: 'Run Unit Tests & Lint & Expo Doctor'
+          runs-on:
+            - 'self.hosted'
+            - 'macos'
+          script:
+            - echo "Installing dependencies..."
+            - yarn install --frozen-lockfile
+            - echo "Running unit tests..."
+            - yarn test:coverage
+            - echo "Running lint..."
+            - yarn lint
+            - echo "Running Expo Doctor..."
+            - npx expo-doctor
+  branches:
+    develop:
+      - step:
+          name: 'Build'
+          deployment: Test
+          runs-on:
+            - 'self.hosted'
+            - 'macos'
+          condition:
+            changesets:
+              includePaths:
+                - 'ios/**'
+                - 'android/**'
+                - 'package.json'
+                - '*.env.*'
+          script:
+            - COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            - yarn install
+            - npx expo prebuild --platform ios --clean
+            - fastlane ios build type:build ci:true buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env development
+            - npx expo prebuild --platform android --clean
+            - fastlane android build type:build buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env development
+    staging:
+      - step:
+          name: 'Build'
+          deployment: Staging
+          runs-on:
+            - 'self.hosted'
+            - 'macos'
+          script:
+            - COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            - yarn install
+            - npx expo prebuild --platform ios --clean
+            - fastlane ios build type:build ci:true buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env staging
+            - npx expo prebuild --platform android --clean
+            - fastlane android build type:build buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env staging
+    production:
+      - step:
+          name: 'Build'
+          deployment: Production
+          runs-on:
+            - 'self.hosted'
+            - 'macos'
+          script:
+            - COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            - yarn install
+            - npx expo prebuild --platform ios --clean
+            - fastlane ios build type:build ci:true buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env production
+            - npx expo prebuild --platform android --clean
+            - fastlane android build type:build buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env production
+  custom:
+    buildDev:
+      - step:
+          name: 'Build - Dev'
+          runs-on:
+            - 'self.hosted'
+            - 'macos'
+          deployment: Test
+          script:
+            - COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            - yarn install
+            - npx expo prebuild --platform ios --clean
+            - fastlane ios build type:build ci:true buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env development
+            - npx expo prebuild --platform android --clean
+            - fastlane android build type:build buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env development
+    buildStaging:
+      - step:
+          name: 'Build - Staging'
+          runs-on:
+            - 'self.hosted'
+            - 'macos'
+          deployment: Staging
+          script:
+            - COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            - yarn install
+            - npx expo prebuild --platform ios --clean
+            - fastlane ios build type:build ci:true buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env staging
+            - npx expo prebuild --platform android --clean
+            - fastlane android build type:build buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env staging
+    buildProduction:
+      - step:
+          name: 'Build - Production'
+          runs-on:
+            - 'self.hosted'
+            - 'macos'
+          deployment: Production
+          script:
+            - COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            - yarn install
+            - npx expo prebuild --platform ios --clean
+            - fastlane ios build type:build ci:true buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env production
+            - npx expo prebuild --platform android --clean
+            - fastlane android build type:build buildNumber:$BITBUCKET_BUILD_NUMBER changelog:"$COMMIT_MESSAGE" --env production
