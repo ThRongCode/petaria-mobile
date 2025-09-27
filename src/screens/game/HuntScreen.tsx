@@ -15,8 +15,10 @@ import { Region, HuntResult, Pet } from '@/stores/types/game'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import { ButtonPrimary, ButtonSecondary } from 'rn-base-component'
+import { useRouter } from 'expo-router'
 
 export const HuntScreen: React.FC = () => {
+  const router = useRouter()
   const dispatch = useAppDispatch()
   const availableRegions = useSelector(getAvailableRegions)
   const currency = useSelector(getUserCurrency)
@@ -24,27 +26,35 @@ export const HuntScreen: React.FC = () => {
   const huntingCooldowns = useSelector(getHuntingCooldowns)
   
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null)
+  const [showRegionModal, setShowRegionModal] = useState(false)
   const [showHuntResult, setShowHuntResult] = useState(false)
   const [lastHuntResult, setLastHuntResult] = useState<HuntResult | null>(null)
   const [isHunting, setIsHunting] = useState(false)
   const [cooldownTimers, setCooldownTimers] = useState<{ [key: string]: number }>({})
 
+
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = Date.now()
-      const newTimers: { [key: string]: number } = {}
-      
-      Object.entries(huntingCooldowns).forEach(([regionId, cooldownEnd]) => {
-        if (cooldownEnd > now) {
-          newTimers[regionId] = Math.ceil((cooldownEnd - now) / 1000)
-        }
+      setCooldownTimers(prevTimers => {
+        const now = Date.now()
+        const newTimers: { [key: string]: number } = {}
+        
+        Object.entries(huntingCooldowns).forEach(([regionId, cooldownEnd]) => {
+          if (cooldownEnd > now) {
+            newTimers[regionId] = Math.ceil((cooldownEnd - now) / 1000)
+          }
+        })
+        
+        // Only update if timers have actually changed
+        const hasChanged = Object.keys(newTimers).length !== Object.keys(prevTimers).length ||
+          Object.entries(newTimers).some(([key, value]) => prevTimers[key] !== value)
+        
+        return hasChanged ? newTimers : prevTimers
       })
-      
-      setCooldownTimers(newTimers)
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [huntingCooldowns])
+  }, []) // Remove huntingCooldowns dependency
 
   const getRegionHuntCost = (region: Region): number => {
     let cost = region.huntingCost
@@ -221,7 +231,10 @@ export const HuntScreen: React.FC = () => {
           styles.regionCard,
           (!canAfford || onCooldown) && styles.disabledRegionCard
         ]}
-        onPress={() => setSelectedRegion(region)}
+        onPress={() => {
+          setSelectedRegion(region)
+          setShowRegionModal(true)
+        }}
         disabled={!canAfford || onCooldown}
       >
         <Image source={{ uri: region.image }} style={styles.regionImage} />
@@ -271,9 +284,20 @@ export const HuntScreen: React.FC = () => {
   }
 
   const RegionDetailsModal = () => (
-    <Modal visible={!!selectedRegion} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+    <Modal visible={showRegionModal} animationType="slide" transparent>
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => {
+          setShowRegionModal(false)
+          setSelectedRegion(null)
+        }}
+      >
+        <TouchableOpacity 
+          style={styles.modalContent}
+          activeOpacity={1}
+          onPress={(e) => e.stopPropagation()}
+        >
           {selectedRegion && (
             <>
               <Image source={{ uri: selectedRegion.image }} style={styles.modalRegionImage} />
@@ -322,8 +346,19 @@ export const HuntScreen: React.FC = () => {
                 <ButtonPrimary 
                   style={styles.huntButton}
                   onPress={() => {
-                    setSelectedRegion(null)
-                    startHunt(selectedRegion)
+                    if (selectedRegion) {
+                      const regionData = {
+                        regionId: selectedRegion.id,
+                        regionName: selectedRegion.name,
+                        huntCost: getRegionHuntCost(selectedRegion),
+                      }
+                      setShowRegionModal(false)
+                      setSelectedRegion(null)
+                      router.push({
+                        pathname: '/hunting-session',
+                        params: regionData
+                      })
+                    }
                   }}
                   disabled={
                     !canAffordHunt(selectedRegion) || 
@@ -333,20 +368,23 @@ export const HuntScreen: React.FC = () => {
                 >
                   {isRegionOnCooldown(selectedRegion.id) 
                     ? `Cooldown: ${formatTime(cooldownTimers[selectedRegion.id] || 0)}`
-                    : 'Start Hunt'
+                    : 'Enter Dungeon'
                   }
                 </ButtonPrimary>
                 <ButtonSecondary 
                   style={styles.closeButton}
-                  onPress={() => setSelectedRegion(null)}
+                  onPress={() => {
+                    setShowRegionModal(false)
+                    setSelectedRegion(null)
+                  }}
                 >
                   Close
                 </ButtonSecondary>
               </View>
             </>
           )}
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   )
 
