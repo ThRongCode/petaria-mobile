@@ -1,9 +1,9 @@
-import { persistor, store } from '@/stores/store'
+import { store } from '@/stores/store'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import 'react-native-reanimated'
 import { Provider } from 'react-redux'
-import { PersistGate } from 'redux-persist/integration/react'
+// import { PersistGate } from 'redux-persist/integration/react' // Temporarily disabled
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { Stack } from 'expo-router'
 import { useFonts } from 'expo-font'
@@ -69,9 +69,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.flex}>
       <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <RootLayoutContent />
-        </PersistGate>
+        <RootLayoutContent />
       </Provider>
     </GestureHandlerRootView>
   )

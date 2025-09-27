@@ -26,8 +26,9 @@ const userPersistConfig = {
 }
 
 const gamePersistConfig = {
-  key: 'game',
+  key: 'game-v3', // Force complete reset 
   storage: AsyncStorage,
+  version: 1, // Add versioning to handle state migration
 }
 
 export const InitialState = {
@@ -39,7 +40,7 @@ export const InitialState = {
 export default combineReducers({
   // Reducers
   user: persistReducer(userPersistConfig, user),
-  game: persistReducer(gamePersistConfig, game),
+  game: game, // Temporarily disable persistence completely to test
   app,
   loading,
 })

@@ -1,3 +1,50 @@
+// Move Types
+export interface Move {
+  id: string
+  name: string
+  type: 'Physical' | 'Special' | 'Status'
+  element: 'Normal' | 'Fire' | 'Water' | 'Grass' | 'Electric' | 'Ice' | 'Fighting' | 'Poison' | 'Ground' | 'Flying' | 'Psychic' | 'Bug' | 'Rock' | 'Ghost' | 'Dragon' | 'Dark' | 'Steel' | 'Fairy'
+  power: number
+  accuracy: number
+  pp: number
+  maxPp: number
+  description: string
+  effects?: {
+    damage?: number
+    healing?: number
+    statusEffect?: 'burn' | 'freeze' | 'paralyze' | 'poison' | 'sleep'
+    statBoost?: {
+      attack?: number
+      defense?: number
+      speed?: number
+    }
+  }
+}
+
+// Opponent Types
+export interface Opponent {
+  id: string
+  name: string
+  species: string
+  level: number
+  difficulty: 'Easy' | 'Normal' | 'Hard' | 'Expert' | 'Master'
+  stats: {
+    hp: number
+    maxHp: number
+    attack: number
+    defense: number
+    speed: number
+  }
+  moves: Move[]
+  image: string
+  rewards: {
+    xp: number
+    coins: number
+    items: string[]
+  }
+  unlockLevel: number
+}
+
 // Pet Types
 export interface Pet {
   id: string
@@ -14,6 +61,7 @@ export interface Pet {
     defense: number
     speed: number
   }
+  moves: Move[]
   image: string
   evolutionStage: number
   maxEvolutionStage: number
@@ -203,6 +251,7 @@ export interface GameState {
   pets: Pet[]
   items: Item[]
   regions: Region[]
+  opponents: Opponent[]
   auctions: Auction[]
   battles: Battle[]
   activeBattle?: Battle

@@ -132,11 +132,25 @@ export const PetManagementScreen: React.FC = () => {
 
   const PetDetailsModal = () => (
     <Modal visible={showPetDetails} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowPetDetails(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalContent}
+          activeOpacity={1}
+          onPress={(e) => e.stopPropagation()}
+        >
           {selectedPet && (
             <>
               <View style={styles.modalHeader}>
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => setShowPetDetails(false)}
+                >
+                  <ThemedText style={styles.closeButtonText}>✕</ThemedText>
+                </TouchableOpacity>
                 <Image source={{ uri: selectedPet.image }} style={styles.modalPetImage} />
                 <View style={styles.modalPetInfo}>
                   <ThemedText type="title" style={styles.modalPetName}>
@@ -153,24 +167,74 @@ export const PetManagementScreen: React.FC = () => {
 
               <View style={styles.statsContainer}>
                 <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Stats</ThemedText>
-                <View style={styles.statsGrid}>
-                  <View style={styles.statItem}>
+                
+                {/* HP with progress bar */}
+                <View style={styles.statWithProgressContainer}>
+                  <View style={styles.statRow}>
                     <ThemedText style={styles.statLabel}>HP</ThemedText>
                     <ThemedText style={styles.statValue}>
                       {selectedPet.stats.hp}/{selectedPet.stats.maxHp}
                     </ThemedText>
                   </View>
+                  <View style={styles.progressBar}>
+                    <View 
+                      style={[
+                        styles.progressFill, 
+                        { 
+                          width: `${(selectedPet.stats.hp / selectedPet.stats.maxHp) * 100}%`,
+                          backgroundColor: selectedPet.stats.hp > selectedPet.stats.maxHp * 0.5 ? colors.success : 
+                                         selectedPet.stats.hp > selectedPet.stats.maxHp * 0.25 ? colors.warning : colors.error
+                        }
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.statsGrid}>
                   <View style={styles.statItem}>
                     <ThemedText style={styles.statLabel}>Attack</ThemedText>
                     <ThemedText style={styles.statValue}>{selectedPet.stats.attack}</ThemedText>
+                    <View style={styles.miniProgressBar}>
+                      <View 
+                        style={[
+                          styles.miniProgressFill, 
+                          { 
+                            width: `${Math.min((selectedPet.stats.attack / 100) * 100, 100)}%`,
+                            backgroundColor: colors.error
+                          }
+                        ]}
+                      />
+                    </View>
                   </View>
                   <View style={styles.statItem}>
                     <ThemedText style={styles.statLabel}>Defense</ThemedText>
                     <ThemedText style={styles.statValue}>{selectedPet.stats.defense}</ThemedText>
+                    <View style={styles.miniProgressBar}>
+                      <View 
+                        style={[
+                          styles.miniProgressFill, 
+                          { 
+                            width: `${Math.min((selectedPet.stats.defense / 100) * 100, 100)}%`,
+                            backgroundColor: colors.info
+                          }
+                        ]}
+                      />
+                    </View>
                   </View>
                   <View style={styles.statItem}>
                     <ThemedText style={styles.statLabel}>Speed</ThemedText>
                     <ThemedText style={styles.statValue}>{selectedPet.stats.speed}</ThemedText>
+                    <View style={styles.miniProgressBar}>
+                      <View 
+                        style={[
+                          styles.miniProgressFill, 
+                          { 
+                            width: `${Math.min((selectedPet.stats.speed / 100) * 100, 100)}%`,
+                            backgroundColor: colors.warning
+                          }
+                        ]}
+                      />
+                    </View>
                   </View>
                 </View>
               </View>
@@ -220,8 +284,8 @@ export const PetManagementScreen: React.FC = () => {
               </View>
             </>
           )}
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   )
 
@@ -495,6 +559,29 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     marginBottom: metrics.large,
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.error,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  closeButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   modalPetImage: {
     width: 100,
@@ -543,6 +630,37 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.large,
     fontWeight: '600',
     color: colors.primary,
+  },
+  statWithProgressContainer: {
+    marginBottom: metrics.medium,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: metrics.small,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  miniProgressBar: {
+    height: 4,
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: metrics.tiny,
+    width: '100%',
+  },
+  miniProgressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   xpContainer: {
     marginBottom: metrics.large,

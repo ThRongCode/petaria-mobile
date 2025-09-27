@@ -7,187 +7,103 @@ import {
   getActiveBattle, 
   getRecentBattles, 
   getBattleStats,
-  getUserCurrency 
+  getUserCurrency,
+  getAvailableOpponents
 } from '@/stores/selectors'
 import { colors, metrics, fontSizes } from '@/themes'
-import { Pet, Battle, BattleAction } from '@/stores/types/game'
+import { Pet, Battle, Opponent } from '@/stores/types/game'
+import { useRouter } from 'expo-router'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import { ButtonPrimary, ButtonSecondary } from 'rn-base-component'
 
 export const BattleScreen: React.FC = () => {
+  const router = useRouter()
   const dispatch = useAppDispatch()
   const ownedPets = useSelector(getOwnedPets)
   const activeBattle = useSelector(getActiveBattle)
   const recentBattles = useSelector(getRecentBattles)
   const battleStats = useSelector(getBattleStats)
   const currency = useSelector(getUserCurrency)
+  const availableOpponents = useSelector(getAvailableOpponents)
+  
+  
   
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
+  const [selectedOpponent, setSelectedOpponent] = useState<Opponent | null>(null)
+  const [showOpponentSelector, setShowOpponentSelector] = useState(false)
   const [showPetSelector, setShowPetSelector] = useState(false)
-  const [battleMode, setBattleMode] = useState<'pve' | 'pvp' | 'legend'>('pve')
-  const [battleLog, setBattleLog] = useState<BattleAction[]>([])
-  const [isProcessingBattle, setIsProcessingBattle] = useState(false)
 
   const availablePets = ownedPets.filter(pet => pet.stats.hp > 0)
 
-  const simulateBattle = (attackerPet: Pet, defenderPet: Pet): Battle['result'] => {
-    const log: BattleAction[] = []
-    let attackerHp = attackerPet.stats.hp
-    let defenderHp = defenderPet.stats.hp
-    let turn = 1
-
-    // Simple battle simulation
-    while (attackerHp > 0 && defenderHp > 0 && turn <= 20) {
-      // Attacker's turn
-      const attackerDamage = Math.max(1, 
-        attackerPet.stats.attack - Math.floor(defenderPet.stats.defense / 2) + 
-        Math.floor(Math.random() * 10) - 5
-      )
-      defenderHp = Math.max(0, defenderHp - attackerDamage)
-      
-      log.push({
-        turn,
-        actor: 'attacker',
-        action: 'attack',
-        damage: attackerDamage,
-        description: `${attackerPet.name} attacks for ${attackerDamage} damage!`
-      })
-
-      if (defenderHp <= 0) break
-
-      // Defender's turn
-      const defenderDamage = Math.max(1,
-        defenderPet.stats.attack - Math.floor(attackerPet.stats.defense / 2) +
-        Math.floor(Math.random() * 10) - 5
-      )
-      attackerHp = Math.max(0, attackerHp - defenderDamage)
-      
-      log.push({
-        turn,
-        actor: 'defender',
-        action: 'attack',
-        damage: defenderDamage,
-        description: `${defenderPet.name} attacks for ${defenderDamage} damage!`
-      })
-
-      turn++
-    }
-
-    const winner = attackerHp > 0 ? 'attacker' : 'defender'
-    const xpReward = winner === 'attacker' ? 100 + Math.floor(defenderPet.level * 10) : 25
-    const coinReward = winner === 'attacker' ? 50 + Math.floor(defenderPet.level * 5) : 10
-
-    return {
-      winner,
-      rewards: {
-        xp: xpReward,
-        coins: coinReward,
-        items: winner === 'attacker' && Math.random() < 0.3 ? ['item-heal-001'] : []
-      },
-      battleLog: log
-    }
+  const handleChooseOpponent = () => {
+    setShowOpponentSelector(true)
   }
 
-  const startBattle = async (pet: Pet) => {
-    if (!pet) return
+  const handleOpponentSelect = (opponent: Opponent) => {
+    setSelectedOpponent(opponent)
+    setShowOpponentSelector(false)
+    setShowPetSelector(true)
+  }
 
-    setIsProcessingBattle(true)
+  const handlePetSelect = (pet: Pet) => {
+    if (!selectedOpponent) return
+    
+    setSelectedPet(pet)
     setShowPetSelector(false)
-
-    // Generate enemy pet based on battle mode
-    const enemyPet: Pet = {
-      id: 'enemy-' + Date.now(),
-      name: battleMode === 'legend' ? 'Legend Guardian' : 'Wild ' + pet.species,
-      species: pet.species,
-      rarity: battleMode === 'legend' ? 'Legendary' : 'Common',
-      level: pet.level + (battleMode === 'legend' ? 5 : Math.floor(Math.random() * 3) - 1),
-      xp: 0,
-      xpToNext: 1000,
-      stats: {
-        hp: pet.stats.maxHp + (battleMode === 'legend' ? 30 : Math.floor(Math.random() * 20) - 10),
-        maxHp: pet.stats.maxHp + (battleMode === 'legend' ? 30 : Math.floor(Math.random() * 20) - 10),
-        attack: pet.stats.attack + (battleMode === 'legend' ? 15 : Math.floor(Math.random() * 10) - 5),
-        defense: pet.stats.defense + (battleMode === 'legend' ? 10 : Math.floor(Math.random() * 8) - 4),
-        speed: pet.stats.speed + (battleMode === 'legend' ? 10 : Math.floor(Math.random() * 8) - 4),
-      },
-      image: 'https://via.placeholder.com/120/F44336/FFFFFF?text=👹',
-      evolutionStage: 1,
-      maxEvolutionStage: 1,
-      isLegendary: battleMode === 'legend',
-      ownerId: 'enemy',
-      isForSale: false,
-      mood: 100,
-      lastFed: Date.now(),
-    }
-
-    const battle: Battle = {
-      id: 'battle-' + Date.now(),
-      type: battleMode === 'pvp' ? 'PvP' : battleMode === 'legend' ? 'LegendChallenge' : 'PvE',
-      attacker: {
-        userId: 'user-001',
-        petId: pet.id,
-        username: 'VnPetTrainer'
-      },
-      defender: {
-        userId: 'enemy',
-        petId: enemyPet.id,
-        username: enemyPet.name
-      },
-      status: 'in_progress',
-      createdAt: Date.now()
-    }
-
-    dispatch(gameActions.startBattle(battle))
-
-    // Simulate battle with delay for drama
-    setTimeout(() => {
-      const result = simulateBattle(pet, enemyPet)
-      setBattleLog(result.battleLog)
-      
-      setTimeout(() => {
-        dispatch(gameActions.completeBattle({ battleId: battle.id, result }))
-        
-        // Apply pet damage
-        const finalHp = result.winner === 'attacker' 
-          ? Math.floor(pet.stats.hp * 0.3) // Winner loses some HP
-          : 1 // Loser barely survives
-        
-        dispatch(gameActions.updatePet({
-          petId: pet.id,
-          updates: { stats: { ...pet.stats, hp: finalHp } }
-        }))
-
-        // Level up pet with XP
-        dispatch(gameActions.levelUpPet({ petId: pet.id, xpGained: result.rewards.xp }))
-        
-        // Add currency rewards
-        dispatch(gameActions.addCurrency({ coins: result.rewards.coins }))
-        
-        // Add item rewards
-        result.rewards.items.forEach(itemId => {
-          dispatch(gameActions.addItem({ itemId, quantity: 1 }))
-        })
-
-        setIsProcessingBattle(false)
-        
-        Alert.alert(
-          result.winner === 'attacker' ? 'Victory!' : 'Defeat!',
-          `${pet.name} ${result.winner === 'attacker' ? 'won' : 'lost'} the battle!\n\n` +
-          `Rewards:\n` +
-          `+${result.rewards.xp} XP\n` +
-          `+${result.rewards.coins} Coins` +
-          (result.rewards.items.length > 0 ? `\n+${result.rewards.items.length} Items` : ''),
-          [{ text: 'OK' }]
-        )
-      }, 2000)
-    }, 1000)
+    
+    // Navigate to battle arena with pet and opponent data
+    router.push({
+      pathname: '/battle-arena',
+      params: {
+        playerPet: JSON.stringify(pet),
+        opponent: JSON.stringify(selectedOpponent)
+      }
+    })
   }
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Easy': return colors.success
+      case 'Normal': return colors.info
+      case 'Hard': return colors.warning
+      case 'Expert': return colors.error
+      case 'Master': return colors.black
+      default: return colors.gray
+    }
+  }
+
+  const renderOpponentCard = ({ item: opponent }: { item: Opponent }) => (
+    <TouchableOpacity 
+      style={styles.opponentCard}
+      onPress={() => handleOpponentSelect(opponent)}
+    >
+      <Image source={{ uri: opponent.image }} style={styles.opponentImage} />
+      <View style={styles.opponentInfo}>
+        <ThemedText type="defaultSemiBold" style={styles.opponentName}>
+          {opponent.name}
+        </ThemedText>
+        <ThemedText style={styles.opponentSpecies}>
+          {opponent.species} • Level {opponent.level}
+        </ThemedText>
+        <View style={styles.difficultyContainer}>
+          <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(opponent.difficulty) }]}>
+            <ThemedText style={styles.difficultyText}>{opponent.difficulty}</ThemedText>
+          </View>
+        </View>
+        <View style={styles.rewardsContainer}>
+          <ThemedText style={styles.rewardsText}>
+            💰 {opponent.rewards.coins} • ⭐ {opponent.rewards.xp} XP
+          </ThemedText>
+        </View>
+      </View>
+    </TouchableOpacity>
+  )
 
   const renderPetSelector = ({ item: pet }: { item: Pet }) => (
     <TouchableOpacity 
       style={styles.petSelectorCard}
-      onPress={() => startBattle(pet)}
+      onPress={() => handlePetSelect(pet)}
     >
       <Image source={{ uri: pet.image }} style={styles.petSelectorImage} />
       <View style={styles.petSelectorInfo}>
@@ -201,17 +117,15 @@ export const BattleScreen: React.FC = () => {
             {pet.stats.hp}/{pet.stats.maxHp}
           </ThemedText>
         </View>
+        <View style={styles.movesPreview}>
+          <ThemedText style={styles.movesText}>
+            Moves: {pet.moves?.map(m => m.name).join(', ') || 'No moves learned'}
+          </ThemedText>
+        </View>
       </View>
     </TouchableOpacity>
   )
 
-  const renderBattleLogItem = ({ item: action }: { item: BattleAction }) => (
-    <View style={styles.battleLogItem}>
-      <ThemedText style={styles.battleLogText}>
-        Turn {action.turn}: {action.description}
-      </ThemedText>
-    </View>
-  )
 
   const renderRecentBattle = ({ item: battle }: { item: Battle }) => (
     <View style={styles.battleHistoryCard}>
@@ -270,61 +184,16 @@ export const BattleScreen: React.FC = () => {
           </View>
         </View>
 
-        <View style={styles.battleModeContainer}>
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Battle Mode</ThemedText>
-          <View style={styles.modeButtons}>
-            <TouchableOpacity 
-              style={[styles.modeButton, battleMode === 'pve' && styles.activeModeButton]}
-              onPress={() => setBattleMode('pve')}
-            >
-              <ThemedText style={[styles.modeText, battleMode === 'pve' && styles.activeModeText]}>
-                PvE
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.modeButton, battleMode === 'pvp' && styles.activeModeButton]}
-              onPress={() => setBattleMode('pvp')}
-            >
-              <ThemedText style={[styles.modeText, battleMode === 'pvp' && styles.activeModeText]}>
-                PvP
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.modeButton, battleMode === 'legend' && styles.activeModeButton]}
-              onPress={() => setBattleMode('legend')}
-            >
-              <ThemedText style={[styles.modeText, battleMode === 'legend' && styles.activeModeText]}>
-                Legend
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {!activeBattle && !isProcessingBattle && (
+        <View style={styles.actionContainer}>
           <ButtonPrimary 
-            style={styles.startBattleButton}
-            onPress={() => setShowPetSelector(true)}
+            style={styles.chooseOpponentButton}
+            onPress={handleChooseOpponent}
             disabled={availablePets.length === 0}
           >
-            {availablePets.length === 0 ? 'No Healthy Pets Available' : 'Start Battle'}
+            {availablePets.length === 0 ? 'No Healthy Pets Available' : 'Choose Opponent'}
           </ButtonPrimary>
-        )}
+        </View>
 
-        {(activeBattle || isProcessingBattle) && (
-          <View style={styles.activeBattleContainer}>
-            <ThemedText type="defaultSemiBold" style={styles.activeBattleTitle}>
-              Battle in Progress...
-            </ThemedText>
-            {battleLog.length > 0 && (
-              <FlatList
-                data={battleLog}
-                renderItem={renderBattleLogItem}
-                keyExtractor={(item, index) => index.toString()}
-                style={styles.battleLogContainer}
-              />
-            )}
-          </View>
-        )}
 
         <View style={styles.historyContainer}>
           <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Recent Battles</ThemedText>
@@ -336,15 +205,38 @@ export const BattleScreen: React.FC = () => {
           />
         </View>
 
+        {/* Opponent Selection Modal */}
+        <Modal visible={showOpponentSelector} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ThemedText type="title" style={styles.modalTitle}>Choose Your Opponent</ThemedText>
+              <FlatList
+                data={availableOpponents}
+                renderItem={renderOpponentCard}
+                keyExtractor={(item) => item.id}
+                style={styles.opponentSelectorList}
+                showsVerticalScrollIndicator={false}
+              />
+              <ButtonSecondary onPress={() => setShowOpponentSelector(false)}>
+                Cancel
+              </ButtonSecondary>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Pet Selection Modal */}
         <Modal visible={showPetSelector} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <ThemedText type="title" style={styles.modalTitle}>Select Your Pet</ThemedText>
+              <ThemedText type="title" style={styles.modalTitle}>
+                Select Your Pet vs {selectedOpponent?.name}
+              </ThemedText>
               <FlatList
                 data={availablePets}
                 renderItem={renderPetSelector}
                 keyExtractor={(item) => item.id}
                 style={styles.petSelectorList}
+                showsVerticalScrollIndicator={false}
               />
               <ButtonSecondary onPress={() => setShowPetSelector(false)}>
                 Cancel
@@ -409,57 +301,81 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.span,
     color: colors.gray,
   },
-  battleModeContainer: {
+  actionContainer: {
     marginBottom: metrics.large,
   },
-  modeButtons: {
-    flexDirection: 'row',
-    gap: metrics.small,
-  },
-  modeButton: {
-    flex: 1,
-    paddingVertical: metrics.medium,
-    borderRadius: metrics.borderRadius,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    alignItems: 'center',
-  },
-  activeModeButton: {
+  chooseOpponentButton: {
     backgroundColor: colors.primary,
   },
-  modeText: {
-    fontSize: fontSizes.body,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  activeModeText: {
-    color: colors.white,
-  },
-  startBattleButton: {
-    marginBottom: metrics.large,
-  },
-  activeBattleContainer: {
-    backgroundColor: colors.backgroundPrimary,
+  opponentCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
     padding: metrics.medium,
     borderRadius: metrics.borderRadius,
-    marginBottom: metrics.large,
-  },
-  activeBattleTitle: {
-    textAlign: 'center',
     marginBottom: metrics.medium,
+    elevation: 2,
+    shadowColor: colors.black,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  opponentImage: {
+    width: 80,
+    height: 80,
+    borderRadius: metrics.borderRadius,
+  },
+  opponentInfo: {
+    flex: 1,
+    marginLeft: metrics.medium,
+    justifyContent: 'center',
+  },
+  opponentName: {
+    fontSize: fontSizes.large,
+    marginBottom: metrics.tiny,
     color: colors.primary,
   },
-  battleLogContainer: {
-    maxHeight: 200,
+  opponentSpecies: {
+    fontSize: fontSizes.span,
+    color: colors.gray,
+    marginBottom: metrics.small,
   },
-  battleLogItem: {
-    backgroundColor: colors.white,
+  difficultyContainer: {
+    marginBottom: metrics.small,
+  },
+  difficultyBadge: {
+    paddingHorizontal: metrics.small,
+    paddingVertical: metrics.tiny,
+    borderRadius: metrics.borderRadius,
+    alignSelf: 'flex-start',
+  },
+  difficultyText: {
+    color: colors.white,
+    fontSize: fontSizes.small,
+    fontWeight: '600',
+  },
+  rewardsContainer: {
+    backgroundColor: colors.backgroundPrimary,
     padding: metrics.small,
     borderRadius: metrics.borderRadius,
-    marginBottom: metrics.tiny,
   },
-  battleLogText: {
+  rewardsText: {
     fontSize: fontSizes.span,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  opponentSelectorList: {
+    maxHeight: 400,
+    marginBottom: metrics.large,
+  },
+  movesPreview: {
+    marginTop: metrics.small,
+    backgroundColor: colors.backgroundPrimary,
+    padding: metrics.small,
+    borderRadius: metrics.borderRadius,
+  },
+  movesText: {
+    fontSize: fontSizes.small,
+    color: colors.gray,
   },
   historyContainer: {
     flex: 1,

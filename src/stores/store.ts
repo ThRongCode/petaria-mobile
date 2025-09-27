@@ -12,17 +12,18 @@ const sagaMiddleware = createSagaMiddleware();
 
 const middlewareEnhancer = applyMiddleware(sagaMiddleware)
 
-const persistedReducer = persistReducer(persistConfig, reducers)
+// Temporarily disable ALL persistence to test
+// const persistedReducer = persistReducer(persistConfig, reducers)
 
 const store = configureStore({
-  reducer: persistedReducer,
+  reducer: reducers, // Use raw reducers without persistence
   middleware: getDefaultMiddleware => getDefaultMiddleware({ serializableCheck: false, thunk: false }),
   enhancers: getDefaultEnhancers => getDefaultEnhancers().concat(middlewareEnhancer),
 })
 
 sagaMiddleware.run(rootSaga)
 
-const persistor = persistStore(store)
+// const persistor = persistStore(store) // Temporarily disabled
 
 export type AppDispatch = typeof store.dispatch
 export type AppState = typeof store.getState
@@ -30,4 +31,4 @@ export type RootState = ReturnType<AppState>
 export const useAppDispatch: () => AppDispatch = useDispatch
 
 export const useSelector: TypedUseSelectorHook<RootState> = useReduxSelector
-export { persistor, store }
+export { store }
