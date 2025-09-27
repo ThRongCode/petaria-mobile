@@ -17,7 +17,7 @@ export const RootScreen: React.FC = () => {
   }, [])
 
   if (!isMockVerify) {
-    return <Redirect href={RouteKeys.SignIn} />
+    return <Redirect href="/(app)/hunt" />
   }
 
   return (

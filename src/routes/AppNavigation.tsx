@@ -29,17 +29,38 @@ export const TabNavigation: React.FC = () => {
   return (
     <Tabs screenOptions={getTabScreenOptions(colorScheme)}>
       <Tabs.Screen
-        name="home"
+        name="hunt"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="house" color={color} />,
+          title: 'Hunt',
+          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="map" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="about"
+        name="pets"
         options={{
-          title: 'About',
-          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="info" color={color} />,
+          title: 'Pets',
+          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="heart" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="battle"
+        options={{
+          title: 'Battle',
+          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="bolt" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="auction"
+        options={{
+          title: 'Auction',
+          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="bag" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="person" color={color} />,
         }}
       />
     </Tabs>
