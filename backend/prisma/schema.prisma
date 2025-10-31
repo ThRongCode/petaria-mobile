@@ -1,0 +1,290 @@
+// Prisma schema for VnPeteria Game Backend
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USERS ====================
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  username        String    @unique
+  passwordHash    String    @map("password_hash")
+  level           Int       @default(1)
+  xp              Int       @default(0)
+  coins           Int       @default(1000)
+  gems            Int       @default(50)
+  energy          Int       @default(100)
+  maxEnergy       Int       @default(100) @map("max_energy")
+  lastHealTime    DateTime? @map("last_heal_time")
+  battlesWon      Int       @default(0) @map("battles_won")
+  battlesLost     Int       @default(0) @map("battles_lost")
+  huntsCompleted  Int       @default(0) @map("hunts_completed")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  pets            Pet[]
+  userItems       UserItem[]
+  battles         Battle[]
+  hunts           Hunt[]
+  huntSessions    HuntSession[]
+  battleSessions  BattleSession[]
+
+  @@map("users")
+}
+
+// ==================== PETS ====================
+
+model Pet {
+  id              String    @id @default(uuid())
+  ownerId         String    @map("owner_id")
+  species         String
+  nickname        String?
+  rarity          String
+  level           Int       @default(1)
+  xp              Int       @default(0)
+  hp              Int
+  maxHp           Int       @map("max_hp")
+  attack          Int
+  defense         Int
+  speed           Int
+  evolutionStage  Int       @default(1) @map("evolution_stage")
+  mood            Int       @default(100)
+  lastFed         DateTime? @map("last_fed")
+  isForSale       Boolean   @default(false) @map("is_for_sale")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  owner           User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  moves           PetMove[]
+  battles         Battle[]
+
+  @@index([ownerId])
+  @@map("pets")
+}
+
+// ==================== ITEMS (Static Catalog) ====================
+
+model Item {
+  id              String    @id
+  name            String
+  description     String
+  type            String    // Consumable, StatBoost, Evolution, Cosmetic
+  rarity          String
+  effectHp        Int?      @map("effect_hp")
+  effectAttack    Int?      @map("effect_attack")
+  effectDefense   Int?      @map("effect_defense")
+  effectSpeed     Int?      @map("effect_speed")
+  effectXpBoost   Int?      @map("effect_xp_boost")
+  isPermanent     Boolean   @default(false) @map("is_permanent")
+  priceCoins      Int?      @map("price_coins")
+  priceGems       Int?      @map("price_gems")
+  imageUrl        String    @map("image_url")
+
+  userItems       UserItem[]
+
+  @@map("items")
+}
+
+// ==================== USER INVENTORY ====================
+
+model UserItem {
+  userId          String    @map("user_id")
+  itemId          String    @map("item_id")
+  quantity        Int       @default(0)
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item            Item      @relation(fields: [itemId], references: [id])
+
+  @@id([userId, itemId])
+  @@index([userId])
+  @@map("user_items")
+}
+
+// ==================== REGIONS (Static) ====================
+
+model Region {
+  id              String    @id
+  name            String
+  description     String
+  difficulty      String
+  energyCost      Int       @map("energy_cost")
+  coinsCost       Int       @map("coins_cost")
+  imageUrl        String    @map("image_url")
+  unlockLevel     Int       @default(1) @map("unlock_level")
+
+  spawns          RegionSpawn[]
+  hunts           Hunt[]
+  huntSessions    HuntSession[]
+
+  @@map("regions")
+}
+
+// ==================== SPAWN RATES (Static) ====================
+
+model RegionSpawn {
+  id              String    @id @default(uuid())
+  regionId        String    @map("region_id")
+  species         String
+  rarity          String
+  spawnRate       Float     @map("spawn_rate")
+  minLevel        Int       @map("min_level")
+  maxLevel        Int       @map("max_level")
+
+  region          Region    @relation(fields: [regionId], references: [id])
+
+  @@index([regionId])
+  @@map("region_spawns")
+}
+
+// ==================== HUNT SESSIONS (Active) ====================
+
+model HuntSession {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  regionId        String    @map("region_id")
+  encountersData  Json?     @map("encounters_data") // Store current encounters
+  expiresAt       DateTime  @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  region          Region    @relation(fields: [regionId], references: [id])
+
+  @@index([userId])
+  @@map("hunt_sessions")
+}
+
+// ==================== HUNT HISTORY ====================
+
+model Hunt {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  regionId        String    @map("region_id")
+  petsCaught      Int       @default(0) @map("pets_caught")
+  xpEarned        Int       @default(0) @map("xp_earned")
+  coinsEarned     Int       @default(0) @map("coins_earned")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  region          Region    @relation(fields: [regionId], references: [id])
+
+  @@index([userId])
+  @@map("hunts")
+}
+
+// ==================== OPPONENTS (Static) ====================
+
+model Opponent {
+  id              String    @id
+  name            String
+  species         String
+  level           Int
+  difficulty      String
+  hp              Int
+  maxHp           Int       @map("max_hp")
+  attack          Int
+  defense         Int
+  speed           Int
+  rewardXp        Int       @map("reward_xp")
+  rewardCoins     Int       @map("reward_coins")
+  unlockLevel     Int       @default(1) @map("unlock_level")
+  imageUrl        String    @map("image_url")
+
+  moves           OpponentMove[]
+  battles         Battle[]
+  battleSessions  BattleSession[]
+
+  @@map("opponents")
+}
+
+// ==================== BATTLE SESSIONS (Active) ====================
+
+model BattleSession {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  petId           String    @map("pet_id")
+  opponentId      String    @map("opponent_id")
+  battleType      String    @map("battle_type") // event, exp, material
+  startedAt       DateTime  @default(now()) @map("started_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opponent        Opponent  @relation(fields: [opponentId], references: [id])
+
+  @@index([userId])
+  @@map("battle_sessions")
+}
+
+// ==================== BATTLE HISTORY ====================
+
+model Battle {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  petId           String    @map("pet_id")
+  opponentId      String    @map("opponent_id")
+  battleType      String    @map("battle_type")
+  result          String    // victory, defeat
+  xpEarned        Int       @map("xp_earned")
+  coinsEarned     Int       @map("coins_earned")
+  turnsTaken      Int?      @map("turns_taken")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet             Pet       @relation(fields: [petId], references: [id])
+  opponent        Opponent  @relation(fields: [opponentId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("battles")
+}
+
+// ==================== MOVES (Static Reference) ====================
+
+model Move {
+  id              String    @id
+  name            String
+  type            String    // Physical, Special, Status
+  element         String    // Fire, Water, Grass, etc.
+  power           Int
+  accuracy        Float
+  description     String
+
+  petMoves        PetMove[]
+  opponentMoves   OpponentMove[]
+
+  @@map("moves")
+}
+
+// ==================== PET MOVES (Junction) ====================
+
+model PetMove {
+  petId           String    @map("pet_id")
+  moveId          String    @map("move_id")
+  pp              Int
+  maxPp           Int       @map("max_pp")
+
+  pet             Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
+  move            Move      @relation(fields: [moveId], references: [id])
+
+  @@id([petId, moveId])
+  @@map("pet_moves")
+}
+
+// ==================== OPPONENT MOVES (Junction) ====================
+
+model OpponentMove {
+  opponentId      String    @map("opponent_id")
+  moveId          String    @map("move_id")
+
+  opponent        Opponent  @relation(fields: [opponentId], references: [id])
+  move            Move      @relation(fields: [moveId], references: [id])
+
+  @@id([opponentId, moveId])
+  @@map("opponent_moves")
+}
