@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { StyleSheet, View, TouchableOpacity, Image, FlatList, Modal, TextInput, Alert } from 'react-native'
-import { ThemedText, ThemedView, ScreenContainer } from '@/components'
+import { ThemedText, ThemedView, ScreenContainer, HeaderBase } from '@/components'
+import { HEADER_GRADIENTS } from '@/constants/headerGradients'
 import { useSelector } from 'react-redux'
 import { 
   getActiveAuctions, 
@@ -448,13 +449,14 @@ export const AuctionScreen: React.FC = () => {
           
           <View style={styles.createSection}>
             <ThemedText type="defaultSemiBold" style={styles.createLabel}>Select Item</ThemedText>
-            <FlatList
-              data={createItemType === 'pet' ? ownedPets.filter(pet => !pet.isForSale) : ownedItems}
-              renderItem={renderCreateableItem}
-              keyExtractor={(item) => item.id}
-              style={styles.itemSelector}
-              maxHeight={150}
-            />
+            <View style={styles.itemSelectorWrapper}>
+              <FlatList
+                data={createItemType === 'pet' ? ownedPets.filter(pet => !pet.isForSale) : ownedItems}
+                renderItem={renderCreateableItem}
+                keyExtractor={(item) => item.id}
+                style={styles.itemSelector}
+              />
+            </View>
           </View>
           
           <View style={styles.formRow}>
@@ -524,15 +526,15 @@ export const AuctionScreen: React.FC = () => {
   )
 
   return (
-    <ScreenContainer>
-      <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>Auction House</ThemedText>
-          <View style={styles.currencyContainer}>
-            <ThemedText style={styles.currency}>💰 {currency.coins.toLocaleString()}</ThemedText>
-            <ThemedText style={styles.currency}>💎 {currency.gems.toLocaleString()}</ThemedText>
-          </View>
+    <ScreenContainer style={styles.screenContainer}>
+      <HeaderBase title="Auction House" gradientColors={HEADER_GRADIENTS.auction}>
+        <View style={styles.currencyContainer}>
+          <ThemedText style={styles.currency}>💰 {currency.coins.toLocaleString()}</ThemedText>
+          <ThemedText style={styles.currency}>💎 {currency.gems.toLocaleString()}</ThemedText>
         </View>
+      </HeaderBase>
+
+      <ThemedView style={styles.container}>
 
         {/* Main Tab Navigation */}
         <View style={styles.mainTabContainer}>
@@ -616,26 +618,22 @@ export const AuctionScreen: React.FC = () => {
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    backgroundColor: '#F8F9FA',
+  },
   container: {
     flex: 1,
     padding: metrics.medium,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: metrics.large,
-  },
-  title: {
-    color: colors.primary,
-  },
   currencyContainer: {
     flexDirection: 'row',
     gap: metrics.small,
+    justifyContent: 'center',
   },
   currency: {
     fontSize: fontSizes.body,
     fontWeight: '600',
+    color: colors.white,
   },
   mainTabContainer: {
     flexDirection: 'row',
@@ -931,8 +929,11 @@ const styles = StyleSheet.create({
   activeTypeButtonText: {
     color: colors.white,
   },
-  itemSelector: {
+  itemSelectorWrapper: {
     maxHeight: 150,
+  },
+  itemSelector: {
+    flex: 1,
   },
   selectableItem: {
     flexDirection: 'row',

@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Image, Alert, Animated } from 'react-native'
-import { ThemedText, ThemedView, ScreenContainer } from '@/components'
+import { StyleSheet, View, TouchableOpacity, Image, Animated, Dimensions, ScrollView, ImageBackground } from 'react-native'
+import { ThemedText } from '@/components'
+import { Panel } from '@/components/ui'
+import { getPokemonImage } from '@/assets/images'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
-import { colors, metrics, fontSizes } from '@/themes'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Pet, Opponent, Move } from '@/stores/types/game'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
-import { ButtonPrimary, ButtonSecondary } from 'rn-base-component'
 import { useRouter, useLocalSearchParams } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 interface BattleState {
   playerPet: Pet & { currentHp: number; temporaryStats: any }
@@ -63,13 +67,17 @@ export const BattleArenaScreen: React.FC = () => {
 
   // Handle opponent turn
   useEffect(() => {
-    if (battleState && battleState.turn === 'opponent' && !battleState.battleOver) {
+    if (battleState && battleState.turn === 'opponent' && !battleState.battleOver && !isAnimating) {
+      console.log('⏰ Scheduling opponent move...')
       const timer = setTimeout(() => {
         handleOpponentMove()
       }, 1500)
-      return () => clearTimeout(timer)
+      return () => {
+        console.log('🧹 Cleaning up opponent timer')
+        clearTimeout(timer)
+      }
     }
-  }, [battleState?.turn, battleState?.turnCount])
+  }, [battleState?.turn, battleState?.turnCount, isAnimating])
 
   const calculateDamage = (attacker: any, defender: any, move: Move): number => {
     if (move.power === 0) return 0 // Status moves
@@ -95,476 +103,600 @@ export const BattleArenaScreen: React.FC = () => {
 
   const applyMoveEffects = (user: any, target: any, move: Move) => {
     if (move.effects) {
-      // Healing
+      // Healing effect
       if (move.effects.healing) {
-        user.currentHp = Math.min(user.stats.maxHp || user.stats.hp, user.currentHp + move.effects.healing)
+        const healAmount = Math.floor(move.effects.healing)
+        user.currentHp = Math.min(user.currentHp + healAmount, user.temporaryStats.hp)
       }
       
-      // Stat boosts
+      // Stat boost effects
       if (move.effects.statBoost) {
-        if (move.effects.statBoost.attack) {
-          user.temporaryStats.attack += move.effects.statBoost.attack
-        }
-        if (move.effects.statBoost.defense) {
-          user.temporaryStats.defense += move.effects.statBoost.defense
-        }
-        if (move.effects.statBoost.speed) {
-          user.temporaryStats.speed += move.effects.statBoost.speed
-        }
+        Object.entries(move.effects.statBoost).forEach(([stat, change]) => {
+          if (typeof change === 'number') {
+            user.temporaryStats[stat] = Math.max(1, user.temporaryStats[stat] + change)
+          }
+        })
       }
     }
   }
 
-  const executeMove = (attacker: any, defender: any, move: Move, isPlayer: boolean) => {
-    const damage = calculateDamage(attacker, defender, move)
-    let logMessage = ''
+  const handleMoveSelection = (move: Move) => {
+    if (isAnimating || battleState?.turn !== 'player') return
     
-    if (damage === -1) {
-      logMessage = `${attacker.name} used ${move.name}, but it missed!`
-    } else if (damage === 0) {
-      // Status move
-      applyMoveEffects(attacker, defender, move)
-      if (move.effects?.healing) {
-        logMessage = `${attacker.name} used ${move.name} and restored ${move.effects.healing} HP!`
-      } else if (move.effects?.statBoost) {
-        const stat = Object.keys(move.effects.statBoost)[0]
-        logMessage = `${attacker.name} used ${move.name} and boosted ${stat}!`
-      } else {
-        logMessage = `${attacker.name} used ${move.name}!`
-      }
-    } else {
-      defender.currentHp = Math.max(0, defender.currentHp - damage)
-      logMessage = `${attacker.name} used ${move.name} and dealt ${damage} damage!`
-      
-      // Animate HP bars
-      const newHpPercentage = (defender.currentHp / (defender.stats.maxHp || defender.stats.hp)) * 100
-      Animated.timing(isPlayer ? opponentHpAnim : playerHpAnim, {
-        toValue: newHpPercentage,
-        duration: 500,
-        useNativeDriver: false,
-      }).start()
-    }
+    console.log(`⚔️ Player selected ${move.name}`)
+    setSelectedMove(move)
     
-    return logMessage
+    // Auto-execute move after selection (like classic Pokemon)
+    setTimeout(() => {
+      handlePlayerMove(move)
+    }, 300)
   }
 
   const handlePlayerMove = (move: Move) => {
-    if (!battleState || battleState.battleOver || isAnimating) return
+    if (!battleState || battleState.turn !== 'player' || isAnimating) return
     
+    console.log('👤 Player turn starting...')
     setIsAnimating(true)
-    setSelectedMove(move)
+    const { playerPet, opponentPet } = battleState
     
-    const logMessage = executeMove(battleState.playerPet, battleState.opponentPet, move, true)
+    let newLog = [...battleState.battleLog, `${playerPet.name} used ${move.name}!`]
     
-    setTimeout(() => {
-      setBattleState(prev => {
-        if (!prev) return null
-        
-        const newLog = [...prev.battleLog, logMessage]
-        const opponentDefeated = prev.opponentPet.currentHp <= 0
-        
-        if (opponentDefeated) {
-          return {
-            ...prev,
-            battleLog: [...newLog, `${prev.opponentPet.name} was defeated!`],
-            battleOver: true,
-            winner: 'player'
-          }
-        }
-        
-        return {
-          ...prev,
-          battleLog: newLog,
-          turn: 'opponent' as const,
-          turnCount: prev.turnCount + 1
-        }
-      })
+    // Calculate damage
+    const damage = calculateDamage(playerPet, opponentPet, move)
+    
+    if (damage === -1) {
+      newLog.push(`${playerPet.name}'s attack missed!`)
+    } else if (damage > 0) {
+      opponentPet.currentHp = Math.max(0, opponentPet.currentHp - damage)
+      newLog.push(`Dealt ${damage} damage!`)
       
+      // Animate HP bar
+      Animated.timing(opponentHpAnim, {
+        toValue: (opponentPet.currentHp / opponentPet.temporaryStats.hp) * 100,
+        duration: 500,
+        useNativeDriver: false
+      }).start()
+    }
+    
+    // Apply effects
+    applyMoveEffects(playerPet, opponentPet, move)
+    
+    // Check if opponent fainted
+    if (opponentPet.currentHp <= 0) {
+      newLog.push(`${opponentPet.name} fainted!`)
+      
+      // Calculate XP gained
+      const xpGained = Math.floor(opponentPet.level * 50 * 1.5)
+      newLog.push(`${playerPet.name} gained ${xpGained} XP!`)
+      
+      // TODO: Dispatch XP gain action when API is integrated
+      // dispatch(gameActions.gainXp({ petId: playerPet.id, xp: xpGained }))
+      
+      setBattleState({
+        ...battleState,
+        opponentPet,
+        battleLog: newLog,
+        battleOver: true,
+        winner: 'player'
+      })
       setIsAnimating(false)
-      setSelectedMove(null)
-    }, 1000)
+      return
+    }
+    
+    // Switch turn
+    console.log('🔄 Switching turn to opponent...')
+    setBattleState({
+      ...battleState,
+      playerPet,
+      opponentPet,
+      turn: 'opponent',
+      turnCount: battleState.turnCount + 1,
+      battleLog: newLog
+    })
+    
+    setSelectedMove(null)
+    setTimeout(() => {
+      console.log('✅ Player turn complete')
+      setIsAnimating(false)
+    }, 600)
   }
 
   const handleOpponentMove = () => {
-    if (!battleState || battleState.battleOver) return
+    if (!battleState || battleState.turn !== 'opponent' || isAnimating) return
     
+    console.log('🤖 Opponent turn starting...')
     setIsAnimating(true)
+    const { playerPet, opponentPet } = battleState
     
-    // AI chooses random move
-    const availableMoves = battleState.opponentPet.moves
-    const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)]
+    // Check if opponent has moves
+    if (!opponentPet.moves || opponentPet.moves.length === 0) {
+      console.error('Opponent has no moves!')
+      setIsAnimating(false)
+      return
+    }
     
-    const logMessage = executeMove(battleState.opponentPet, battleState.playerPet, randomMove, false)
+    // Opponent picks a random move
+    const randomMove = opponentPet.moves[Math.floor(Math.random() * opponentPet.moves.length)]
+    
+    let newLog = [...battleState.battleLog, `${opponentPet.name} used ${randomMove.name}!`]
+    
+    // Calculate damage
+    const damage = calculateDamage(opponentPet, playerPet, randomMove)
+    
+    if (damage === -1) {
+      newLog.push(`${opponentPet.name}'s attack missed!`)
+    } else if (damage > 0) {
+      playerPet.currentHp = Math.max(0, playerPet.currentHp - damage)
+      newLog.push(`${playerPet.name} took ${damage} damage!`)
+      
+      // Animate HP bar
+      Animated.timing(playerHpAnim, {
+        toValue: (playerPet.currentHp / playerPet.temporaryStats.hp) * 100,
+        duration: 500,
+        useNativeDriver: false
+      }).start()
+    }
+    
+    // Apply effects
+    applyMoveEffects(opponentPet, playerPet, randomMove)
+    
+    // Check if player fainted
+    if (playerPet.currentHp <= 0) {
+      newLog.push(`${playerPet.name} fainted!`)
+      
+      setBattleState({
+        ...battleState,
+        playerPet,
+        battleLog: newLog,
+        battleOver: true,
+        winner: 'opponent'
+      })
+      setIsAnimating(false)
+      return
+    }
+    
+    // Switch turn back to player
+    console.log('🔄 Switching turn back to player...')
+    setBattleState({
+      ...battleState,
+      playerPet,
+      opponentPet,
+      turn: 'player',
+      turnCount: battleState.turnCount + 1,
+      battleLog: newLog
+    })
     
     setTimeout(() => {
-      setBattleState(prev => {
-        if (!prev) return null
-        
-        const newLog = [...prev.battleLog, logMessage]
-        const playerDefeated = prev.playerPet.currentHp <= 0
-        
-        if (playerDefeated) {
-          return {
-            ...prev,
-            battleLog: [...newLog, `${prev.playerPet.name} was defeated!`],
-            battleOver: true,
-            winner: 'opponent'
-          }
-        }
-        
-        return {
-          ...prev,
-          battleLog: newLog,
-          turn: 'player' as const,
-          turnCount: prev.turnCount + 1
-        }
-      })
-      
+      console.log('✅ Opponent turn complete')
       setIsAnimating(false)
-    }, 1000)
+    }, 600)
   }
-
-  const handleBattleEnd = () => {
-    if (!battleState) return
-    
-    const { winner, opponentPet, playerPet } = battleState
-    
-    if (winner === 'player') {
-      // Calculate XP gained (Pokemon-style formula)
-      const baseXP = opponentPet.rewards.xp
-      const levelDifference = Math.max(1, opponentPet.level - playerPet.level + 5)
-      const xpGained = Math.floor(baseXP * levelDifference / 7)
-      
-      // Update pet HP and XP
-      dispatch(gameActions.updatePet({
-        petId: playerPet.id,
-        updates: {
-          stats: { ...playerPet.stats, hp: playerPet.currentHp }
-        }
-      }))
-      
-      dispatch(gameActions.levelUpPet({
-        petId: playerPet.id,
-        xpGained
-      }))
-      
-      // Add currency rewards
-      dispatch(gameActions.addCurrency({ coins: opponentPet.rewards.coins }))
-      
-      // Add item rewards
-      opponentPet.rewards.items.forEach(itemId => {
-        dispatch(gameActions.addItem({ itemId, quantity: 1 }))
-      })
-      
-      Alert.alert(
-        'Victory!',
-        `${playerPet.name} defeated ${opponentPet.name}!\n\n` +
-        `Rewards:\n` +
-        `+${xpGained} XP\n` +
-        `+${opponentPet.rewards.coins} Coins` +
-        (opponentPet.rewards.items.length > 0 ? `\n+${opponentPet.rewards.items.length} Items` : ''),
-        [{ text: 'Continue', onPress: () => router.back() }]
-      )
-    } else {
-      // Player lost
-      dispatch(gameActions.updatePet({
-        petId: playerPet.id,
-        updates: {
-          stats: { ...playerPet.stats, hp: Math.max(1, Math.floor(playerPet.stats.maxHp * 0.1)) }
-        }
-      }))
-      
-      Alert.alert(
-        'Defeat!',
-        `${playerPet.name} was defeated by ${opponentPet.name}.\n\n${playerPet.name} needs rest before the next battle.`,
-        [{ text: 'Continue', onPress: () => router.back() }]
-      )
-    }
-  }
-
-  // Show battle end screen if battle is over
-  useEffect(() => {
-    if (battleState?.battleOver) {
-      setTimeout(handleBattleEnd, 1500)
-    }
-  }, [battleState?.battleOver])
 
   if (!battleState) {
     return (
-      <ScreenContainer>
-        <ThemedView style={styles.container}>
+      <ImageBackground 
+        source={require('@/assets/images/background/mobile_background.png')}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <ThemedText style={styles.headerTitle}>Battle Arena</ThemedText>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.container}>
           <ThemedText>Loading battle...</ThemedText>
-        </ThemedView>
-      </ScreenContainer>
+        </View>
+      </ImageBackground>
     )
   }
 
   const { playerPet, opponentPet, turn, battleLog, battleOver } = battleState
+  
+  const playerHpPercentage = (playerPet.currentHp / playerPet.temporaryStats.hp) * 100
+  const opponentHpPercentage = (opponentPet.currentHp / opponentPet.temporaryStats.hp) * 100
+  
+  const getHpColor = (percentage: number) => {
+    if (percentage > 50) return '#4CAF50'
+    if (percentage > 20) return '#FFA726'
+    return '#EF5350'
+  }
 
   return (
-    <ScreenContainer>
-      <ThemedView style={styles.container}>
-        {/* Opponent Pokemon */}
-        <View style={styles.opponentSection}>
-          <View style={styles.pokemonInfo}>
-            <ThemedText type="defaultSemiBold" style={styles.pokemonName}>
-              {opponentPet.name} (Lv.{opponentPet.level})
-            </ThemedText>
-            <View style={styles.hpBarContainer}>
-              <View style={styles.hpBar}>
-                <Animated.View 
-                  style={[
-                    styles.hpFill, 
-                    { 
-                      width: opponentHpAnim.interpolate({
-                        inputRange: [0, 100],
-                        outputRange: ['0%', '100%']
-                      })
-                    }
-                  ]} 
+    <ImageBackground 
+      source={require('@/assets/images/background/mobile_background.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerTitle}>Battle Arena</ThemedText>
+        <View style={{ width: 40 }} />
+      </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.container}>
+          {/* Battle Layout: Side by Side Pokemon */}
+          
+          {/* Pokemon Battle Area - Side by Side */}
+          <View style={styles.battleFieldArea}>
+            <View style={styles.pokemonRow}>
+              {/* Opponent Pokemon - Left Half */}
+              <View style={styles.pokemonColumn}>
+                <Image 
+                  source={getPokemonImage(opponentPet.species) as any}
+                  style={styles.pokemonSprite}
+                  resizeMode="contain"
                 />
+                {/* Opponent Info Badge */}
+                <Panel variant="dark" style={styles.infoBadge}>
+                  <View style={styles.infoBadgeHeader}>
+                    <ThemedText style={styles.badgeName}>{opponentPet.name}</ThemedText>
+                    <ThemedText style={styles.badgeLevel}>Lv.{opponentPet.level}</ThemedText>
+                  </View>
+                  <View style={styles.hpBarContainer}>
+                    <ThemedText style={styles.hpLabel}>HP</ThemedText>
+                    <View style={styles.hpBarOuter}>
+                      <Animated.View 
+                        style={[
+                          styles.hpBarInner,
+                          {
+                            width: opponentHpAnim.interpolate({
+                              inputRange: [0, 100],
+                              outputRange: ['0%', '100%']
+                            }),
+                            backgroundColor: getHpColor(opponentHpPercentage)
+                          }
+                        ]} 
+                      />
+                    </View>
+                  </View>
+                </Panel>
               </View>
-              <ThemedText style={styles.hpText}>
-                {opponentPet.currentHp}/{opponentPet.stats.hp}
-              </ThemedText>
-            </View>
-          </View>
-          <Image source={{ uri: opponentPet.image }} style={styles.opponentImage} />
-        </View>
 
-        {/* Battle Log */}
-        <View style={styles.battleLogContainer}>
-          <ThemedText style={styles.battleLogText}>
-            {battleLog[battleLog.length - 1]}
-          </ThemedText>
-        </View>
-
-        {/* Player Pokemon */}
-        <View style={styles.playerSection}>
-          <Image source={{ uri: playerPet.image }} style={styles.playerImage} />
-          <View style={styles.pokemonInfo}>
-            <ThemedText type="defaultSemiBold" style={styles.pokemonName}>
-              {playerPet.name} (Lv.{playerPet.level})
-            </ThemedText>
-            <View style={styles.hpBarContainer}>
-              <View style={styles.hpBar}>
-                <Animated.View 
-                  style={[
-                    styles.hpFill, 
-                    { 
-                      width: playerHpAnim.interpolate({
-                        inputRange: [0, 100],
-                        outputRange: ['0%', '100%']
-                      })
-                    }
-                  ]} 
+              {/* Player Pokemon - Right Half */}
+              <View style={styles.pokemonColumn}>
+                <Image 
+                  source={getPokemonImage(playerPet.species) as any}
+                  style={styles.pokemonSprite}
+                  resizeMode="contain"
                 />
-              </View>
-              <ThemedText style={styles.hpText}>
-                {playerPet.currentHp}/{playerPet.stats.maxHp}
-              </ThemedText>
-            </View>
-          </View>
-        </View>
-
-        {/* Move Selection */}
-        {turn === 'player' && !battleOver && !isAnimating && (
-          <View style={styles.movesContainer}>
-            <ThemedText type="defaultSemiBold" style={styles.movesTitle}>
-              Choose a move:
-            </ThemedText>
-            <View style={styles.movesGrid}>
-              {playerPet.moves.map((move, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.moveButton,
-                    selectedMove?.id === move.id && styles.selectedMove
-                  ]}
-                  onPress={() => handlePlayerMove(move)}
-                >
-                  <ThemedText style={styles.moveName}>{move.name}</ThemedText>
-                  <ThemedText style={styles.moveType}>{move.element}</ThemedText>
-                  <ThemedText style={styles.movePower}>
-                    {move.power > 0 ? `${move.power} PWR` : 'Status'}
+                {/* Player Info Badge */}
+                <Panel variant="dark" style={styles.infoBadge}>
+                  <View style={styles.infoBadgeHeader}>
+                    <ThemedText style={styles.badgeName}>{playerPet.name}</ThemedText>
+                    <ThemedText style={styles.badgeLevel}>Lv.{playerPet.level}</ThemedText>
+                  </View>
+                  <View style={styles.hpBarContainer}>
+                    <ThemedText style={styles.hpLabel}>HP</ThemedText>
+                    <View style={styles.hpBarOuter}>
+                      <Animated.View 
+                        style={[
+                          styles.hpBarInner,
+                          {
+                            width: playerHpAnim.interpolate({
+                              inputRange: [0, 100],
+                              outputRange: ['0%', '100%']
+                            }),
+                            backgroundColor: getHpColor(playerHpPercentage)
+                          }
+                        ]} 
+                      />
+                    </View>
+                  </View>
+                  <ThemedText style={styles.hpNumbers}>
+                    {playerPet.currentHp} / {playerPet.temporaryStats.hp}
                   </ThemedText>
-                </TouchableOpacity>
-              ))}
+                </Panel>
+              </View>
             </View>
           </View>
-        )}
 
-        {/* Waiting for opponent */}
-        {turn === 'opponent' && !battleOver && (
-          <View style={styles.waitingContainer}>
-            <ThemedText style={styles.waitingText}>
-              {opponentPet.name} is choosing a move...
-            </ThemedText>
+          {/* Bottom Section: Compact Action Box */}
+          <View style={styles.bottomSection}>
+            {/* Battle Log */}
+            <Panel variant="dark" style={styles.battleLogBox}>
+              <ThemedText style={styles.battleLogText}>
+                {battleLog[battleLog.length - 1]}
+              </ThemedText>
+            </Panel>
+            
+            {/* Action Box - Compact */}
+            <Panel variant="dark" style={styles.actionBox}>
+              {!battleOver ? (
+                turn === 'player' ? (
+                  <View style={styles.actionContent}>
+                    <ThemedText style={styles.actionTitle}>What will {playerPet.name} do?</ThemedText>
+                    
+                    {/* Moves in 2x2 Grid */}
+                    <View style={styles.movesGrid}>
+                      {playerPet.moves.map((move, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.moveButtonContainer,
+                            selectedMove?.name === move.name && styles.selectedMoveButton
+                          ]}
+                          onPress={() => handleMoveSelection(move)}
+                          disabled={isAnimating}
+                        >
+                          <LinearGradient
+                            colors={selectedMove?.name === move.name ? ['#4CAF50', '#45a049'] : ['#2196F3', '#1976D2']}
+                            style={styles.moveButton}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                          >
+                            <ThemedText style={styles.moveButtonText}>{move.name}</ThemedText>
+                            <ThemedText style={styles.movePpText}>PP {move.pp}/{move.maxPp}</ThemedText>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    
+                    {/* Run Button */}
+                    <TouchableOpacity
+                      style={styles.runButtonContainer}
+                      onPress={() => router.back()}
+                    >
+                      <LinearGradient
+                        colors={['#EF5350', '#E53935']}
+                        style={styles.runButton}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                      >
+                        <ThemedText style={styles.runButtonText}>🏃 Run</ThemedText>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <ThemedText style={styles.waitingText}>
+                    {opponentPet.name} is attacking...
+                  </ThemedText>
+                )
+              ) : (
+                <View style={styles.battleOverBox}>
+                  <ThemedText style={styles.battleOverTitle}>
+                    {battleState.winner === 'player' ? '🏆 Victory!' : '💀 Defeat!'}
+                  </ThemedText>
+                  <TouchableOpacity
+                    style={styles.continueButtonContainer}
+                    onPress={() => router.back()}
+                  >
+                    <LinearGradient
+                      colors={battleState.winner === 'player' ? ['#4CAF50', '#45a049'] : ['#757575', '#616161']}
+                      style={styles.continueButton}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <ThemedText style={styles.continueButtonText}>Continue</ThemedText>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </Panel>
           </View>
-        )}
-
-        {/* Battle Over */}
-        {battleOver && (
-          <View style={styles.battleOverContainer}>
-            <ThemedText type="title" style={styles.battleOverText}>
-              {battleState.winner === 'player' ? 'Victory!' : 'Defeat!'}
-            </ThemedText>
-          </View>
-        )}
-
-        {/* Back Button */}
-        <View style={styles.backButtonContainer}>
-          <ButtonSecondary onPress={() => router.back()}>
-            {battleOver ? 'Continue' : 'Flee Battle'}
-          </ButtonSecondary>
         </View>
-      </ThemedView>
-    </ScreenContainer>
+      </ScrollView>
+    </ImageBackground>
   )
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
-    padding: metrics.medium,
   },
-  opponentSection: {
+  
+  // Battle field area - Pokemon side by side
+  battleFieldArea: {
+    paddingTop: 40,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  
+  pokemonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    marginBottom: metrics.large,
-    backgroundColor: colors.backgroundPrimary,
-    padding: metrics.medium,
-    borderRadius: metrics.borderRadius,
+    gap: 16,
   },
-  playerSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: metrics.large,
-    backgroundColor: colors.white,
-    padding: metrics.medium,
-    borderRadius: metrics.borderRadius,
-  },
-  pokemonInfo: {
+  
+  pokemonColumn: {
     flex: 1,
+    alignItems: 'center',
   },
-  pokemonName: {
-    fontSize: fontSizes.large,
-    marginBottom: metrics.small,
-    color: colors.primary,
+  
+  pokemonSprite: {
+    width: 130,
+    height: 130,
+    marginBottom: 16,
+  },
+  
+  infoBadge: {
+    width: '100%',
+    maxWidth: 180,
+    padding: 12,
+  },
+  
+  // Info Badge Styles
+  infoBadgeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  badgeName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  badgeLevel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ccc',
   },
   hpBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: metrics.small,
   },
-  hpBar: {
+  hpLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginRight: 6,
+  },
+  hpBarOuter: {
     flex: 1,
-    height: 20,
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: metrics.borderRadius,
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 4,
     overflow: 'hidden',
   },
-  hpFill: {
+  hpBarInner: {
     height: '100%',
-    backgroundColor: colors.success,
   },
-  hpText: {
-    fontSize: fontSizes.span,
+  hpNumbers: {
+    fontSize: 11,
     fontWeight: '600',
-    minWidth: 60,
+    color: '#fff',
+    textAlign: 'right',
+    marginTop: 4,
   },
-  opponentImage: {
-    width: 100,
-    height: 100,
-    borderRadius: metrics.borderRadius,
+  
+  // Bottom Section: Battle Log + Actions
+  bottomSection: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
-  playerImage: {
-    width: 100,
-    height: 100,
-    borderRadius: metrics.borderRadius,
-  },
-  battleLogContainer: {
-    backgroundColor: colors.black,
-    padding: metrics.medium,
-    borderRadius: metrics.borderRadius,
-    marginBottom: metrics.large,
-    minHeight: 60,
+  battleLogBox: {
+    padding: 12,
+    marginBottom: 8,
+    minHeight: 50,
     justifyContent: 'center',
   },
   battleLogText: {
-    color: colors.white,
-    fontSize: fontSizes.body,
-    textAlign: 'center',
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '500',
   },
-  movesContainer: {
-    backgroundColor: colors.white,
-    padding: metrics.medium,
-    borderRadius: metrics.borderRadius,
-    marginBottom: metrics.medium,
+  
+  // Action Box - Compact
+  actionBox: {
+    padding: 16,
   },
-  movesTitle: {
-    fontSize: fontSizes.large,
-    marginBottom: metrics.medium,
-    color: colors.primary,
-    textAlign: 'center',
+  actionContent: {
+    // Container for action elements
+  },
+  actionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 12,
   },
   movesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: metrics.small,
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  moveButtonContainer: {
+    width: '48%',
+    marginBottom: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   moveButton: {
-    width: '48%',
-    backgroundColor: colors.backgroundPrimary,
-    padding: metrics.medium,
-    borderRadius: metrics.borderRadius,
-    borderWidth: 2,
-    borderColor: colors.border,
+    padding: 12,
+    alignItems: 'center',
   },
-  selectedMove: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '20',
+  selectedMoveButton: {
+    // Selected state handled by gradient colors
   },
-  moveName: {
-    fontSize: fontSizes.body,
-    fontWeight: '600',
-    marginBottom: metrics.tiny,
+  moveButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
   },
-  moveType: {
-    fontSize: fontSizes.span,
-    color: colors.gray,
-    marginBottom: metrics.tiny,
+  movePpText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
   },
-  movePower: {
-    fontSize: fontSizes.small,
-    color: colors.primary,
-    fontWeight: '500',
+  runButtonContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-  waitingContainer: {
-    backgroundColor: colors.info,
-    padding: metrics.large,
-    borderRadius: metrics.borderRadius,
-    marginBottom: metrics.medium,
+  runButton: {
+    padding: 12,
+    alignItems: 'center',
+  },
+  runButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   waitingText: {
-    color: colors.white,
-    fontSize: fontSizes.body,
+    fontSize: 14,
+    color: '#fff',
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: '500',
+    paddingVertical: 16,
   },
-  battleOverContainer: {
-    backgroundColor: colors.primary,
-    padding: metrics.large,
-    borderRadius: metrics.borderRadius,
-    marginBottom: metrics.medium,
+  
+  // Battle Over
+  battleOverBox: {
+    alignItems: 'center',
   },
-  battleOverText: {
-    color: colors.white,
-    textAlign: 'center',
+  battleOverTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 24,
   },
-  backButtonContainer: {
-    marginTop: 'auto',
+  continueButtonContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  continueButton: {
+    padding: 16,
+    paddingHorizontal: 48,
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 })

@@ -36,7 +36,7 @@ export interface Opponent {
     speed: number
   }
   moves: Move[]
-  image: string
+  image: string | ReturnType<typeof require>
   rewards: {
     xp: number
     coins: number
@@ -251,7 +251,7 @@ export interface GameState {
   pets: Pet[]
   items: Item[]
   regions: Region[]
-  opponents: Opponent[]
+  // opponents removed - now a constant in src/constants/opponents.ts
   auctions: Auction[]
   battles: Battle[]
   activeBattle?: Battle

@@ -5,30 +5,31 @@ import app, { appInitialState } from './app'
 import loading from './loading'
 import user, { userInitialState } from './user'
 import game, { gameInitialState } from './game'
-import { persistReducer } from 'redux-persist'
 import INITIAL_STATE from '../initialState'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Reducer Export
 export * from './app'
 export * from './user'
 export * from './game'
 
+// Remove Redux Persist - API-first architecture
+// Fetch fresh data from API on each app load
 export const persistConfig = {
   key: 'root',
-  storage: AsyncStorage,
-  blacklist: Object.keys(INITIAL_STATE),
+  storage: null as any, // Disabled
+  whitelist: [], // Don't persist anything
 }
 
 const userPersistConfig = {
   key: 'user',
-  storage: AsyncStorage,
+  storage: null as any, // Disabled
+  whitelist: [], // Don't persist anything
 }
 
 const gamePersistConfig = {
-  key: 'game-v3', // Force complete reset 
-  storage: AsyncStorage,
-  version: 1, // Add versioning to handle state migration
+  key: 'game',
+  storage: null as any, // Disabled
+  whitelist: [], // Don't persist anything
 }
 
 export const InitialState = {
@@ -37,10 +38,10 @@ export const InitialState = {
   game: gameInitialState,
 }
 
+// API-first: No persistence, always fetch fresh data
 export default combineReducers({
-  // Reducers
-  user: persistReducer(userPersistConfig, user),
-  game: game, // Temporarily disable persistence completely to test
+  user,
+  game,
   app,
   loading,
 })

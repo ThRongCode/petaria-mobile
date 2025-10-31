@@ -1,6 +1,3 @@
-import React from 'react'
-import { PetManagementScreen } from '@/screens/game/PetManagementScreen'
+import { PetsScreenNew } from '@/screens/game/PetsScreenNew'
 
-export default function PetsRoute() {
-  return <PetManagementScreen />
-}
+export default PetsScreenNew

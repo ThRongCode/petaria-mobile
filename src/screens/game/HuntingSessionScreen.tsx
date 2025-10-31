@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Image, Modal, Alert, Animated } from 'react-native'
-import { ThemedText, ThemedView, ScreenContainer } from '@/components'
+import { StyleSheet, View, TouchableOpacity, Image, Modal, Animated, ImageBackground } from 'react-native'
+import { ThemedText } from '@/components'
+import { Panel, TopBar, IconButton, CustomAlert } from '@/components/ui'
 import { useSelector } from 'react-redux'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { getUserCurrency, getUserProfile, getRegionById } from '@/stores/selectors'
-import { colors, metrics, fontSizes } from '@/themes'
 import { Pet, Item } from '@/stores/types/game'
-import { useAppDispatch } from '@/stores/store'
+import { useAppDispatch, RootState } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
-import { ButtonPrimary, ButtonSecondary } from 'rn-base-component'
+import { getPetImageByName } from '@/assets/images'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 
 type EncounterType = 'nothing' | 'monster' | 'treasure'
 
@@ -16,7 +18,7 @@ interface Monster {
   id: string
   name: string
   species: string
-  image: string
+  image: any  // Image require() object from getPetImageByName
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary'
   level: number
   captureRate: number
@@ -36,9 +38,10 @@ interface EncounterResult {
 }
 
 export const HuntingSessionScreen: React.FC = () => {
+  const params = useLocalSearchParams<{ regionName: string; regionId: string; huntCost?: string }>()
   const router = useRouter()
   const dispatch = useAppDispatch()
-  const params = useLocalSearchParams()
+  const userProfile = useSelector((state: RootState) => state.game.userProfile)
   const currency = useSelector(getUserCurrency)
   const profile = useSelector(getUserProfile)
   const region = useSelector(getRegionById(params.regionId as string))
@@ -56,8 +59,25 @@ export const HuntingSessionScreen: React.FC = () => {
   })
   const [sessionStarted, setSessionStarted] = useState(false)
   
+  // Custom alert states
+  const [showAlert, setShowAlert] = useState(false)
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string
+    message?: string
+    buttons?: Array<{ text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }>
+  }>({ title: '' })
+  
   // Animation values
   const [moveAnimation] = useState(new Animated.Value(0))
+
+  const showCustomAlert = (
+    title: string,
+    message?: string,
+    buttons?: Array<{ text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }>
+  ) => {
+    setAlertConfig({ title, message, buttons })
+    setShowAlert(true)
+  }
 
   useEffect(() => {
     if (!sessionStarted && params.regionId) {
@@ -73,37 +93,31 @@ export const HuntingSessionScreen: React.FC = () => {
     
     if (random < 0.4) {
       // 40% chance for monster encounter
+      const monsterData = [
+        { species: 'Rattata', rarity: 'Common' as const, captureRate: 0.7 },
+        { species: 'Pidgey', rarity: 'Common' as const, captureRate: 0.7 },
+        { species: 'Caterpie', rarity: 'Common' as const, captureRate: 0.8 },
+        { species: 'Oddish', rarity: 'Rare' as const, captureRate: 0.5 },
+        { species: 'Bellsprout', rarity: 'Rare' as const, captureRate: 0.5 },
+        { species: 'Scyther', rarity: 'Epic' as const, captureRate: 0.3 },
+        { species: 'Pinsir', rarity: 'Epic' as const, captureRate: 0.3 },
+      ]
+      
+      const randomMonsterData = monsterData[Math.floor(Math.random() * monsterData.length)]
+      
       const monsters: Monster[] = [
         {
-          id: 'monster-1',
-          name: 'Wild Fluffy',
-          species: 'Fluffball',
-          image: 'https://via.placeholder.com/120/4CAF50/FFFFFF?text=🐾',
-          rarity: 'Common',
+          id: 'monster-' + Date.now(),
+          name: randomMonsterData.species,
+          species: randomMonsterData.species,
+          image: getPetImageByName(randomMonsterData.species),
+          rarity: randomMonsterData.rarity,
           level: Math.max(1, profile.level + Math.floor(Math.random() * 3) - 1),
-          captureRate: 0.7
-        },
-        {
-          id: 'monster-2', 
-          name: 'Forest Sprite',
-          species: 'Woodling',
-          image: 'https://via.placeholder.com/120/8BC34A/FFFFFF?text=🌱',
-          rarity: 'Rare',
-          level: Math.max(1, profile.level + Math.floor(Math.random() * 5) - 2),
-          captureRate: 0.5
-        },
-        {
-          id: 'monster-3',
-          name: 'Mystic Beast',
-          species: 'Shadowfang',
-          image: 'https://via.placeholder.com/120/9C27B0/FFFFFF?text=⚡',
-          rarity: 'Epic',
-          level: Math.max(1, profile.level + Math.floor(Math.random() * 7) - 3),
-          captureRate: 0.3
+          captureRate: randomMonsterData.captureRate
         }
       ]
       
-      const randomMonster = monsters[Math.floor(Math.random() * monsters.length)]
+      const randomMonster = monsters[0]
       
       return {
         type: 'monster',
@@ -192,10 +206,11 @@ export const HuntingSessionScreen: React.FC = () => {
   }
 
   const attemptCapture = () => {
-    if (!currentEncounter?.monster || captureAttempts >= 5) return
+    if (!currentEncounter?.monster || captureAttempts >= 5 || isCapturing) return
 
     setIsCapturing(true)
-    setCaptureAttempts(prev => prev + 1)
+    const newAttemptCount = captureAttempts + 1
+    setCaptureAttempts(newAttemptCount)
 
     setTimeout(() => {
       const success = Math.random() < currentEncounter.monster!.captureRate
@@ -217,7 +232,7 @@ export const HuntingSessionScreen: React.FC = () => {
             defense: 12 + Math.floor(Math.random() * 8),
             speed: 18 + Math.floor(Math.random() * 12),
           },
-          moves: [], // Will be assigned properly in real implementation
+          moves: [], // Moves will be assigned based on species
           image: currentEncounter.monster!.image,
           evolutionStage: 1,
           maxEvolutionStage: 3,
@@ -232,29 +247,33 @@ export const HuntingSessionScreen: React.FC = () => {
         dispatch(gameActions.addPet(newPet))
         setSessionRewards(prev => ({ ...prev, petsFound: prev.petsFound + 1 }))
         
-        Alert.alert(
+        showCustomAlert(
           'Capture Successful!',
           `You successfully captured ${currentEncounter.monster!.name}!`,
-          [{ text: 'Continue', onPress: () => setShowEncounter(false) }]
+          [{ text: 'Continue', onPress: () => {
+            setShowEncounter(false)
+            setIsCapturing(false)
+          }}]
         )
       } else {
-        if (captureAttempts >= 4) {
+        if (newAttemptCount >= 5) {
           // Monster escapes after 5 failed attempts
-          Alert.alert(
+          showCustomAlert(
             'Monster Escaped!',
-            `${currentEncounter.monster!.name} escaped after ${captureAttempts + 1} attempts!`,
-            [{ text: 'Continue', onPress: () => setShowEncounter(false) }]
+            `${currentEncounter.monster!.name} escaped after ${newAttemptCount} attempts!`,
+            [{ text: 'Continue', onPress: () => {
+              setShowEncounter(false)
+              setIsCapturing(false)
+            }}]
           )
         } else {
-          Alert.alert(
+          showCustomAlert(
             'Capture Failed!',
-            `Capture attempt failed! ${5 - (captureAttempts + 1)} attempts remaining.`,
-            [{ text: 'Try Again' }]
+            `Capture attempt failed! ${5 - newAttemptCount} attempts remaining.`,
+            [{ text: 'Try Again', onPress: () => setIsCapturing(false) }]
           )
         }
       }
-      
-      setIsCapturing(false)
     }, 1000)
   }
 
@@ -275,7 +294,7 @@ export const HuntingSessionScreen: React.FC = () => {
   }
 
   const endSession = () => {
-    Alert.alert(
+    showCustomAlert(
       'Hunting Session Complete!',
       `Session Summary:\n• ${sessionRewards.totalXp} Total XP\n• ${sessionRewards.totalCoins} Coins Found\n• ${sessionRewards.petsFound} Pets Captured\n• ${sessionRewards.itemsFound} Items Found`,
       [
@@ -293,28 +312,18 @@ export const HuntingSessionScreen: React.FC = () => {
     }
   }, [actionsLeft, showEncounter])
 
-  const getDirectionIcon = (direction: string) => {
-    switch (direction) {
-      case 'up': return '⬆️'
-      case 'down': return '⬇️'
-      case 'left': return '⬅️'
-      case 'right': return '➡️'
-      default: return '❓'
-    }
-  }
-
   const EncounterModal = () => (
-    <Modal visible={showEncounter} animationType="slide" transparent>
+    <Modal visible={showEncounter} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <Panel variant="dark" style={styles.modalContent}>
           {currentEncounter && (
             <>
               {currentEncounter.type === 'monster' && currentEncounter.monster && (
                 <View style={styles.encounterContent}>
-                  <ThemedText type="title" style={styles.encounterTitle}>
+                  <ThemedText style={styles.encounterTitle}>
                     Wild {currentEncounter.monster.species} Appears!
                   </ThemedText>
-                  <Image source={{ uri: currentEncounter.monster.image }} style={styles.monsterImage} />
+                  <Image source={currentEncounter.monster.image} style={styles.monsterImage} />
                   <ThemedText style={styles.monsterName}>
                     {currentEncounter.monster.name} (Level {currentEncounter.monster.level})
                   </ThemedText>
@@ -332,27 +341,44 @@ export const HuntingSessionScreen: React.FC = () => {
                   </View>
 
                   <View style={styles.encounterActions}>
-                    <ButtonPrimary 
-                      style={styles.captureButton}
+                    <TouchableOpacity 
+                      style={[styles.actionButton, (captureAttempts >= 5 || isCapturing) && styles.disabledButton]}
                       onPress={attemptCapture}
                       disabled={captureAttempts >= 5 || isCapturing}
                     >
-                      {isCapturing ? 'Capturing...' : captureAttempts >= 5 ? 'Escaped' : 'Attempt Capture'}
-                    </ButtonPrimary>
-                    <ButtonSecondary 
-                      style={styles.runButton}
+                      <LinearGradient
+                        colors={captureAttempts >= 5 || isCapturing ? ['#666', '#444'] : ['#4CAF50', '#45a049']}
+                        style={styles.gradientButton}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                      >
+                        <ThemedText style={styles.buttonText}>
+                          {isCapturing ? 'Capturing...' : captureAttempts >= 5 ? 'Escaped' : 'Attempt Capture'}
+                        </ThemedText>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[styles.actionButton, isCapturing && styles.disabledButton]}
                       onPress={() => setShowEncounter(false)}
                       disabled={isCapturing}
                     >
-                      Run Away
-                    </ButtonSecondary>
+                      <LinearGradient
+                        colors={isCapturing ? ['#666', '#444'] : ['#FF9800', '#F57C00']}
+                        style={styles.gradientButton}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                      >
+                        <ThemedText style={styles.buttonText}>Run Away</ThemedText>
+                      </LinearGradient>
+                    </TouchableOpacity>
                   </View>
                 </View>
               )}
 
               {currentEncounter.type === 'treasure' && currentEncounter.treasure && (
                 <View style={styles.encounterContent}>
-                  <ThemedText type="title" style={styles.encounterTitle}>
+                  <ThemedText style={styles.encounterTitle}>
                     Treasure Found!
                   </ThemedText>
                   <ThemedText style={styles.treasureIcon}>💎</ThemedText>
@@ -365,79 +391,110 @@ export const HuntingSessionScreen: React.FC = () => {
                       You found a {currentEncounter.treasure.item?.name}!
                     </ThemedText>
                   )}
-                  <ButtonPrimary onPress={handleTreasureReward}>
-                    Collect Reward
-                  </ButtonPrimary>
+                  <TouchableOpacity style={styles.actionButton} onPress={handleTreasureReward}>
+                    <LinearGradient
+                      colors={['#4CAF50', '#45a049']}
+                      style={styles.gradientButton}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <ThemedText style={styles.buttonText}>Collect Reward</ThemedText>
+                    </LinearGradient>
+                  </TouchableOpacity>
                 </View>
               )}
 
               {currentEncounter.type === 'nothing' && (
                 <View style={styles.encounterContent}>
-                  <ThemedText type="title" style={styles.encounterTitle}>
+                  <ThemedText style={styles.encounterTitle}>
                     Nothing Here...
                   </ThemedText>
                   <ThemedText style={styles.emptyIcon}>🕳️</ThemedText>
                   <ThemedText style={styles.emptyText}>
                     You explore the area but find nothing of interest.
                   </ThemedText>
-                  <ButtonPrimary onPress={() => setShowEncounter(false)}>
-                    Continue Exploring
-                  </ButtonPrimary>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => setShowEncounter(false)}>
+                    <LinearGradient
+                      colors={['#2196F3', '#1976D2']}
+                      style={styles.gradientButton}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <ThemedText style={styles.buttonText}>Continue Exploring</ThemedText>
+                    </LinearGradient>
+                  </TouchableOpacity>
                 </View>
               )}
             </>
           )}
-        </View>
+        </Panel>
       </View>
     </Modal>
   )
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'Common': return colors.gray
-      case 'Rare': return colors.info
-      case 'Epic': return colors.warning
-      case 'Legendary': return colors.error
-      default: return colors.gray
+      case 'Common': return '#9E9E9E'
+      case 'Rare': return '#2196F3'
+      case 'Epic': return '#9C27B0'
+      case 'Legendary': return '#FF9800'
+      default: return '#9E9E9E'
     }
   }
 
   return (
-    <ScreenContainer>
-      <ThemedView style={styles.container}>
-        {/* Header with session info */}
-        <View style={styles.header}>
-          <View style={styles.sessionInfo}>
-            <ThemedText type="title" style={styles.regionName}>
-              {params.regionName}
-            </ThemedText>
-            <ThemedText style={styles.sessionSubtitle}>Dungeon Exploration</ThemedText>
+    <ImageBackground 
+      source={require('@/assets/images/background/mobile_background.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <TopBar
+        username={profile?.username || 'Trainer'}
+        coins={currency?.coins || 0}
+        gems={currency?.gems || 0}
+        energy={80}
+        maxEnergy={100}
+        onSettingsPress={() => router.push('/profile')}
+      />
+
+      <View style={styles.container}>
+        {/* Header Panel */}
+        <Panel variant="dark" style={styles.headerPanel}>
+          <View style={styles.headerContent}>
+            <View style={styles.sessionInfo}>
+              <ThemedText style={styles.regionName}>
+                {params.regionName}
+              </ThemedText>
+              <ThemedText style={styles.sessionSubtitle}>Dungeon Exploration</ThemedText>
+            </View>
+            <View style={styles.actionsCounter}>
+              <ThemedText style={styles.actionsText}>Actions Left</ThemedText>
+              <ThemedText style={styles.actionsNumber}>{actionsLeft}</ThemedText>
+            </View>
           </View>
-          <View style={styles.actionsCounter}>
-            <ThemedText style={styles.actionsText}>Actions Left</ThemedText>
-            <ThemedText style={styles.actionsNumber}>{actionsLeft}</ThemedText>
-          </View>
-        </View>
+        </Panel>
 
         {/* Session rewards summary */}
-        <View style={styles.rewardsBar}>
-          <View style={styles.rewardItem}>
-            <ThemedText style={styles.rewardLabel}>XP</ThemedText>
-            <ThemedText style={styles.rewardValue}>{sessionRewards.totalXp}</ThemedText>
+        <Panel variant="dark" style={styles.rewardsPanel}>
+          <View style={styles.rewardsBar}>
+            <View style={styles.rewardItem}>
+              <ThemedText style={styles.rewardLabel}>XP</ThemedText>
+              <ThemedText style={styles.rewardValue}>{sessionRewards.totalXp}</ThemedText>
+            </View>
+            <View style={styles.rewardItem}>
+              <ThemedText style={styles.rewardLabel}>Coins</ThemedText>
+              <ThemedText style={styles.rewardValue}>{sessionRewards.totalCoins}</ThemedText>
+            </View>
+            <View style={styles.rewardItem}>
+              <ThemedText style={styles.rewardLabel}>Pets</ThemedText>
+              <ThemedText style={styles.rewardValue}>{sessionRewards.petsFound}</ThemedText>
+            </View>
+            <View style={styles.rewardItem}>
+              <ThemedText style={styles.rewardLabel}>Items</ThemedText>
+              <ThemedText style={styles.rewardValue}>{sessionRewards.itemsFound}</ThemedText>
+            </View>
           </View>
-          <View style={styles.rewardItem}>
-            <ThemedText style={styles.rewardLabel}>Coins</ThemedText>
-            <ThemedText style={styles.rewardValue}>{sessionRewards.totalCoins}</ThemedText>
-          </View>
-          <View style={styles.rewardItem}>
-            <ThemedText style={styles.rewardLabel}>Pets</ThemedText>
-            <ThemedText style={styles.rewardValue}>{sessionRewards.petsFound}</ThemedText>
-          </View>
-          <View style={styles.rewardItem}>
-            <ThemedText style={styles.rewardLabel}>Items</ThemedText>
-            <ThemedText style={styles.rewardValue}>{sessionRewards.itemsFound}</ThemedText>
-          </View>
-        </View>
+        </Panel>
 
         {/* Exploration area */}
         <View style={styles.explorationArea}>
@@ -462,272 +519,330 @@ export const HuntingSessionScreen: React.FC = () => {
           </ThemedText>
         </View>
 
-        {/* Movement controls */}
+        {/* Movement controls - D-Pad Layout */}
         <View style={styles.movementControls}>
+          {/* Up Button */}
           <View style={styles.movementRow}>
             <TouchableOpacity 
-              style={styles.movementButton}
+              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
               onPress={() => makeMove('up')}
               disabled={actionsLeft <= 0}
             >
-              <ThemedText style={styles.movementIcon}>{getDirectionIcon('up')}</ThemedText>
-              <ThemedText style={styles.movementLabel}>Up</ThemedText>
+              <Panel variant="dark" style={styles.buttonPanel}>
+                <Ionicons name="arrow-up" size={28} color="#FFD700" />
+                <ThemedText style={styles.movementLabel}>Up</ThemedText>
+              </Panel>
             </TouchableOpacity>
           </View>
           
+          {/* Left and Right Buttons */}
           <View style={styles.movementRow}>
             <TouchableOpacity 
-              style={styles.movementButton}
+              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
               onPress={() => makeMove('left')}
               disabled={actionsLeft <= 0}
             >
-              <ThemedText style={styles.movementIcon}>{getDirectionIcon('left')}</ThemedText>
-              <ThemedText style={styles.movementLabel}>Left</ThemedText>
+              <Panel variant="dark" style={styles.buttonPanel}>
+                <Ionicons name="arrow-back" size={28} color="#FFD700" />
+                <ThemedText style={styles.movementLabel}>Left</ThemedText>
+              </Panel>
             </TouchableOpacity>
             
+            <View style={styles.dpadSpacer} />
+            
             <TouchableOpacity 
-              style={styles.movementButton}
+              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
               onPress={() => makeMove('right')}
               disabled={actionsLeft <= 0}
             >
-              <ThemedText style={styles.movementIcon}>{getDirectionIcon('right')}</ThemedText>
-              <ThemedText style={styles.movementLabel}>Right</ThemedText>
+              <Panel variant="dark" style={styles.buttonPanel}>
+                <Ionicons name="arrow-forward" size={28} color="#FFD700" />
+                <ThemedText style={styles.movementLabel}>Right</ThemedText>
+              </Panel>
             </TouchableOpacity>
           </View>
           
+          {/* Down Button */}
           <View style={styles.movementRow}>
             <TouchableOpacity 
-              style={styles.movementButton}
+              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
               onPress={() => makeMove('down')}
               disabled={actionsLeft <= 0}
             >
-              <ThemedText style={styles.movementIcon}>{getDirectionIcon('down')}</ThemedText>
-              <ThemedText style={styles.movementLabel}>Down</ThemedText>
+              <Panel variant="dark" style={styles.buttonPanel}>
+                <Ionicons name="arrow-down" size={28} color="#FFD700" />
+                <ThemedText style={styles.movementLabel}>Down</ThemedText>
+              </Panel>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Exit button */}
         <View style={styles.exitContainer}>
-          <ButtonSecondary 
+          <TouchableOpacity
             onPress={() => {
-              Alert.alert(
+              showCustomAlert(
                 'Exit Hunting Session?',
                 'Are you sure you want to exit? You will lose any remaining actions.',
                 [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'Exit', onPress: endSession }
+                  { text: 'Exit', onPress: endSession, style: 'destructive' }
                 ]
               )
             }}
+            style={styles.exitButtonContainer}
           >
-            Exit Session
-          </ButtonSecondary>
+            <LinearGradient
+              colors={['#EF5350', '#E53935']}
+              style={styles.exitButton}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <ThemedText style={styles.exitButtonText}>Exit Session</ThemedText>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         <EncounterModal />
-      </ThemedView>
-    </ScreenContainer>
+        
+        {/* Custom Alert Dialog */}
+        <CustomAlert
+          visible={showAlert}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          buttons={alertConfig.buttons}
+          onDismiss={() => setShowAlert(false)}
+        />
+      </View>
+    </ImageBackground>
   )
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    padding: metrics.medium,
+    padding: 16,
   },
-  header: {
+  headerPanel: {
+    marginBottom: 16,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: metrics.large,
-    paddingBottom: metrics.medium,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.backgroundSecondary,
   },
   sessionInfo: {
     flex: 1,
   },
   regionName: {
-    color: colors.primary,
-    marginBottom: metrics.tiny,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 4,
   },
   sessionSubtitle: {
-    fontSize: fontSizes.span,
-    color: colors.gray,
+    fontSize: 14,
+    color: '#B0B0B0',
   },
   actionsCounter: {
     alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingHorizontal: metrics.medium,
-    paddingVertical: metrics.small,
-    borderRadius: metrics.borderRadius,
   },
   actionsText: {
-    color: colors.white,
-    fontSize: fontSizes.small,
-    marginBottom: metrics.tiny,
+    fontSize: 12,
+    color: '#B0B0B0',
+    marginBottom: 4,
   },
   actionsNumber: {
-    color: colors.white,
-    fontSize: fontSizes.title,
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  rewardsPanel: {
+    marginBottom: 16,
   },
   rewardsBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: colors.backgroundPrimary,
-    padding: metrics.medium,
-    borderRadius: metrics.borderRadius,
-    marginBottom: metrics.large,
   },
   rewardItem: {
     alignItems: 'center',
   },
   rewardLabel: {
-    fontSize: fontSizes.small,
-    color: colors.gray,
-    marginBottom: metrics.tiny,
+    fontSize: 12,
+    color: '#B0B0B0',
+    marginBottom: 4,
   },
   rewardValue: {
-    fontSize: fontSizes.large,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: '#FFD700',
   },
   explorationArea: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: metrics.large,
+    marginVertical: 24,
   },
   explorerIcon: {
-    marginBottom: metrics.medium,
+    marginBottom: 16,
   },
   explorerEmoji: {
     fontSize: 60,
   },
   explorationHint: {
-    fontSize: fontSizes.body,
-    color: colors.gray,
+    fontSize: 16,
+    color: '#E0E0E0',
     textAlign: 'center',
   },
   movementControls: {
     alignItems: 'center',
-    marginBottom: metrics.large,
+    marginBottom: 20,
+    marginTop: 8,
   },
   movementRow: {
     flexDirection: 'row',
-    gap: metrics.large,
-    marginVertical: metrics.small,
-  },
-  movementButton: {
-    backgroundColor: colors.white,
-    padding: metrics.large,
-    borderRadius: metrics.borderRadius,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 3,
-    shadowColor: colors.black,
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    minWidth: 80,
-    minHeight: 80,
+    marginVertical: 6,
   },
-  movementIcon: {
-    fontSize: 24,
-    marginBottom: metrics.small,
+  movementButton: {
+    width: 100,
+    height: 90,
+  },
+  dpadSpacer: {
+    width: 40,
+  },
+  disabledButton: {
+    opacity: 0.4,
+  },
+  buttonPanel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    flex: 1,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
   },
   movementLabel: {
-    fontSize: fontSizes.span,
-    color: colors.gray,
+    fontSize: 13,
+    color: '#FFD700',
+    marginTop: 6,
+    fontWeight: '600',
   },
   exitContainer: {
     alignItems: 'center',
+    marginBottom: 16,
+  },
+  exitButtonContainer: {
+    width: '100%',
+  },
+  exitButton: {
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  exitButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalContent: {
-    width: '90%',
-    backgroundColor: colors.white,
-    borderRadius: metrics.borderRadiusLarge,
-    padding: metrics.large,
+    width: '100%',
+    maxWidth: 400,
   },
   encounterContent: {
     alignItems: 'center',
   },
   encounterTitle: {
-    textAlign: 'center',
-    marginBottom: metrics.large,
-    color: colors.primary,
-  },
-  monsterImage: {
-    width: 120,
-    height: 120,
-    borderRadius: metrics.borderRadius,
-    marginBottom: metrics.medium,
-  },
-  monsterName: {
-    fontSize: fontSizes.large,
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: metrics.small,
+    marginBottom: 20,
+    color: '#FFD700',
+  },
+  monsterImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 12,
+    marginBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  monsterName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+    color: '#FFFFFF',
   },
   monsterRarity: {
-    fontSize: fontSizes.body,
+    fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: metrics.large,
+    marginBottom: 20,
   },
   captureInfo: {
-    backgroundColor: colors.backgroundPrimary,
-    padding: metrics.medium,
-    borderRadius: metrics.borderRadius,
-    marginBottom: metrics.large,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
     width: '100%',
   },
   captureText: {
     textAlign: 'center',
-    fontSize: fontSizes.body,
-    marginBottom: metrics.small,
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#FFFFFF',
   },
   captureRate: {
     textAlign: 'center',
-    fontSize: fontSizes.span,
-    color: colors.gray,
+    fontSize: 14,
+    color: '#B0B0B0',
   },
   encounterActions: {
-    flexDirection: 'row',
-    gap: metrics.medium,
+    gap: 12,
     width: '100%',
   },
-  captureButton: {
-    flex: 2,
+  actionButton: {
+    width: '100%',
   },
-  runButton: {
-    flex: 1,
+  gradientButton: {
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   treasureIcon: {
     fontSize: 60,
-    marginBottom: metrics.medium,
+    marginBottom: 16,
   },
   treasureText: {
-    fontSize: fontSizes.large,
+    fontSize: 18,
     textAlign: 'center',
-    marginBottom: metrics.large,
+    marginBottom: 20,
+    color: '#FFFFFF',
   },
   emptyIcon: {
     fontSize: 60,
-    marginBottom: metrics.medium,
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: fontSizes.body,
+    fontSize: 16,
     textAlign: 'center',
-    color: colors.gray,
-    marginBottom: metrics.large,
+    color: '#B0B0B0',
+    marginBottom: 20,
   },
 })

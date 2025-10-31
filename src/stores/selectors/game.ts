@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit'
 import { RootState } from '../store'
 import { Pet, Region, Auction, Battle } from '../types/game'
+import { OPPONENTS } from '@/constants/opponents'
 
 // Base selectors
 export const getGameState = (state: RootState) => state.game
@@ -9,7 +10,7 @@ export const getUserInventory = (state: RootState) => state.game.inventory
 export const getAllPets = (state: RootState) => state.game.pets
 export const getAllItems = (state: RootState) => state.game.items
 export const getAllRegions = (state: RootState) => state.game.regions
-export const getAllOpponents = (state: RootState) => state.game.opponents
+export const getAllOpponents = () => OPPONENTS // Now returns constant instead of state
 export const getAllAuctions = (state: RootState) => state.game.auctions
 export const getAllBattles = (state: RootState) => state.game.battles
 export const getActiveBattle = (state: RootState) => state.game.activeBattle
@@ -141,24 +142,23 @@ export const canHuntInRegion = (regionId: string) => createSelector(
 
 // Opponent selectors
 export const getAvailableOpponents = createSelector(
-  [getAllOpponents, getUserProfile],
-  (opponents, profile) => {
+  [getUserProfile],
+  (profile) => {
+    const opponents = getAllOpponents()
     if (!opponents || !profile) return []
     return opponents.filter(opponent => profile.level >= opponent.unlockLevel)
   }
 )
 
-export const getOpponentById = (opponentId: string) => createSelector(
-  getAllOpponents,
-  (opponents) => {
-    if (!opponents) return undefined
-    return opponents.find(opponent => opponent.id === opponentId)
-  }
-)
+export const getOpponentById = (opponentId: string) => {
+  const opponents = getAllOpponents()
+  return opponents.find(opponent => opponent.id === opponentId)
+}
 
 export const getOpponentsByDifficulty = createSelector(
-  getAvailableOpponents,
-  (opponents) => {
+  [getUserProfile],
+  (profile) => {
+    const opponents = getAvailableOpponents.resultFunc(profile)
     if (!opponents) return {}
     const grouped = opponents.reduce((acc, opponent) => {
       if (!acc[opponent.difficulty]) acc[opponent.difficulty] = []

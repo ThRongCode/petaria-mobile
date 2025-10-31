@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Image, FlatList, Modal, Alert } from 'react-native'
-import { ThemedText, ThemedView, ScreenContainer } from '@/components'
+import { StyleSheet, View, TouchableOpacity, Image, FlatList, Modal, Alert, ScrollView } from 'react-native'
+import { ThemedText, ThemedView, ScreenContainer, HeaderBase } from '@/components'
+import { HEADER_GRADIENTS } from '@/constants/headerGradients'
 import { useSelector } from 'react-redux'
 import { 
   getAvailableRegions, 
@@ -16,6 +17,8 @@ import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import { ButtonPrimary, ButtonSecondary } from 'rn-base-component'
 import { useRouter } from 'expo-router'
+import { getPetImageByName } from '@/assets/images'
+import { apiClient } from '@/services/api'
 
 export const HuntScreen: React.FC = () => {
   const router = useRouter()
@@ -32,6 +35,39 @@ export const HuntScreen: React.FC = () => {
   const [isHunting, setIsHunting] = useState(false)
   const [cooldownTimers, setCooldownTimers] = useState<{ [key: string]: number }>({})
 
+  // TEST: Call mock API to see logs
+  useEffect(() => {
+    const testMockApi = async () => {
+      console.log('🧪 Testing Mock API...')
+      try {
+        // Test login (use correct mock credentials)
+        const loginResult = await apiClient.login('ash@pokemon.com', 'password')
+        console.log('Login result:', loginResult.success)
+        
+        // Test get profile
+        if (loginResult.success) {
+          const profileResult = await apiClient.getProfile()
+          console.log('Profile result:', profileResult.success)
+          
+          // Test get pets
+          const petsResult = await apiClient.getPets()
+          console.log('Pets result:', petsResult.success, `- Found ${petsResult.data?.length || 0} pets`)
+          
+          // Test get hunting regions
+          const regionsResult = await apiClient.getRegions()
+          console.log('Regions result:', regionsResult.success, `- Found ${regionsResult.data?.length || 0} regions`)
+          
+          // Test get opponents
+          const opponentsResult = await apiClient.getOpponents()
+          console.log('Opponents result:', opponentsResult.success, `- Found ${opponentsResult.data?.length || 0} opponents`)
+        }
+      } catch (error) {
+        console.error('Mock API test failed:', error)
+      }
+    }
+    
+    testMockApi()
+  }, [])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -108,7 +144,8 @@ export const HuntScreen: React.FC = () => {
           defense: 12 + Math.floor(Math.random() * 8),
           speed: 18 + Math.floor(Math.random() * 12),
         },
-        image: 'https://via.placeholder.com/120/4CAF50/FFFFFF?text=🐾',
+        moves: [], // Moves will be assigned based on species
+        image: getPetImageByName(selectedPetType.petSpecies),
         evolutionStage: 1,
         maxEvolutionStage: 3,
         evolutionRequirements: {
@@ -293,97 +330,103 @@ export const HuntScreen: React.FC = () => {
           setSelectedRegion(null)
         }}
       >
-        <TouchableOpacity 
-          style={styles.modalContent}
-          activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
-        >
-          {selectedRegion && (
-            <>
-              <Image source={{ uri: selectedRegion.image }} style={styles.modalRegionImage} />
-              <ThemedText type="title" style={styles.modalRegionName}>
-                {selectedRegion.name}
-              </ThemedText>
-              <ThemedText style={styles.modalRegionDescription}>
-                {selectedRegion.description}
-              </ThemedText>
-              
-              <View style={styles.modalSection}>
-                <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
-                  Available Pets
-                </ThemedText>
-                {selectedRegion.availablePets.map((pet, index) => (
-                  <View key={index} style={styles.petTypeRow}>
-                    <ThemedText style={styles.petTypeName}>{pet.petSpecies}</ThemedText>
-                    <ThemedText style={[
-                      styles.petTypeRarity,
-                      { color: getRarityColor(pet.rarity) }
-                    ]}>
-                      {pet.rarity} ({(pet.spawnRate * 100).toFixed(1)}%)
+        <View style={styles.modalContent}>
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
+            <TouchableOpacity 
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              {selectedRegion && (
+                <>
+                  <Image source={{ uri: selectedRegion.image }} style={styles.modalRegionImage} />
+                  <ThemedText type="title" style={styles.modalRegionName}>
+                    {selectedRegion.name}
+                  </ThemedText>
+                  <ThemedText style={styles.modalRegionDescription}>
+                    {selectedRegion.description}
+                  </ThemedText>
+                  
+                  <View style={styles.modalSection}>
+                    <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+                      Available Pets
+                    </ThemedText>
+                    {selectedRegion.availablePets.map((pet, index) => (
+                      <View key={index} style={styles.petTypeRow}>
+                        <ThemedText style={styles.petTypeName}>{pet.petSpecies}</ThemedText>
+                        <ThemedText style={[
+                          styles.petTypeRarity,
+                          { color: getRarityColor(pet.rarity) }
+                        ]}>
+                          {pet.rarity} ({(pet.spawnRate * 100).toFixed(1)}%)
+                        </ThemedText>
+                      </View>
+                    ))}
+                  </View>
+                  
+                  <View style={styles.modalSection}>
+                    <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+                      Hunt Cost
+                    </ThemedText>
+                    <ThemedText style={styles.costBreakdown}>
+                      Base Cost: {selectedRegion.huntingCost} coins
+                    </ThemedText>
+                    {selectedRegion.legendPetId && selectedRegion.legendOwnerId !== profile.id && (
+                      <ThemedText style={styles.costBreakdown}>
+                        Legend Fee: {selectedRegion.legendFee} coins
+                      </ThemedText>
+                    )}
+                    <ThemedText style={styles.totalCost}>
+                      Total: {getRegionHuntCost(selectedRegion)} coins
                     </ThemedText>
                   </View>
-                ))}
-              </View>
-              
-              <View style={styles.modalSection}>
-                <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
-                  Hunt Cost
-                </ThemedText>
-                <ThemedText style={styles.costBreakdown}>
-                  Base Cost: {selectedRegion.huntingCost} coins
-                </ThemedText>
-                {selectedRegion.legendPetId && selectedRegion.legendOwnerId !== profile.id && (
-                  <ThemedText style={styles.costBreakdown}>
-                    Legend Fee: {selectedRegion.legendFee} coins
-                  </ThemedText>
-                )}
-                <ThemedText style={styles.totalCost}>
-                  Total: {getRegionHuntCost(selectedRegion)} coins
-                </ThemedText>
-              </View>
-              
-              <View style={styles.modalActions}>
-                <ButtonPrimary 
-                  style={styles.huntButton}
-                  onPress={() => {
-                    if (selectedRegion) {
-                      const regionData = {
-                        regionId: selectedRegion.id,
-                        regionName: selectedRegion.name,
-                        huntCost: getRegionHuntCost(selectedRegion),
+                  
+                  <View style={styles.modalActions}>
+                    <ButtonPrimary 
+                      style={styles.huntButton}
+                      onPress={() => {
+                        if (selectedRegion) {
+                          const regionData = {
+                            regionId: selectedRegion.id,
+                            regionName: selectedRegion.name,
+                            huntCost: getRegionHuntCost(selectedRegion),
+                          }
+                          setShowRegionModal(false)
+                          setSelectedRegion(null)
+                          router.push({
+                            pathname: '/hunting-session',
+                            params: regionData
+                          })
+                        }
+                      }}
+                      disabled={
+                        !canAffordHunt(selectedRegion) || 
+                        isRegionOnCooldown(selectedRegion.id) ||
+                        isHunting
                       }
-                      setShowRegionModal(false)
-                      setSelectedRegion(null)
-                      router.push({
-                        pathname: '/hunting-session',
-                        params: regionData
-                      })
-                    }
-                  }}
-                  disabled={
-                    !canAffordHunt(selectedRegion) || 
-                    isRegionOnCooldown(selectedRegion.id) ||
-                    isHunting
-                  }
-                >
-                  {isRegionOnCooldown(selectedRegion.id) 
-                    ? `Cooldown: ${formatTime(cooldownTimers[selectedRegion.id] || 0)}`
-                    : 'Enter Dungeon'
-                  }
-                </ButtonPrimary>
-                <ButtonSecondary 
-                  style={styles.closeButton}
-                  onPress={() => {
-                    setShowRegionModal(false)
-                    setSelectedRegion(null)
-                  }}
-                >
-                  Close
-                </ButtonSecondary>
-              </View>
-            </>
-          )}
-        </TouchableOpacity>
+                    >
+                      {isRegionOnCooldown(selectedRegion.id) 
+                        ? `Cooldown: ${formatTime(cooldownTimers[selectedRegion.id] || 0)}`
+                        : 'Enter Dungeon'
+                      }
+                    </ButtonPrimary>
+                    <ButtonSecondary 
+                      style={styles.closeButton}
+                      onPress={() => {
+                        setShowRegionModal(false)
+                        setSelectedRegion(null)
+                      }}
+                    >
+                      Close
+                    </ButtonSecondary>
+                  </View>
+                </>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
       </TouchableOpacity>
     </Modal>
   )
@@ -460,16 +503,15 @@ export const HuntScreen: React.FC = () => {
   }
 
   return (
-    <ScreenContainer>
-      <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>Hunting Grounds</ThemedText>
-          <View style={styles.currencyContainer}>
-            <ThemedText style={styles.currency}>💰 {currency.coins.toLocaleString()}</ThemedText>
-            <ThemedText style={styles.currency}>💎 {currency.gems.toLocaleString()}</ThemedText>
-          </View>
+    <ScreenContainer style={styles.screenContainer}>
+      <HeaderBase title="Hunt" gradientColors={HEADER_GRADIENTS.hunt}>
+        <View style={styles.currencyContainer}>
+          <ThemedText style={styles.currency}>💰 {currency.coins.toLocaleString()}</ThemedText>
+          <ThemedText style={styles.currency}>💎 {currency.gems.toLocaleString()}</ThemedText>
         </View>
+      </HeaderBase>
 
+      <ThemedView style={styles.container}>
         {isHunting && (
           <View style={styles.huntingIndicator}>
             <ThemedText style={styles.huntingText}>🔍 Hunting in progress...</ThemedText>
@@ -492,26 +534,22 @@ export const HuntScreen: React.FC = () => {
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    backgroundColor: '#F8F9FA',
+  },
   container: {
     flex: 1,
     padding: metrics.medium,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: metrics.large,
-  },
-  title: {
-    color: colors.primary,
-  },
   currencyContainer: {
     flexDirection: 'row',
     gap: metrics.small,
+    justifyContent: 'center',
   },
   currency: {
     fontSize: fontSizes.body,
     fontWeight: '600',
+    color: colors.white,
   },
   huntingIndicator: {
     backgroundColor: colors.primary,

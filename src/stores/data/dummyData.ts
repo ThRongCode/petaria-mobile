@@ -11,16 +11,16 @@ import {
 } from '../types/game'
 
 export const generateDummyData = () => {
-  // Pet species data
+  // Pet species data - Using actual Pokemon names
   const petSpecies = [
-    { name: 'Fluffball', baseStats: { hp: 50, attack: 25, defense: 20, speed: 30 } },
-    { name: 'Rockpup', baseStats: { hp: 70, attack: 30, defense: 35, speed: 15 } },
-    { name: 'Sparkwing', baseStats: { hp: 40, attack: 35, defense: 15, speed: 45 } },
-    { name: 'Aquafin', baseStats: { hp: 60, attack: 28, defense: 25, speed: 35 } },
-    { name: 'Flamecrest', baseStats: { hp: 55, attack: 40, defense: 20, speed: 40 } },
-    { name: 'Shadowpaw', baseStats: { hp: 45, attack: 45, defense: 18, speed: 50 } },
-    { name: 'Ironback', baseStats: { hp: 80, attack: 35, defense: 45, speed: 10 } },
-    { name: 'Windwhisper', baseStats: { hp: 35, attack: 30, defense: 15, speed: 60 } },
+    { name: 'Pikachu', baseStats: { hp: 50, attack: 25, defense: 20, speed: 30 } },
+    { name: 'Charmander', baseStats: { hp: 70, attack: 30, defense: 35, speed: 15 } },
+    { name: 'Bulbasaur', baseStats: { hp: 40, attack: 35, defense: 15, speed: 45 } },
+    { name: 'Squirtle', baseStats: { hp: 60, attack: 28, defense: 25, speed: 35 } },
+    { name: 'Eevee', baseStats: { hp: 55, attack: 40, defense: 20, speed: 40 } },
+    { name: 'Meowth', baseStats: { hp: 45, attack: 45, defense: 18, speed: 50 } },
+    { name: 'Onix', baseStats: { hp: 80, attack: 35, defense: 45, speed: 10 } },
+    { name: 'Pidgey', baseStats: { hp: 35, attack: 30, defense: 15, speed: 60 } },
   ]
 
   // Generate user profile
@@ -61,12 +61,12 @@ export const generateDummyData = () => {
     createdAt: Date.now() - 86400000 * 30, // 30 days ago
   }
 
-  // Generate pets
+  // Generate pets - Using Pokemon names directly (no custom names)
   const pets: Pet[] = [
     {
       id: 'pet-001',
-      name: 'Fluffy',
-      species: 'Fluffball',
+      name: 'Pikachu',
+      species: 'Pikachu',
       rarity: 'Common',
       level: 12,
       xp: 840,
@@ -78,7 +78,31 @@ export const generateDummyData = () => {
         defense: 28,
         speed: 38,
       },
-      image: 'https://via.placeholder.com/120/FFB74D/FFFFFF?text=🐾',
+      moves: [
+        {
+          id: 'move-001',
+          name: 'Thunder Shock',
+          type: 'Physical',
+          element: 'Electric',
+          power: 40,
+          accuracy: 100,
+          pp: 30,
+          maxPp: 30,
+          description: 'An electric attack',
+        },
+        {
+          id: 'move-002',
+          name: 'Quick Attack',
+          type: 'Physical',
+          element: 'Normal',
+          power: 40,
+          accuracy: 100,
+          pp: 30,
+          maxPp: 30,
+          description: 'A fast attack',
+        },
+      ],
+      image: 'pikachu',
       evolutionStage: 1,
       maxEvolutionStage: 3,
       evolutionRequirements: {
@@ -93,8 +117,8 @@ export const generateDummyData = () => {
     },
     {
       id: 'pet-002',
-      name: 'Rocky',
-      species: 'Rockpup',
+      name: 'Charmander',
+      species: 'Charmander',
       rarity: 'Rare',
       level: 18,
       xp: 2100,
@@ -106,8 +130,32 @@ export const generateDummyData = () => {
         defense: 48,
         speed: 22,
       },
-      image: 'https://via.placeholder.com/120/8D6E63/FFFFFF?text=🪨',
-      evolutionStage: 2,
+      moves: [
+        {
+          id: 'move-003',
+          name: 'Ember',
+          type: 'Special',
+          element: 'Fire',
+          power: 40,
+          accuracy: 100,
+          pp: 25,
+          maxPp: 25,
+          description: 'A fire attack',
+        },
+        {
+          id: 'move-004',
+          name: 'Scratch',
+          type: 'Physical',
+          element: 'Normal',
+          power: 40,
+          accuracy: 100,
+          pp: 35,
+          maxPp: 35,
+          description: 'Scratches with claws',
+        },
+      ],
+      image: 'charmander',
+      evolutionStage: 1,
       maxEvolutionStage: 3,
       evolutionRequirements: {
         level: 25,
@@ -121,8 +169,8 @@ export const generateDummyData = () => {
     },
     {
       id: 'pet-003',
-      name: 'Zappy',
-      species: 'Sparkwing',
+      name: 'Bulbasaur',
+      species: 'Bulbasaur',
       rarity: 'Epic',
       level: 20,
       xp: 1800,
@@ -134,8 +182,32 @@ export const generateDummyData = () => {
         defense: 28,
         speed: 65,
       },
-      image: 'https://via.placeholder.com/120/9C27B0/FFFFFF?text=⚡',
-      evolutionStage: 2,
+      moves: [
+        {
+          id: 'move-005',
+          name: 'Vine Whip',
+          type: 'Physical',
+          element: 'Grass',
+          power: 45,
+          accuracy: 100,
+          pp: 25,
+          maxPp: 25,
+          description: 'Whips with vines',
+        },
+        {
+          id: 'move-006',
+          name: 'Tackle',
+          type: 'Physical',
+          element: 'Normal',
+          power: 40,
+          accuracy: 100,
+          pp: 35,
+          maxPp: 35,
+          description: 'A physical tackle',
+        },
+      ],
+      image: 'bulbasaur',
+      evolutionStage: 1,
       maxEvolutionStage: 3,
       isLegendary: false,
       ownerId: 'user-001',
@@ -145,8 +217,8 @@ export const generateDummyData = () => {
     },
     {
       id: 'pet-004',
-      name: 'Crimson Emperor',
-      species: 'Flamecrest',
+      name: 'Mewtwo',
+      species: 'Mewtwo',
       rarity: 'Legendary',
       level: 35,
       xp: 8500,
@@ -158,7 +230,31 @@ export const generateDummyData = () => {
         defense: 65,
         speed: 85,
       },
-      image: 'https://via.placeholder.com/120/F44336/FFFFFF?text=🔥',
+      moves: [
+        {
+          id: 'move-007',
+          name: 'Psychic',
+          type: 'Special',
+          element: 'Psychic',
+          power: 90,
+          accuracy: 100,
+          pp: 10,
+          maxPp: 10,
+          description: 'A powerful psychic attack',
+        },
+        {
+          id: 'move-008',
+          name: 'Shadow Ball',
+          type: 'Special',
+          element: 'Ghost',
+          power: 80,
+          accuracy: 100,
+          pp: 15,
+          maxPp: 15,
+          description: 'Hurls a shadowy blob',
+        },
+      ],
+      image: 'mewtwo',
       evolutionStage: 3,
       maxEvolutionStage: 3,
       isLegendary: true,

@@ -1,6 +1,3 @@
-import React from 'react'
-import { BattleScreen } from '@/screens/game/BattleScreen'
+import { EventScreen } from '@/screens/game/EventScreen'
 
-export default function BattleRoute() {
-  return <BattleScreen />
-}
+export default EventScreen

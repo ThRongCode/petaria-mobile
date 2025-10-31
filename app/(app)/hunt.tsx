@@ -1,6 +1,3 @@
-import React from 'react'
-import { HuntScreen } from '@/screens/game/HuntScreen'
+import { HuntScreenNew } from '@/screens/game/HuntScreenNew'
 
-export default function HuntRoute() {
-  return <HuntScreen />
-}
+export default HuntScreenNew

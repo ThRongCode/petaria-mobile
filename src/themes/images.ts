@@ -1,13 +1,19 @@
 /**
- * @flow
+ * @deprecated Use imports from '@/assets/images' instead
+ * 
+ * This file is kept for backward compatibility.
+ * New code should use:
+ * import { GeneralImages, PetImages, GuiIcons } from '@/assets/images'
  */
 
+import { GeneralImages } from '@/assets/images'
+
 const Images = {
-  close: require('@/assets/images/close.png'),
-  info: require('@/assets/images/info.png'),
-  sts: require('@/assets/images/sts.png'),
-  eye: require('@/assets/images/eye.png'),
-  eyeHide: require('@/assets/images/eye-hide.png'),
+  close: GeneralImages.close,
+  info: GeneralImages.info,
+  sts: GeneralImages.sts,
+  eye: GeneralImages.eye,
+  eyeHide: GeneralImages.eyeHide,
 }
 
 export { Images }

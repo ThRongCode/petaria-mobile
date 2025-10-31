@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { GameState, Pet, Item, Battle, Auction, HuntResult, UserProfile, UserInventory, GameNotification, Move, Opponent } from '../types/game'
+import { getPokemonImage } from '@/assets/images'
 
 // Simple dummy data inline to avoid circular dependencies
 const createDummyData = () => {
@@ -102,8 +103,8 @@ const createDummyData = () => {
   const pets: Pet[] = [
     {
       id: 'pet-001',
-      name: 'Fluffy',
-      species: 'Fluffball',
+      name: 'Pikachu',
+      species: 'Pikachu',
       rarity: 'Common',
       level: 12,
       xp: 840,
@@ -115,7 +116,7 @@ const createDummyData = () => {
         moves.find(m => m.id === 'move-heal'),
         moves.find(m => m.id === 'move-power-up'),
       ].filter(Boolean) as Move[],
-      image: 'https://via.placeholder.com/120/FFB74D/FFFFFF?text=🐾',
+      image: require('@/assets/images/pet_image/pikachu.png'),
       evolutionStage: 1,
       maxEvolutionStage: 3,
       evolutionRequirements: { level: 15, itemId: 'item-evo-001' },
@@ -127,90 +128,7 @@ const createDummyData = () => {
     }
   ]
 
-  const opponents: Opponent[] = [
-    {
-      id: 'opp-001',
-      name: 'Wild Rookie',
-      species: 'Grassling',
-      level: 5,
-      difficulty: 'Easy',
-      stats: { hp: 35, maxHp: 35, attack: 18, defense: 15, speed: 20 },
-      moves: [
-        moves.find(m => m.id === 'move-tackle'),
-        moves.find(m => m.id === 'move-scratch'),
-      ].filter(Boolean) as Move[],
-      image: 'https://via.placeholder.com/120/8BC34A/FFFFFF?text=🌱',
-      rewards: { xp: 50, coins: 25, items: [] },
-      unlockLevel: 1,
-    },
-    {
-      id: 'opp-002',
-      name: 'Forest Guardian',
-      species: 'Treebeast',
-      level: 10,
-      difficulty: 'Normal',
-      stats: { hp: 55, maxHp: 55, attack: 28, defense: 25, speed: 22 },
-      moves: [
-        moves.find(m => m.id === 'move-tackle'),
-        moves.find(m => m.id === 'move-scratch'),
-        moves.find(m => m.id === 'move-heal'),
-      ].filter(Boolean) as Move[],
-      image: 'https://via.placeholder.com/120/4CAF50/FFFFFF?text=🌳',
-      rewards: { xp: 75, coins: 40, items: ['item-heal-001'] },
-      unlockLevel: 5,
-    },
-    {
-      id: 'opp-003',
-      name: 'Flame Warrior',
-      species: 'Blazehound',
-      level: 15,
-      difficulty: 'Hard',
-      stats: { hp: 75, maxHp: 75, attack: 42, defense: 30, speed: 35 },
-      moves: [
-        moves.find(m => m.id === 'move-tackle'),
-        moves.find(m => m.id === 'move-ember'),
-        moves.find(m => m.id === 'move-power-up'),
-        moves.find(m => m.id === 'move-heal'),
-      ].filter(Boolean) as Move[],
-      image: 'https://via.placeholder.com/120/FF5722/FFFFFF?text=🔥',
-      rewards: { xp: 120, coins: 75, items: ['item-heal-001', 'item-evo-001'] },
-      unlockLevel: 10,
-    },
-    {
-      id: 'opp-004',
-      name: 'Water Master',
-      species: 'Hydralord',
-      level: 20,
-      difficulty: 'Expert',
-      stats: { hp: 95, maxHp: 95, attack: 38, defense: 45, speed: 40 },
-      moves: [
-        moves.find(m => m.id === 'move-tackle'),
-        moves.find(m => m.id === 'move-water-gun'),
-        moves.find(m => m.id === 'move-heal'),
-        moves.find(m => m.id === 'move-power-up'),
-      ].filter(Boolean) as Move[],
-      image: 'https://via.placeholder.com/120/2196F3/FFFFFF?text=🌊',
-      rewards: { xp: 180, coins: 120, items: ['item-heal-001', 'item-evo-001', 'item-stat-001'] },
-      unlockLevel: 15,
-    },
-    {
-      id: 'opp-005',
-      name: 'Shadow Champion',
-      species: 'Darklord',
-      level: 25,
-      difficulty: 'Master',
-      stats: { hp: 120, maxHp: 120, attack: 55, defense: 50, speed: 50 },
-      moves: [
-        moves.find(m => m.id === 'move-tackle'),
-        moves.find(m => m.id === 'move-scratch'),
-        moves.find(m => m.id === 'move-heal'),
-        moves.find(m => m.id === 'move-power-up'),
-      ].filter(Boolean) as Move[],
-      image: 'https://via.placeholder.com/120/9C27B0/FFFFFF?text=👹',
-      rewards: { xp: 250, coins: 200, items: ['item-heal-001', 'item-evo-001', 'item-stat-001'] },
-      unlockLevel: 20,
-    },
-  ]
+  // Opponents moved to src/constants/opponents.ts
 
   const items: Item[] = [
     {
@@ -229,15 +147,20 @@ const createDummyData = () => {
     {
       id: 'region-001',
       name: 'Mystic Forest',
-      description: 'A magical forest where nature pets thrive',
+      description: 'A magical forest where grass and bug type pets thrive',
       huntingCost: 100,
       legendFee: 50,
-      legendPetId: 'pet-004',
+      legendPetId: 'pet-legend-001',
       legendOwnerId: 'user-001',
       availablePets: [
-        { petSpecies: 'Fluffball', rarity: 'Common' as const, spawnRate: 0.4 },
+        { petSpecies: 'Bulbasaur', rarity: 'Common' as const, spawnRate: 0.3 },
+        { petSpecies: 'Caterpie', rarity: 'Common' as const, spawnRate: 0.25 },
+        { petSpecies: 'Oddish', rarity: 'Common' as const, spawnRate: 0.2 },
+        { petSpecies: 'Bellsprout', rarity: 'Rare' as const, spawnRate: 0.15 },
+        { petSpecies: 'Scyther', rarity: 'Rare' as const, spawnRate: 0.08 },
+        { petSpecies: 'Celebi', rarity: 'Legendary' as const, spawnRate: 0.02 },
       ],
-      exclusivePets: ['Treant Guardian'],
+      exclusivePets: ['Celebi'],
       image: 'https://via.placeholder.com/200/4CAF50/FFFFFF?text=🌲',
       unlockLevel: 1,
     }
@@ -248,7 +171,7 @@ const createDummyData = () => {
     pets,
     items,
     regions,
-    opponents,
+    // opponents removed - now a constant
     inventory: { pets: ['pet-001'], items: { 'item-heal-001': 5 }, maxPetSlots: 20, maxItemSlots: 100 },
     battles: [],
     auctions: [],
@@ -264,7 +187,7 @@ export const gameInitialState: GameState = {
   pets: dummyData.pets,
   items: dummyData.items,
   regions: dummyData.regions,
-  opponents: dummyData.opponents,
+  // opponents removed - now imported as constant
   auctions: dummyData.auctions,
   battles: dummyData.battles,
   activeBattle: undefined,
@@ -287,6 +210,17 @@ const gameSlice = createSlice({
       }
       if (action.payload.gems) {
         state.profile.currency.gems += action.payload.gems
+      }
+    },
+    
+    addXp: (state, action: PayloadAction<{ amount: number }>) => {
+      state.profile.xp += action.payload.amount
+      
+      // Check for level up
+      while (state.profile.xp >= state.profile.xpToNext) {
+        state.profile.xp -= state.profile.xpToNext
+        state.profile.level += 1
+        state.profile.xpToNext = Math.floor(state.profile.xpToNext * 1.2)
       }
     },
     

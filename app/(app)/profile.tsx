@@ -1,6 +1,3 @@
-import React from 'react'
-import { ProfileScreen } from '@/screens/game/ProfileScreen'
+import { ProfileScreenNew } from '@/screens/game/ProfileScreenNew'
 
-export default function ProfileRoute() {
-  return <ProfileScreen />
-}
+export default ProfileScreenNew

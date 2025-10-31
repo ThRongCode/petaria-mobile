@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { StyleSheet, View, TouchableOpacity, Image, FlatList, Modal, Alert } from 'react-native'
-import { ThemedText, ThemedView, ScreenContainer } from '@/components'
+import { ThemedText, ThemedView, ScreenContainer, HeaderBase } from '@/components'
+import { HEADER_GRADIENTS } from '@/constants/headerGradients'
 import { useSelector } from 'react-redux'
 import { 
   getOwnedPets, 
@@ -78,7 +79,10 @@ export const BattleScreen: React.FC = () => {
       style={styles.opponentCard}
       onPress={() => handleOpponentSelect(opponent)}
     >
-      <Image source={{ uri: opponent.image }} style={styles.opponentImage} />
+      <Image 
+        source={typeof opponent.image === 'string' ? { uri: opponent.image } : opponent.image as any} 
+        style={styles.opponentImage} 
+      />
       <View style={styles.opponentInfo}>
         <ThemedText type="defaultSemiBold" style={styles.opponentName}>
           {opponent.name}
@@ -105,7 +109,10 @@ export const BattleScreen: React.FC = () => {
       style={styles.petSelectorCard}
       onPress={() => handlePetSelect(pet)}
     >
-      <Image source={{ uri: pet.image }} style={styles.petSelectorImage} />
+      <Image 
+        source={typeof pet.image === 'string' ? { uri: pet.image } : pet.image as any} 
+        style={styles.petSelectorImage} 
+      />
       <View style={styles.petSelectorInfo}>
         <ThemedText type="defaultSemiBold">{pet.name}</ThemedText>
         <ThemedText style={styles.petSelectorLevel}>Level {pet.level}</ThemedText>
@@ -156,16 +163,15 @@ export const BattleScreen: React.FC = () => {
   )
 
   return (
-    <ScreenContainer>
-      <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>Battle Arena</ThemedText>
-          <View style={styles.currencyContainer}>
-            <ThemedText style={styles.currency}>💰 {currency.coins.toLocaleString()}</ThemedText>
-            <ThemedText style={styles.currency}>💎 {currency.gems.toLocaleString()}</ThemedText>
-          </View>
+    <ScreenContainer style={styles.screenContainer}>
+      <HeaderBase title="Battle Arena" gradientColors={HEADER_GRADIENTS.battle}>
+        <View style={styles.currencyContainer}>
+          <ThemedText style={styles.currency}>💰 {currency.coins.toLocaleString()}</ThemedText>
+          <ThemedText style={styles.currency}>💎 {currency.gems.toLocaleString()}</ThemedText>
         </View>
+      </HeaderBase>
 
+      <ThemedView style={styles.container}>
         <View style={styles.statsContainer}>
           <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Battle Stats</ThemedText>
           <View style={styles.statsRow}>
@@ -250,26 +256,22 @@ export const BattleScreen: React.FC = () => {
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    backgroundColor: '#F8F9FA',
+  },
   container: {
     flex: 1,
     padding: metrics.medium,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: metrics.large,
-  },
-  title: {
-    color: colors.primary,
-  },
   currencyContainer: {
     flexDirection: 'row',
     gap: metrics.small,
+    justifyContent: 'center',
   },
   currency: {
     fontSize: fontSizes.body,
     fontWeight: '600',
+    color: colors.white,
   },
   statsContainer: {
     marginBottom: metrics.large,

@@ -1,10 +1,12 @@
 import { IconSymbol } from '@/components'
+import { SvgIcons } from '@/assets/images/gui-icons-components'
 import { getTabScreenOptions, NO_HEADER } from './ScreenOptions'
 import { Stack, Tabs } from 'expo-router'
 import React from 'react'
 import { useColorScheme } from 'react-native'
 import { RouteNames } from './RouteKeys'
 import { metrics } from '@/themes'
+import { CustomTabBar } from '@/components/navigation'
 
 export const RootNavigation: React.FC = () => (
   <Stack screenOptions={NO_HEADER}>
@@ -27,40 +29,80 @@ export const TabNavigation: React.FC = () => {
   const colorScheme = useColorScheme()
 
   return (
-    <Tabs screenOptions={getTabScreenOptions(colorScheme)}>
+    <Tabs 
+      screenOptions={getTabScreenOptions(colorScheme)}
+      tabBar={(props) => <CustomTabBar {...props} />}
+    >
+      {/* Left side tabs */}
       <Tabs.Screen
         name="hunt"
         options={{
           title: 'Hunt',
-          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="map" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="pets"
-        options={{
-          title: 'Pets',
-          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="heart" color={color} />,
+          tabBarIcon: ({ color }) => <SvgIcons.PositionMarker width={metrics.xl} height={metrics.xl} fill={color} />,
         }}
       />
       <Tabs.Screen
         name="battle"
         options={{
           title: 'Battle',
-          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="bolt" color={color} />,
+          tabBarIcon: ({ color }) => <SvgIcons.AttackGauge width={metrics.xl} height={metrics.xl} fill={color} />,
         }}
       />
+      
+      {/* Center home tab */}
       <Tabs.Screen
-        name="auction"
+        name="index"
         options={{
-          title: 'Auction',
-          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="bag" color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color }) => <IconSymbol name="house" color={color} size={metrics.xl} />,
+        }}
+      />
+      
+      {/* Right side tabs */}
+      <Tabs.Screen
+        name="pets"
+        options={{
+          title: 'Pets',
+          tabBarIcon: ({ color }) => <SvgIcons.StarsStack width={metrics.xl} height={metrics.xl} fill={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={metrics.xl} name="person" color={color} />,
+          tabBarIcon: ({ color }) => <SvgIcons.IdCard width={metrics.xl} height={metrics.xl} fill={color} />,
+        }}
+      />
+      {/* Hide auction tab */}
+      <Tabs.Screen
+        name="auction"
+        options={{
+          href: null, // This hides the tab
+        }}
+      />
+      {/* Hide all backup screens */}
+      <Tabs.Screen
+        name="hunt.backup"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="battle.backup"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="pets.backup"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="profile.backup"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
