@@ -252,6 +252,26 @@ class MockDatabase {
       .slice(0, 20)
   }
 
+  // Delete pet
+  deletePet(petId: string): boolean {
+    const pet = this.pets.get(petId)
+    if (!pet) return false
+
+    // Remove from pets map
+    this.pets.delete(petId)
+
+    // Remove from userPets map
+    const userPetIds = this.userPets.get(pet.ownerId) || []
+    const updatedPetIds = userPetIds.filter(id => id !== petId)
+    if (updatedPetIds.length > 0) {
+      this.userPets.set(pet.ownerId, updatedPetIds)
+    } else {
+      this.userPets.delete(pet.ownerId)
+    }
+
+    return true
+  }
+
   // Clear all data (for testing)
   reset(): void {
     this.users.clear()

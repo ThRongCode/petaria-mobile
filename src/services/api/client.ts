@@ -113,6 +113,9 @@ class ApiClient {
       if (method === 'POST' && segments[1] === 'feed' && segments[2]) {
         return mockApi.feedPet(segments[2]) as Promise<ApiResponse<T>>
       }
+      if (method === 'POST' && segments[1] === 'release') {
+        return mockApi.releasePet(body.petId, this.userId!) as Promise<ApiResponse<T>>
+      }
     }
 
     // Region endpoints
@@ -147,6 +150,20 @@ class ApiClient {
       }
       if (segments[1] === 'use' && method === 'POST') {
         return mockApi.useItemOnPet(body.itemId, body.petId, this.userId!) as Promise<ApiResponse<T>>
+      }
+    }
+
+    // Game endpoints
+    if (segments[0] === 'game') {
+      if (segments[1] === 'heal-center' && method === 'POST') {
+        return mockApi.healAllPets(body.userId) as Promise<ApiResponse<T>>
+      }
+    }
+
+    // Inventory endpoints
+    if (segments[0] === 'inventory') {
+      if (segments[1] === 'info' && method === 'GET') {
+        return mockApi.getInventoryInfo(body.userId || this.userId!) as Promise<ApiResponse<T>>
       }
     }
 
@@ -357,6 +374,37 @@ class ApiClient {
       itemId,
       petId,
     })
+  }
+
+  /**
+   * Heal all user's Pokemon to full HP
+   */
+  async healAllPets(userId: string): Promise<ApiResponse<{ healedCount: number }>> {
+    return this.request<{ healedCount: number }>('/game/heal-center', 'POST', {
+      userId,
+    })
+  }
+
+  /**
+   * Release a Pokemon and get coin reward
+   */
+  async releasePet(petId: string): Promise<ApiResponse<{ coinsEarned: number }>> {
+    return this.request<{ coinsEarned: number }>('/pets/release', 'POST', {
+      petId,
+    })
+  }
+
+  /**
+   * Get inventory limits and current counts
+   */
+  async getInventoryInfo(userId: string): Promise<ApiResponse<{
+    pets: { current: number; max: number }
+    items: { current: number; max: number }
+  }>> {
+    return this.request<{
+      pets: { current: number; max: number }
+      items: { current: number; max: number }
+    }>('/inventory/info', 'GET', { userId })
   }
 
   /**

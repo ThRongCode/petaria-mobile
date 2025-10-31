@@ -5,7 +5,8 @@ import {
   ScrollView, 
   ImageBackground,
   TouchableOpacity,
-  Dimensions 
+  Dimensions,
+  ActivityIndicator 
 } from 'react-native'
 import { TopBar, Panel, IconButton, QuestPopup } from '@/components/ui'
 import { ThemedText } from '@/components'
@@ -13,6 +14,9 @@ import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
+import { apiClient } from '@/services/api/client'
+import { showCustomAlert } from '@/components/ui/CustomAlert'
+import { Ionicons } from '@expo/vector-icons'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -25,6 +29,45 @@ export const HomeHubScreen: React.FC = () => {
   const router = useRouter()
   const profile = useSelector(getUserProfile)
   const [questPopupVisible, setQuestPopupVisible] = useState(false)
+  const [healingLoading, setHealingLoading] = useState(false)
+  const [lastHealTime, setLastHealTime] = useState<number | null>(null)
+
+  const handleHealAllPets = async () => {
+    try {
+      setHealingLoading(true)
+      const response = await apiClient.healAllPets(profile.id)
+      
+      if (response.success && response.data) {
+        const healedCount = response.data.healedCount
+        setLastHealTime(Date.now())
+        
+        showCustomAlert(
+          'Healing Complete!',
+          `Successfully healed ${healedCount} Pokemon to full HP! ✨`,
+          [{ text: 'Great!', style: 'default' }]
+        )
+      } else {
+        throw new Error(response.error?.message || 'Failed to heal Pokemon')
+      }
+    } catch (error) {
+      console.error('Failed to heal Pokemon:', error)
+      showCustomAlert(
+        'Healing Failed',
+        'Unable to heal your Pokemon at this time. Please try again.',
+        [{ text: 'OK', style: 'cancel' }]
+      )
+    } finally {
+      setHealingLoading(false)
+    }
+  }
+
+  const canHealToday = () => {
+    if (!lastHealTime) return true
+    const now = Date.now()
+    const timeSinceLastHeal = now - lastHealTime
+    const oneDay = 24 * 60 * 60 * 1000
+    return timeSinceLastHeal >= oneDay
+  }
 
   return (
     <View style={styles.container}>
@@ -67,6 +110,63 @@ export const HomeHubScreen: React.FC = () => {
             <ThemedText style={styles.welcomeSubtitle}>
               Level {profile.level} • Ready for adventure
             </ThemedText>
+          </Panel>
+
+          {/* Healing Center Section */}
+          <Panel variant="dark" style={styles.healingCenterPanel}>
+            <View style={styles.healingHeader}>
+              <View style={styles.healingTitleRow}>
+                <Ionicons name="heart" size={28} color="#FF6B9D" />
+                <ThemedText style={styles.healingTitle}>Healing Center</ThemedText>
+              </View>
+              {lastHealTime && (
+                <ThemedText style={styles.healingTimeText}>
+                  Last healed: {new Date(lastHealTime).toLocaleTimeString()}
+                </ThemedText>
+              )}
+            </View>
+            
+            <ThemedText style={styles.healingDescription}>
+              Restore all your Pokemon to full health!
+            </ThemedText>
+
+            <TouchableOpacity
+              style={[
+                styles.healButton,
+                (!canHealToday() || healingLoading) && styles.healButtonDisabled
+              ]}
+              onPress={handleHealAllPets}
+              disabled={!canHealToday() || healingLoading}
+            >
+              <LinearGradient
+                colors={
+                  !canHealToday() || healingLoading
+                    ? ['rgba(100,100,100,0.3)', 'rgba(60,60,60,0.3)']
+                    : ['rgba(255,107,157,0.4)', 'rgba(147,51,234,0.4)']
+                }
+                style={styles.healButtonGradient}
+              >
+                {healingLoading ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="heart-circle" size={24} color={!canHealToday() ? '#666' : '#FFD700'} />
+                    <ThemedText style={[
+                      styles.healButtonText,
+                      !canHealToday() && styles.healButtonTextDisabled
+                    ]}>
+                      {canHealToday() ? 'Heal All Pokemon' : 'Used Today (24h cooldown)'}
+                    </ThemedText>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {!canHealToday() && (
+              <ThemedText style={styles.cooldownText}>
+                Come back tomorrow for another free healing!
+              </ThemedText>
+            )}
           </Panel>
 
           {/* Quick Actions - Featured Buttons */}
@@ -254,7 +354,71 @@ const styles = StyleSheet.create({
   },
   welcomeSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255,255,255,0.7)',
+  },
+  // Healing Center Styles
+  healingCenterPanel: {
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,157,0.3)',
+  },
+  healingHeader: {
+    marginBottom: 12,
+  },
+  healingTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  healingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FF6B9D',
+  },
+  healingTimeText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.5)',
+    fontStyle: 'italic',
+  },
+  healingDescription: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  healButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.4)',
+  },
+  healButtonDisabled: {
+    borderColor: 'rgba(100,100,100,0.3)',
+    opacity: 0.6,
+  },
+  healButtonGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  healButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  healButtonTextDisabled: {
+    color: '#666',
+  },
+  cooldownText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
+    marginTop: 12,
+    fontStyle: 'italic',
   },
   quickActionsContainer: {
     gap: 12,

@@ -1124,7 +1124,7 @@ class MockApiService {
     const inventory = await this.getUserInventory(userId)
     
     const itemCount = inventory.data?.items 
-      ? Object.values(inventory.data.items).reduce((sum: number, qty: number) => sum + qty, 0)
+      ? Object.values(inventory.data.items as Record<string, number>).reduce((sum: number, qty: number) => sum + qty, 0)
       : 0
 
     return this.respond({
