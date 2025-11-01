@@ -215,6 +215,13 @@ export interface UserProfile {
   xp: number
   xpToNext: number
   currency: Currency
+  // Ticket system for hunts and battles
+  huntTickets: number
+  battleTickets: number
+  lastTicketReset: string
+  // Inventory tracking
+  petCount: number
+  itemCount: number
   stats: {
     battlesWon: number
     battlesLost: number

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   StyleSheet,
   View,
@@ -7,16 +7,44 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  ActivityIndicator,
+  Alert,
 } from 'react-native'
 import { TopBar, Panel, PokemonSelectionDialog } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
-import { getUserProfile, getAllOpponents, getAllPets } from '@/stores/selectors'
+import { getUserProfile, getAllPets } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
-import type { Opponent, Pet } from '@/stores/types/game'
+import type { Pet } from '@/stores/types/game'
+import { battleApi } from '@/services/api'
+
+// Backend opponent type
+interface BackendOpponent {
+  id: string
+  name: string
+  species?: string
+  description?: string
+  difficulty: string
+  level: number
+  coinReward?: number
+  xpReward?: number
+  rewardXp?: number
+  rewardCoins?: number
+  imageUrl?: string
+  unlockLevel: number
+  pets?: Array<{
+    species: string
+    level: number
+    hp: number
+    maxHp: number
+    attack: number
+    defense: number
+    speed: number
+  }>
+}
 
 /**
  * BattleSelectionScreen - Select opponent for specific battle type
@@ -26,16 +54,38 @@ export const BattleSelectionScreen: React.FC = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
   const profile = useSelector(getUserProfile)
-  const allOpponents = getAllOpponents() as Opponent[]
   const pets = useSelector(getAllPets) as Pet[]
-  const [selectedOpponent, setSelectedOpponent] = useState<Opponent | null>(null)
+  
+  const [opponents, setOpponents] = useState<BackendOpponent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedOpponent, setSelectedOpponent] = useState<BackendOpponent | null>(null)
   const [showPokemonSelection, setShowPokemonSelection] = useState(false)
 
   const battleType = params.battleType as string
   const battleName = params.battleName as string
 
-  // Filter opponents based on battle type (can be enhanced with API)
-  const opponents = allOpponents
+  // Load opponents from API
+  useEffect(() => {
+    const loadOpponents = async () => {
+      console.log('⚔️ Loading opponents from API...')
+      setIsLoading(true)
+      setError(null)
+      
+      try {
+        const result = await battleApi.listOpponents()
+        console.log('✅ Loaded opponents:', result.data.length)
+        setOpponents(result.data)
+      } catch (error) {
+        console.error('❌ Error loading opponents:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load opponents')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadOpponents()
+  }, [])
 
   const getDifficultyColor = (difficulty?: string) => {
     switch (difficulty?.toLowerCase()) {
@@ -52,7 +102,7 @@ export const BattleSelectionScreen: React.FC = () => {
     }
   }
 
-  const handleOpponentSelect = (opponent: Opponent) => {
+  const handleOpponentSelect = (opponent: BackendOpponent) => {
     setSelectedOpponent(opponent)
     setShowPokemonSelection(true)
   }
@@ -64,7 +114,7 @@ export const BattleSelectionScreen: React.FC = () => {
         pathname: '/battle-arena' as any,
         params: {
           playerPet: JSON.stringify(pet),
-          opponent: JSON.stringify(selectedOpponent),
+          opponentId: selectedOpponent.id,
           battleType: battleType,
         },
       })
@@ -73,7 +123,7 @@ export const BattleSelectionScreen: React.FC = () => {
     setSelectedOpponent(null)
   }
 
-  const renderOpponentCard = ({ item: opponent }: { item: Opponent }) => {
+  const renderOpponentCard = ({ item: opponent }: { item: BackendOpponent }) => {
     return (
       <TouchableOpacity
         style={styles.opponentCard}
@@ -95,7 +145,7 @@ export const BattleSelectionScreen: React.FC = () => {
           {/* Opponent Image */}
           <View style={styles.opponentImageContainer}>
             <Image
-              source={opponent.image || getPokemonImage(opponent.species) as any}
+              source={opponent.species ? getPokemonImage(opponent.species) : { uri: opponent.imageUrl }}
               style={styles.opponentImage}
               resizeMode="contain"
             />
@@ -104,9 +154,14 @@ export const BattleSelectionScreen: React.FC = () => {
           {/* Opponent Info */}
           <View style={styles.opponentInfo}>
             <ThemedText style={styles.opponentName}>{opponent.name}</ThemedText>
+            <ThemedText style={styles.opponentDescription} numberOfLines={2}>
+              {opponent.description}
+            </ThemedText>
             <View style={styles.pokemonRow}>
               <Ionicons name="paw" size={14} color="rgba(255, 255, 255, 0.6)" />
-              <ThemedText style={styles.pokemonName}>{opponent.species}</ThemedText>
+              <ThemedText style={styles.pokemonName}>
+                {opponent.pets?.length || 0} Pokemon
+              </ThemedText>
             </View>
 
             {/* Level */}
@@ -119,13 +174,13 @@ export const BattleSelectionScreen: React.FC = () => {
             <View style={styles.rewardsContainer}>
               <View style={styles.rewardItem}>
                 <ThemedText style={styles.rewardValue}>
-                  {opponent.rewards.xp}
+                  {opponent.xpReward || opponent.rewardXp || 0}
                 </ThemedText>
                 <ThemedText style={styles.rewardLabel}>XP</ThemedText>
               </View>
               <View style={styles.rewardItem}>
                 <ThemedText style={styles.rewardValue}>
-                  {opponent.rewards.coins}
+                  {opponent.coinReward || opponent.rewardCoins || 0}
                 </ThemedText>
                 <ThemedText style={styles.rewardLabel}>💰</ThemedText>
               </View>
@@ -193,16 +248,38 @@ export const BattleSelectionScreen: React.FC = () => {
           </Panel>
         </View>
 
-        {/* Opponents Grid */}
-        <FlatList
-          data={opponents}
-          renderItem={renderOpponentCard}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.gridRow}
-          contentContainerStyle={styles.gridContent}
-          showsVerticalScrollIndicator={false}
-        />
+        {/* Loading/Error States */}
+        {isLoading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#FFD700" />
+            <ThemedText style={styles.loadingText}>Loading opponents...</ThemedText>
+          </View>
+        ) : error ? (
+          <View style={styles.centerContainer}>
+            <ThemedText style={styles.errorText}>❌ {error}</ThemedText>
+            <TouchableOpacity 
+              style={styles.retryButton} 
+              onPress={() => {
+                setIsLoading(true)
+                setError(null)
+                // Re-trigger useEffect by refreshing
+              }}
+            >
+              <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          /* Opponents Grid */
+          <FlatList
+            data={opponents}
+            renderItem={renderOpponentCard}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.gridRow}
+            contentContainerStyle={styles.gridContent}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
 
       {/* Pokemon Selection Dialog */}
@@ -370,5 +447,36 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
     color: '#EF5350',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  errorText: {
+    color: '#FF5252',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  opponentDescription: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
+    marginBottom: 4,
   },
 })

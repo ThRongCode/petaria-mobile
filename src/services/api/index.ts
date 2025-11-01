@@ -9,3 +9,12 @@ export { API_CONFIG } from './config'
 export * from './types'
 export { mockApi } from './mockApi'
 export { mockDB } from './mockDatabase'
+
+// Real API services
+export { authApi } from './authApi'
+export { userApi } from './userApi'
+export { petApi } from './petApi'
+export { huntApi } from './huntApi'
+export { battleApi } from './battleApi'
+export { itemApi } from './itemApi'
+export { realApiClient } from './realApiClient'

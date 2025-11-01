@@ -1,5 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit'
-import { IUser } from '../types'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { IUser, IUserSignInPayload, IUserSignUpPayload, IUserInfo, ITokenData } from '../types'
 
 export const userInitialState: IUser = {
   userInfo: {},
@@ -12,14 +12,39 @@ export const userSlice = createSlice({
   name: 'auth',
   initialState: userInitialState,
   reducers: {
-    userLogin: () => {
-      // TODO: add action when user login
+    userLogin: (state, action: PayloadAction<IUserSignInPayload>) => {
+      // Payload handled by saga
     },
-    userSignUp: () => {
-      // TODO: add action when user sign up
+    userLoginSuccess: (state, action: PayloadAction<{ user: IUserInfo; token: ITokenData }>) => {
+      state.userInfo = action.payload.user
+      state.tokenData = action.payload.token
+      state.isEndUser = true
     },
-    logout: () => {
-      // TODO: add action when user logout
+    userLoginFailure: (state) => {
+      state.userInfo = {}
+      state.tokenData = {}
+      state.isEndUser = false
+    },
+    userSignUp: (state, action: PayloadAction<IUserSignUpPayload>) => {
+      // Payload handled by saga
+    },
+    userSignUpSuccess: (state, action: PayloadAction<{ user: IUserInfo; token: ITokenData }>) => {
+      state.userInfo = action.payload.user
+      state.tokenData = action.payload.token
+      state.isEndUser = true
+    },
+    userSignUpFailure: (state) => {
+      state.userInfo = {}
+      state.tokenData = {}
+      state.isEndUser = false
+    },
+    updateUserProfile: (state, action: PayloadAction<Partial<IUserInfo>>) => {
+      state.userInfo = { ...state.userInfo as IUserInfo, ...action.payload }
+    },
+    logout: (state) => {
+      state.userInfo = {}
+      state.tokenData = {}
+      state.isEndUser = false
     },
   },
 })

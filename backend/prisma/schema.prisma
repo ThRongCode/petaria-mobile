@@ -21,9 +21,11 @@ model User {
   xp              Int       @default(0)
   coins           Int       @default(1000)
   gems            Int       @default(50)
-  energy          Int       @default(100)
-  maxEnergy       Int       @default(100) @map("max_energy")
-  lastHealTime    DateTime? @map("last_heal_time")
+  huntTickets     Int       @default(5) @map("hunt_tickets")
+  battleTickets   Int       @default(20) @map("battle_tickets")
+  lastTicketReset DateTime  @default(now()) @map("last_ticket_reset")
+  petCount        Int       @default(0) @map("pet_count")
+  itemCount       Int       @default(0) @map("item_count")
   battlesWon      Int       @default(0) @map("battles_won")
   battlesLost     Int       @default(0) @map("battles_lost")
   huntsCompleted  Int       @default(0) @map("hunts_completed")
@@ -151,7 +153,6 @@ model HuntSession {
   userId          String    @map("user_id")
   regionId        String    @map("region_id")
   encountersData  Json?     @map("encounters_data") // Store current encounters
-  expiresAt       DateTime  @map("expires_at")
   createdAt       DateTime  @default(now()) @map("created_at")
 
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)

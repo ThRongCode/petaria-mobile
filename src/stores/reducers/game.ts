@@ -85,6 +85,13 @@ const createDummyData = () => {
     xp: 2840,
     xpToNext: 3200,
     currency: { coins: 15750, gems: 245 },
+    // Ticket system fields
+    huntTickets: 5,
+    battleTickets: 20,
+    lastTicketReset: new Date().toISOString(),
+    // Inventory tracking fields
+    petCount: 8,
+    itemCount: 45,
     stats: {
       battlesWon: 67,
       battlesLost: 23,

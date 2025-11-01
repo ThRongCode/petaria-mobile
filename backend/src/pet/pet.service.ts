@@ -69,6 +69,14 @@ export class PetService {
       where: { id },
     });
 
+    // Decrement petCount
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        petCount: { decrement: 1 },
+      },
+    });
+
     return { message: 'Pet released successfully' };
   }
 

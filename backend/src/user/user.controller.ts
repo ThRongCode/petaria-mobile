@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -18,9 +18,9 @@ export class UserController {
     return this.userService.getInventory(user.id);
   }
 
-  @Patch('energy')
-  healEnergy(@CurrentUser() user: any) {
-    return this.userService.healEnergy(user.id);
+  @Post('check-tickets')
+  checkTickets(@CurrentUser() user: any) {
+    return this.userService.checkTicketReset(user.id);
   }
 
   @Get('stats')

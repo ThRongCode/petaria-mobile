@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -22,6 +23,30 @@ async function main() {
   await prisma.user.deleteMany();
 
   console.log('🧹 Cleared existing data');
+
+  // Seed Test User
+  const passwordHash = await bcrypt.hash('password123', 10);
+  const testUser = await prisma.user.create({
+    data: {
+      id: 'test-user-1',
+      email: 'test@vnpet.com',
+      username: 'TestTrainer',
+      passwordHash,
+      level: 10,
+      xp: 500,
+      coins: 5000,
+      gems: 100,
+      huntTickets: 5,
+      battleTickets: 20,
+      lastTicketReset: new Date(),
+      petCount: 2,
+      itemCount: 5,
+      battlesWon: 15,
+      battlesLost: 5,
+      huntsCompleted: 8,
+    },
+  });
+  console.log('✅ Seeded test user: test@vnpet.com / password123');
 
   // Seed Items
   const items = await prisma.item.createMany({
@@ -314,6 +339,62 @@ async function main() {
   });
   console.log('✅ Seeded moves');
 
+  // Seed Test User's Starter Pets
+  const starterPet1 = await prisma.pet.create({
+    data: {
+      id: 'test-pet-1',
+      ownerId: testUser.id,
+      species: 'Pikachu',
+      nickname: 'Sparky',
+      level: 15,
+      xp: 200,
+      rarity: 'rare',
+      hp: 80,
+      maxHp: 80,
+      attack: 55,
+      defense: 40,
+      speed: 90,
+      mood: 80,
+      evolutionStage: 1,
+    },
+  });
+
+  const starterPet2 = await prisma.pet.create({
+    data: {
+      id: 'test-pet-2',
+      ownerId: testUser.id,
+      species: 'Charmander',
+      nickname: 'Blaze',
+      level: 12,
+      xp: 150,
+      rarity: 'rare',
+      hp: 70,
+      maxHp: 70,
+      attack: 52,
+      defense: 43,
+      speed: 65,
+      mood: 75,
+      evolutionStage: 1,
+    },
+  });
+
+  // Add moves to starter pets
+  await prisma.petMove.createMany({
+    data: [
+      // Pikachu moves
+      { petId: starterPet1.id, moveId: 'thunder-shock', pp: 40, maxPp: 40 },
+      { petId: starterPet1.id, moveId: 'thunderbolt', pp: 90, maxPp: 90 },
+      { petId: starterPet1.id, moveId: 'quick-attack', pp: 40, maxPp: 40 },
+      { petId: starterPet1.id, moveId: 'tackle', pp: 40, maxPp: 40 },
+      // Charmander moves
+      { petId: starterPet2.id, moveId: 'ember', pp: 40, maxPp: 40 },
+      { petId: starterPet2.id, moveId: 'flamethrower', pp: 90, maxPp: 90 },
+      { petId: starterPet2.id, moveId: 'scratch', pp: 35, maxPp: 35 },
+      { petId: starterPet2.id, moveId: 'tackle', pp: 40, maxPp: 40 },
+    ],
+  });
+  console.log('✅ Seeded test user starter pets');
+
   // Seed Regions
   const region1 = await prisma.region.create({
     data: {
@@ -433,14 +514,14 @@ async function main() {
     data: {
       id: 'rookie-trainer',
       name: 'Rookie Trainer',
-      species: 'Fluffbit',
-      level: 3,
+      species: 'Rattata',
+      level: 5,
       difficulty: 'easy',
-      hp: 50,
-      maxHp: 50,
+      hp: 60,
+      maxHp: 60,
       attack: 15,
-      defense: 10,
-      speed: 12,
+      defense: 12,
+      speed: 10,
       rewardXp: 100,
       rewardCoins: 50,
       unlockLevel: 1,
@@ -452,7 +533,7 @@ async function main() {
     data: {
       id: 'forest-ranger',
       name: 'Forest Ranger',
-      species: 'Leafling',
+      species: 'Oddish',
       level: 8,
       difficulty: 'medium',
       hp: 80,
@@ -471,7 +552,7 @@ async function main() {
     data: {
       id: 'fire-master',
       name: 'Fire Master',
-      species: 'Infernowolf',
+      species: 'Charizard',
       level: 15,
       difficulty: 'hard',
       hp: 120,
@@ -490,7 +571,7 @@ async function main() {
     data: {
       id: 'water-sage',
       name: 'Water Sage',
-      species: 'Waveserpent',
+      species: 'Blastoise',
       level: 15,
       difficulty: 'hard',
       hp: 130,
@@ -509,7 +590,7 @@ async function main() {
     data: {
       id: 'champion',
       name: 'Elite Champion',
-      species: 'Phoenix',
+      species: 'Dragonite',
       level: 25,
       difficulty: 'legendary',
       hp: 200,

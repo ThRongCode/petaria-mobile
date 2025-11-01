@@ -4,6 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TicketResetUtil } from '../utils/ticketReset';
+import { PetStatsUtil } from '../utils/petStats';
 
 @Injectable()
 export class BattleService {
@@ -57,6 +59,25 @@ export class BattleService {
       throw new NotFoundException('User not found');
     }
 
+    // Check and reset tickets if needed
+    await TicketResetUtil.checkAndResetTickets(this.prisma, userId);
+
+    // Refresh user data after potential ticket reset
+    const updatedUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!updatedUser) {
+      throw new NotFoundException('User not found after ticket reset');
+    }
+
+    // Check if user has enough battle tickets
+    if (updatedUser.battleTickets < 1) {
+      throw new BadRequestException(
+        'Not enough battle tickets (need 1, resets daily)',
+      );
+    }
+
     const pet = await this.prisma.pet.findFirst({
       where: {
         id: petId,
@@ -74,11 +95,19 @@ export class BattleService {
 
     const opponent = await this.getOpponent(opponentId);
 
-    if (opponent.unlockLevel > user.level) {
+    if (opponent.unlockLevel > updatedUser.level) {
       throw new BadRequestException(
         `Opponent requires level ${opponent.unlockLevel}`,
       );
     }
+
+    // Deduct battle ticket
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        battleTickets: updatedUser.battleTickets - 1,
+      },
+    });
 
     // Create battle session
     const session = await this.prisma.battleSession.create({
@@ -167,26 +196,39 @@ export class BattleService {
     const newHp = Math.max(0, pet.hp - damageTaken);
     let leveledUp = false;
     let newLevel = pet.level;
+    let statChanges = {};
 
     // Add XP and check for level up
     const newXp = pet.xp + xpReward;
-    const xpForNextLevel = pet.level * 100; // 100 XP per level
+    const xpForNextLevel = PetStatsUtil.calculateXpForNextLevel(pet.level);
 
     if (newXp >= xpForNextLevel) {
       newLevel = pet.level + 1;
       leveledUp = true;
 
-      // Stat increases on level up
+      // Random stat growth (5-10% increase per stat)
+      const newMaxHp = PetStatsUtil.calculateStatGrowth(pet.maxHp);
+      const newAttack = PetStatsUtil.calculateStatGrowth(pet.attack);
+      const newDefense = PetStatsUtil.calculateStatGrowth(pet.defense);
+      const newSpeed = PetStatsUtil.calculateStatGrowth(pet.speed);
+
+      statChanges = {
+        maxHp: newMaxHp,
+        attack: newAttack,
+        defense: newDefense,
+        speed: newSpeed,
+      };
+
       await this.prisma.pet.update({
         where: { id: pet.id },
         data: {
           level: newLevel,
           xp: newXp - xpForNextLevel,
-          hp: newHp,
-          maxHp: pet.maxHp + 5,
-          attack: pet.attack + 2,
-          defense: pet.defense + 2,
-          speed: pet.speed + 2,
+          hp: Math.min(newHp, newMaxHp), // Heal to new max if increased
+          maxHp: newMaxHp,
+          attack: newAttack,
+          defense: newDefense,
+          speed: newSpeed,
         },
       });
     } else {
@@ -254,6 +296,7 @@ export class BattleService {
         leveledUp,
         newLevel,
         currentHp: newHp,
+        statChanges: leveledUp ? statChanges : undefined,
       },
       user: {
         leveledUp: userLeveledUp,

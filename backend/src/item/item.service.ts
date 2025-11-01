@@ -39,6 +39,13 @@ export class ItemService {
       throw new NotFoundException('User not found');
     }
 
+    // Check item limit
+    if (user.itemCount + quantity > 500) {
+      throw new BadRequestException(
+        `Item limit reached. Can only add ${500 - user.itemCount} more items (500 max)`,
+      );
+    }
+
     // Determine which currency to use
     let totalCost = 0;
     let currency: 'coin' | 'gem' = 'coin';
@@ -100,6 +107,14 @@ export class ItemService {
         },
       });
     }
+
+    // Increment itemCount
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        itemCount: { increment: quantity },
+      },
+    });
 
     return {
       message: 'Item purchased successfully',
@@ -191,26 +206,36 @@ export class ItemService {
       }
     }
 
-    // Decrease item quantity
-    if (userItem.quantity === 1) {
-      await this.prisma.userItem.delete({
-        where: {
-          userId_itemId: {
-            userId,
-            itemId,
+    // Decrease item quantity if not permanent
+    if (!item.isPermanent) {
+      if (userItem.quantity === 1) {
+        await this.prisma.userItem.delete({
+          where: {
+            userId_itemId: {
+              userId,
+              itemId,
+            },
           },
-        },
-      });
-    } else {
-      await this.prisma.userItem.update({
-        where: {
-          userId_itemId: {
-            userId,
-            itemId,
+        });
+      } else {
+        await this.prisma.userItem.update({
+          where: {
+            userId_itemId: {
+              userId,
+              itemId,
+            },
           },
-        },
+          data: {
+            quantity: userItem.quantity - 1,
+          },
+        });
+      }
+
+      // Decrement itemCount
+      await this.prisma.user.update({
+        where: { id: userId },
         data: {
-          quantity: userItem.quantity - 1,
+          itemCount: { decrement: 1 },
         },
       });
     }

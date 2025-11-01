@@ -14,7 +14,10 @@ export interface AuthResponse {
     xp: number;
     coins: number;
     gems: number;
-    energy: number;
-    maxEnergy: number;
+    huntTickets: number;
+    battleTickets: number;
+    lastTicketReset: Date;
+    petCount: number;
+    itemCount: number;
   };
 }

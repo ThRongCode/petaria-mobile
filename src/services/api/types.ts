@@ -62,6 +62,20 @@ export interface AuthResponse {
   userId: string
   username: string
   email: string
+  user?: {
+    id: string
+    email: string
+    username: string
+    level: number
+    xp: number
+    coins: number
+    gems: number
+    huntTickets: number
+    battleTickets: number
+    lastTicketReset: string
+    petCount: number
+    itemCount: number
+  }
 }
 
 // Hunt types

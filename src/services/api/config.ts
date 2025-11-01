@@ -5,7 +5,7 @@
 
 export const API_CONFIG = {
   // Set to false when real backend is ready
-  useMock: true,
+  useMock: false,
   
   // Real backend URL (for future)
   baseURL: __DEV__ 

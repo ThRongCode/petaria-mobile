@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { HuntService } from './hunt.service';
 import { StartHuntDto } from './dto/start-hunt.dto';
 import { CatchPetDto } from './dto/catch-pet.dto';
@@ -39,6 +39,11 @@ export class HuntController {
   @Post('flee/:sessionId')
   flee(@CurrentUser('id') userId: string, @Param('sessionId') sessionId: string) {
     return this.huntService.flee(userId, sessionId);
+  }
+
+  @Delete('session/:sessionId')
+  cancelSession(@CurrentUser('id') userId: string, @Param('sessionId') sessionId: string) {
+    return this.huntService.cancelSession(userId, sessionId);
   }
 
   @Post('complete/:sessionId')

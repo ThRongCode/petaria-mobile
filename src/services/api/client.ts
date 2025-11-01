@@ -1,5 +1,11 @@
 import { API_CONFIG } from './config'
 import { mockApi } from './mockApi'
+import { authApi } from './authApi'
+import { userApi } from './userApi'
+import { petApi } from './petApi'
+import { huntApi } from './huntApi'
+import { battleApi } from './battleApi'
+import { itemApi } from './itemApi'
 import type {
   ApiResponse,
   LoginRequest,
@@ -197,45 +203,171 @@ class ApiClient {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     body?: any
   ): Promise<ApiResponse<T>> {
-    const url = `${API_CONFIG.baseURL}${endpoint}`
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`
-    }
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: AbortSignal.timeout(API_CONFIG.timeout),
-      })
+      // Parse endpoint to route to appropriate service
+      const [path, ...rest] = endpoint.split('?')
+      const segments = path.split('/').filter(Boolean)
 
-      const data = await response.json()
+      // Auth endpoints
+      if (segments[0] === 'auth') {
+        if (segments[1] === 'login' && method === 'POST') {
+          const result = await authApi.login({ email: body.email, password: body.password })
+          if (result.success) {
+            this.setAuthToken(result.data.token, result.data.userId)
+          }
+          return result as ApiResponse<T>
+        }
+        if (segments[1] === 'register' && method === 'POST') {
+          const result = await authApi.register({ 
+            email: body.email, 
+            password: body.password, 
+            username: body.username 
+          })
+          if (result.success) {
+            this.setAuthToken(result.data.token, result.data.userId)
+          }
+          return result as ApiResponse<T>
+        }
+        if (segments[1] === 'validate' && method === 'GET') {
+          const result = await authApi.validateToken(this.authToken!)
+          return result as ApiResponse<T>
+        }
+      }
 
-      if (!response.ok) {
+      // Profile endpoints (user)
+      if (segments[0] === 'profile') {
+        if (method === 'GET') {
+          const result = await userApi.getProfile()
+          return result as ApiResponse<T>
+        }
+        if (method === 'PUT') {
+          const result = await userApi.updateProfile(body)
+          return result as ApiResponse<T>
+        }
+      }
+
+      // Inventory endpoints (user)
+      if (segments[0] === 'inventory') {
+        if (method === 'GET' && !segments[1]) {
+          const result = await userApi.getInventory()
+          return result as ApiResponse<T>
+        }
+        if (segments[1] === 'info' && method === 'GET') {
+          // Map to getProfile which returns petCount/itemCount
+          const result = await userApi.getProfile()
+          if (result.success) {
+            return {
+              success: true,
+              data: {
+                pets: { current: result.data.petCount, max: 100 },
+                items: { current: result.data.itemCount, max: 500 },
+              },
+            } as ApiResponse<T>
+          }
+          return result as ApiResponse<T>
+        }
+      }
+
+      // Pet endpoints
+      if (segments[0] === 'pets') {
+        if (method === 'GET' && !segments[1]) {
+          const result = await petApi.getUserPets()
+          return result as ApiResponse<T>
+        }
+        if (method === 'GET' && segments[1]) {
+          const result = await petApi.getPetDetails(segments[1])
+          return result as ApiResponse<T>
+        }
+        if (method === 'PUT' && segments[1]) {
+          const result = await petApi.updatePet(segments[1], body)
+          return result as ApiResponse<T>
+        }
+        if (method === 'POST' && segments[1] === 'feed' && segments[2]) {
+          const result = await petApi.feedPet(segments[2])
+          return result as ApiResponse<T>
+        }
+        if (method === 'POST' && segments[1] === 'release') {
+          const result = await petApi.releasePet(body.petId)
+          return {
+            success: result.success,
+            data: { coinsEarned: 0 } as any, // Backend doesn't return coins for release
+          } as ApiResponse<T>
+        }
+      }
+
+      // Region endpoints (hunt)
+      if (segments[0] === 'regions' && method === 'GET') {
+        const result = await huntApi.getRegions()
+        return result as ApiResponse<T>
+      }
+
+      // Hunt endpoints
+      if (segments[0] === 'hunt') {
+        if (method === 'POST' && !segments[1]) {
+          const result = await huntApi.startHunt(body.regionId)
+          return result as ApiResponse<T>
+        }
+      }
+
+      // Opponent endpoints (battle)
+      if (segments[0] === 'opponents' && method === 'GET') {
+        const result = await battleApi.listOpponents()
+        return result as ApiResponse<T>
+      }
+
+      // Battle endpoints
+      if (segments[0] === 'battle') {
+        if (segments[1] === 'complete' && method === 'POST') {
+          // Map old battle complete format to new format
+          const victory = body.winner === 'player'
+          const result = await battleApi.completeBattle(body.battleId, victory, body.playerPetId)
+          return result as ApiResponse<T>
+        }
+        if (segments[1] === 'history' && method === 'GET') {
+          const result = await battleApi.getBattleHistory()
+          return result as ApiResponse<T>
+        }
+      }
+
+      // Item endpoints
+      if (segments[0] === 'items') {
+        if (method === 'GET' && !segments[1]) {
+          const result = await itemApi.getCatalog()
+          return result as ApiResponse<T>
+        }
+        if (segments[1] === 'use' && method === 'POST') {
+          const result = await itemApi.useItem(body.itemId, body.petId)
+          return result as ApiResponse<T>
+        }
+      }
+
+      // Game endpoints
+      if (segments[0] === 'game') {
+        if (segments[1] === 'heal-center' && method === 'POST') {
+          // Heal center not implemented in backend - would need to loop through pets
+          // For now, return mock response
+          return {
+            success: true,
+            data: { healedCount: 0 },
+          } as ApiResponse<T>
+        }
+      }
+
+      // Auction endpoints - not implemented in backend yet
+      if (segments[0] === 'auctions' || segments[0] === 'auction') {
         return {
           success: false,
-          error: data.error || { code: 'UNKNOWN', message: `Request failed with status ${response.status}` },
+          error: { code: 'NOT_IMPLEMENTED', message: 'Auction system not yet implemented in backend' },
         }
       }
 
       return {
-        success: true,
-        data,
+        success: false,
+        error: { code: 'NOT_FOUND', message: `Real API endpoint not found: ${method} ${endpoint}` },
       }
     } catch (error) {
+      console.error('Real API request error:', error)
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          return {
-            success: false,
-            error: { code: 'TIMEOUT', message: 'Request timeout' },
-          }
-        }
         return {
           success: false,
           error: { code: 'NETWORK_ERROR', message: error.message },

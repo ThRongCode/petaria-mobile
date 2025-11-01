@@ -4,7 +4,8 @@ import {
   View, 
   ScrollView, 
   ImageBackground,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert
 } from 'react-native'
 import { TopBar, Panel } from '@/components/ui'
 import { ThemedText } from '@/components'
@@ -13,6 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
+import { useAppDispatch } from '@/stores/store'
+import { userActions } from '@/stores/reducers'
 
 /**
  * ProfileScreenNew - Trainer profile with stats and achievements
@@ -20,7 +23,29 @@ import { Ionicons } from '@expo/vector-icons'
  */
 export const ProfileScreenNew: React.FC = () => {
   const router = useRouter()
+  const dispatch = useAppDispatch()
   const profile = useSelector(getUserProfile)
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => {
+            console.log('🚪 Logging out...')
+            dispatch(userActions.logout())
+          },
+        },
+      ]
+    )
+  }
 
   const stats = [
     { label: 'Total Battles', value: profile.stats?.battlesWon || 0, icon: 'flame', color: '#F44336' },
@@ -228,7 +253,7 @@ export const ProfileScreenNew: React.FC = () => {
             </LinearGradient>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleLogout}>
             <LinearGradient
               colors={['rgba(244, 67, 54, 0.3)', 'rgba(198, 40, 40, 0.5)']}
               start={{ x: 0, y: 0 }}

@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Image, FlatList, Modal, Alert, ScrollView } from 'react-native'
+import { StyleSheet, View, TouchableOpacity, Image, FlatList, Modal, Alert, ScrollView, ActivityIndicator, RefreshControl } from 'react-native'
 import { ThemedText, ThemedView, ScreenContainer, HeaderBase } from '@/components'
 import { HEADER_GRADIENTS } from '@/constants/headerGradients'
 import { useSelector } from 'react-redux'
 import { 
-  getAvailableRegions, 
   getUserCurrency, 
-  getRegionHuntingCost,
-  canHuntInRegion,
   getUserProfile,
   getHuntingCooldowns
 } from '@/stores/selectors'
@@ -18,55 +15,97 @@ import { gameActions } from '@/stores/reducers'
 import { ButtonPrimary, ButtonSecondary } from 'rn-base-component'
 import { useRouter } from 'expo-router'
 import { getPetImageByName } from '@/assets/images'
-import { apiClient } from '@/services/api'
+import { huntApi } from '@/services/api'
+
+// Backend region type
+interface BackendRegion {
+  id: string
+  name: string
+  description: string
+  difficulty: string
+  energyCost: number
+  coinsCost: number
+  imageUrl: string
+  unlockLevel: number
+}
 
 export const HuntScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useAppDispatch()
-  const availableRegions = useSelector(getAvailableRegions)
   const currency = useSelector(getUserCurrency)
   const profile = useSelector(getUserProfile)
   const huntingCooldowns = useSelector(getHuntingCooldowns)
   
-  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null)
+  // API state
+  const [regions, setRegions] = useState<BackendRegion[]>([])
+  const [isLoadingRegions, setIsLoadingRegions] = useState(true)
+  const [regionsError, setRegionsError] = useState<string | null>(null)
+  const [isStartingHunt, setIsStartingHunt] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  const [selectedRegion, setSelectedRegion] = useState<BackendRegion | null>(null)
   const [showRegionModal, setShowRegionModal] = useState(false)
   const [showHuntResult, setShowHuntResult] = useState(false)
   const [lastHuntResult, setLastHuntResult] = useState<HuntResult | null>(null)
   const [isHunting, setIsHunting] = useState(false)
   const [cooldownTimers, setCooldownTimers] = useState<{ [key: string]: number }>({})
 
-  // TEST: Call mock API to see logs
-  useEffect(() => {
-    const testMockApi = async () => {
-      console.log('🧪 Testing Mock API...')
-      try {
-        // Test login (use correct mock credentials)
-        const loginResult = await apiClient.login('ash@pokemon.com', 'password')
-        console.log('Login result:', loginResult.success)
-        
-        // Test get profile
-        if (loginResult.success) {
-          const profileResult = await apiClient.getProfile()
-          console.log('Profile result:', profileResult.success)
-          
-          // Test get pets
-          const petsResult = await apiClient.getPets()
-          console.log('Pets result:', petsResult.success, `- Found ${petsResult.data?.length || 0} pets`)
-          
-          // Test get hunting regions
-          const regionsResult = await apiClient.getRegions()
-          console.log('Regions result:', regionsResult.success, `- Found ${regionsResult.data?.length || 0} regions`)
-          
-          // Test get opponents
-          const opponentsResult = await apiClient.getOpponents()
-          console.log('Opponents result:', opponentsResult.success, `- Found ${opponentsResult.data?.length || 0} opponents`)
-        }
-      } catch (error) {
-        console.error('Mock API test failed:', error)
-      }
-    }
+  // Load regions from API
+  const loadRegions = async () => {
+    console.log('🗺️ Loading regions from API...')
+    setIsLoadingRegions(true)
+    setRegionsError(null)
     
-    testMockApi()
+    try {
+      const result = await huntApi.getRegions()
+      if (result.success && result.data) {
+        console.log('✅ Loaded regions:', result.data.length)
+        setRegions(result.data)
+      } else {
+        throw new Error('Failed to load regions')
+      }
+    } catch (error) {
+      console.error('❌ Error loading regions:', error)
+      setRegionsError(error instanceof Error ? error.message : 'Failed to load regions')
+    } finally {
+      setIsLoadingRegions(false)
+    }
+  }
+
+  // Pull to refresh handler
+  const onRefresh = async () => {
+    console.log('\n🔄 ========== PULL TO REFRESH ==========')
+    console.log('🔄 Pull to refresh triggered')
+    console.log('📍 API Config useMock:', require('@/services/api/config').API_CONFIG.useMock)
+    console.log('🌐 API URL:', require('@/services/api/config').API_CONFIG.baseURL)
+    
+    setIsRefreshing(true)
+    setRegionsError(null)
+    
+    try {
+      console.log('📡 Calling huntApi.getRegions()...')
+      const result = await huntApi.getRegions()
+      console.log('📦 API Response:', JSON.stringify(result, null, 2))
+      
+      if (result.success && result.data) {
+        console.log('✅ Refreshed regions:', result.data.length)
+        console.log('📋 Region names:', result.data.map(r => r.name).join(', '))
+        setRegions(result.data)
+      } else {
+        throw new Error('Failed to refresh regions')
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing regions:', error)
+      console.error('❌ Error details:', JSON.stringify(error, null, 2))
+      setRegionsError(error instanceof Error ? error.message : 'Failed to refresh regions')
+    } finally {
+      setIsRefreshing(false)
+      console.log('🔄 ========== REFRESH COMPLETE ==========\n')
+    }
+  }
+
+  useEffect(() => {
+    loadRegions()
   }, [])
 
   useEffect(() => {
@@ -76,8 +115,9 @@ export const HuntScreen: React.FC = () => {
         const newTimers: { [key: string]: number } = {}
         
         Object.entries(huntingCooldowns).forEach(([regionId, cooldownEnd]) => {
-          if (cooldownEnd > now) {
-            newTimers[regionId] = Math.ceil((cooldownEnd - now) / 1000)
+          const endTime = typeof cooldownEnd === 'number' ? cooldownEnd : Number(cooldownEnd)
+          if (endTime > now) {
+            newTimers[regionId] = Math.ceil((endTime - now) / 1000)
           }
         })
         
@@ -92,15 +132,12 @@ export const HuntScreen: React.FC = () => {
     return () => clearInterval(interval)
   }, []) // Remove huntingCooldowns dependency
 
-  const getRegionHuntCost = (region: Region): number => {
-    let cost = region.huntingCost
-    if (region.legendPetId && region.legendOwnerId && region.legendOwnerId !== profile.id) {
-      cost += region.legendFee
-    }
-    return cost
+  const getRegionHuntCost = (region: BackendRegion): number => {
+    // Backend uses coinsCost
+    return region.coinsCost
   }
 
-  const canAffordHunt = (region: Region): boolean => {
+  const canAffordHunt = (region: BackendRegion): boolean => {
     return currency.coins >= getRegionHuntCost(region)
   }
 
@@ -108,146 +145,50 @@ export const HuntScreen: React.FC = () => {
     return cooldownTimers[regionId] > 0
   }
 
-  const generateHuntResult = (region: Region): HuntResult => {
-    const random = Math.random()
+  const handleStartHunt = async (region: BackendRegion) => {
+    console.log('🎯 Starting hunt in region:', region.name)
     
-    // 60% chance for pet encounter, 25% for item, 15% for empty
-    if (random < 0.6) {
-      // Generate a pet based on region's available pets
-      const availablePets = region.availablePets
-      const totalSpawnRate = availablePets.reduce((sum, pet) => sum + pet.spawnRate, 0)
-      const spawnRoll = Math.random() * totalSpawnRate
-      
-      let currentRate = 0
-      let selectedPetType = availablePets[0]
-      
-      for (const petType of availablePets) {
-        currentRate += petType.spawnRate
-        if (spawnRoll <= currentRate) {
-          selectedPetType = petType
-          break
-        }
-      }
-
-      const newPet: Pet = {
-        id: 'pet-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-        name: selectedPetType.petSpecies + ' #' + Math.floor(Math.random() * 1000),
-        species: selectedPetType.petSpecies,
-        rarity: selectedPetType.rarity,
-        level: Math.max(1, profile.level + Math.floor(Math.random() * 5) - 2),
-        xp: 0,
-        xpToNext: 100,
-        stats: {
-          hp: 30 + Math.floor(Math.random() * 20),
-          maxHp: 30 + Math.floor(Math.random() * 20),
-          attack: 15 + Math.floor(Math.random() * 10),
-          defense: 12 + Math.floor(Math.random() * 8),
-          speed: 18 + Math.floor(Math.random() * 12),
-        },
-        moves: [], // Moves will be assigned based on species
-        image: getPetImageByName(selectedPetType.petSpecies),
-        evolutionStage: 1,
-        maxEvolutionStage: 3,
-        evolutionRequirements: {
-          level: 15,
-          itemId: 'item-evo-001'
-        },
-        isLegendary: false,
-        ownerId: profile.id,
-        isForSale: false,
-        mood: Math.floor(Math.random() * 30) + 70,
-        lastFed: Date.now(),
-      }
-
-      return {
-        type: 'pet',
-        pet: newPet,
-        xp: 25,
-        coins: 10
-      }
-    } else if (random < 0.85) {
-      // Item drop
-      const items = ['item-heal-001', 'item-xp-001', 'item-evo-001']
-      const randomItem = items[Math.floor(Math.random() * items.length)]
-      
-      return {
-        type: 'item',
-        item: {
-          id: randomItem,
-          name: 'Found Item',
-          description: 'An item found while hunting',
-          type: 'Consumable',
-          rarity: 'Common',
-          effects: {},
-          price: { coins: 100 },
-          image: 'https://via.placeholder.com/80/2196F3/FFFFFF?text=📦'
-        },
-        xp: 15,
-        coins: 5
-      }
-    } else {
-      // Empty run
-      return {
-        type: 'empty',
-        xp: 5,
-        coins: 0
-      }
-    }
-  }
-
-  const startHunt = async (region: Region) => {
-    if (!canAffordHunt(region) || isRegionOnCooldown(region.id)) {
+    // Check if user has tickets
+    if (profile.huntTickets <= 0) {
+      Alert.alert('No Hunt Tickets', 'You need hunt tickets to start hunting. Tickets reset daily at midnight UTC.')
       return
     }
-
-    setIsHunting(true)
-    const huntCost = getRegionHuntCost(region)
     
-    // Simulate hunting delay
-    setTimeout(() => {
-      const result = generateHuntResult(region)
+    // Check if can afford
+    if (!canAffordHunt(region)) {
+      Alert.alert('Insufficient Coins', `You need ${getRegionHuntCost(region)} coins to hunt in this region.`)
+      return
+    }
+    
+    setIsStartingHunt(true)
+    
+    try {
+      const result = await huntApi.startHunt(region.id)
+      console.log('✅ Hunt session started:', result)
       
-      // Process hunt result
-      dispatch(gameActions.processHuntResult({
-        regionId: region.id,
-        result,
-        cost: huntCost
-      }))
-      
-      // Add pet if found
-      if (result.type === 'pet' && result.pet) {
-        dispatch(gameActions.addPet(result.pet))
+      if (result.success && result.data) {
+        // Navigate to hunting session with session ID
+        router.push({
+          pathname: '/hunting-session',
+          params: {
+            sessionId: result.data.session.id,
+            regionId: region.id,
+            regionName: region.name,
+          }
+        })
+        
+        // Close modal
+        setShowRegionModal(false)
+        setSelectedRegion(null)
+      } else {
+        Alert.alert('Error', result.message || 'Failed to start hunt session')
       }
-      
-      // Add item if found
-      if (result.type === 'item' && result.item) {
-        dispatch(gameActions.addItem({ itemId: result.item.id, quantity: 1 }))
-      }
-      
-      // Set cooldown (30 seconds for demo, would be longer in real game)
-      dispatch(gameActions.setHuntingCooldown({
-        regionId: region.id,
-        cooldownEnd: Date.now() + 30000
-      }))
-      
-      // Transfer legend fee if applicable
-      if (region.legendOwnerId && region.legendOwnerId !== profile.id) {
-        // In real implementation, this would transfer to the legend owner
-        dispatch(gameActions.addNotification({
-          id: 'notif-' + Date.now(),
-          type: 'hunt_result',
-          title: 'Someone hunted in your region!',
-          message: `You received ${region.legendFee} coins from ${region.name}`,
-          data: { regionId: region.id, fee: region.legendFee },
-          read: false,
-          timestamp: Date.now()
-        }))
-      }
-      
-      setLastHuntResult(result)
-      setIsHunting(false)
-      setShowHuntResult(true)
-    }, 2000)
+    } catch (error) {
+      console.error('❌ Error starting hunt:', error)
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to start hunt')
+    } finally {
+      setIsStartingHunt(false)
+    }
   }
 
   const formatTime = (seconds: number): string => {
@@ -256,7 +197,7 @@ export const HuntScreen: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const renderRegionCard = ({ item: region }: { item: Region }) => {
+  const renderRegionCard = ({ item: region }: { item: BackendRegion }) => {
     const huntCost = getRegionHuntCost(region)
     const canAfford = canAffordHunt(region)
     const onCooldown = isRegionOnCooldown(region.id)
@@ -274,7 +215,7 @@ export const HuntScreen: React.FC = () => {
         }}
         disabled={!canAfford || onCooldown}
       >
-        <Image source={{ uri: region.image }} style={styles.regionImage} />
+        <Image source={{ uri: region.imageUrl }} style={styles.regionImage} />
         <View style={styles.regionInfo}>
           <ThemedText type="defaultSemiBold" style={styles.regionName}>
             {region.name}
@@ -288,11 +229,6 @@ export const HuntScreen: React.FC = () => {
               <ThemedText style={styles.costText}>
                 💰 {huntCost} coins
               </ThemedText>
-              {region.legendPetId && (
-                <ThemedText style={styles.legendFeeText}>
-                  (👑 +{region.legendFee} legend fee)
-                </ThemedText>
-              )}
             </View>
             
             {onCooldown ? (
@@ -304,17 +240,11 @@ export const HuntScreen: React.FC = () => {
             ) : (
               <View style={styles.petsContainer}>
                 <ThemedText style={styles.petsText}>
-                  🐾 {region.availablePets.length} species
+                  � {region.difficulty}
                 </ThemedText>
               </View>
             )}
           </View>
-          
-          {region.legendOwnerId === profile.id && (
-            <View style={styles.ownedBadge}>
-              <ThemedText style={styles.ownedText}>👑 Your Region</ThemedText>
-            </View>
-          )}
         </View>
       </TouchableOpacity>
     )
@@ -341,7 +271,7 @@ export const HuntScreen: React.FC = () => {
             >
               {selectedRegion && (
                 <>
-                  <Image source={{ uri: selectedRegion.image }} style={styles.modalRegionImage} />
+                  <Image source={{ uri: selectedRegion.imageUrl }} style={styles.modalRegionImage} />
                   <ThemedText type="title" style={styles.modalRegionName}>
                     {selectedRegion.name}
                   </ThemedText>
@@ -351,19 +281,23 @@ export const HuntScreen: React.FC = () => {
                   
                   <View style={styles.modalSection}>
                     <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
-                      Available Pets
+                      Region Info
                     </ThemedText>
-                    {selectedRegion.availablePets.map((pet, index) => (
-                      <View key={index} style={styles.petTypeRow}>
-                        <ThemedText style={styles.petTypeName}>{pet.petSpecies}</ThemedText>
-                        <ThemedText style={[
-                          styles.petTypeRarity,
-                          { color: getRarityColor(pet.rarity) }
-                        ]}>
-                          {pet.rarity} ({(pet.spawnRate * 100).toFixed(1)}%)
-                        </ThemedText>
-                      </View>
-                    ))}
+                    <View style={styles.petTypeRow}>
+                      <ThemedText style={styles.petTypeName}>Difficulty</ThemedText>
+                      <ThemedText style={[
+                        styles.petTypeRarity,
+                        { color: getDifficultyColor(selectedRegion.difficulty) }
+                      ]}>
+                        {selectedRegion.difficulty}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.petTypeRow}>
+                      <ThemedText style={styles.petTypeName}>Unlock Level</ThemedText>
+                      <ThemedText style={styles.petTypeRarity}>
+                        Level {selectedRegion.unlockLevel}
+                      </ThemedText>
+                    </View>
                   </View>
                   
                   <View style={styles.modalSection}>
@@ -371,13 +305,11 @@ export const HuntScreen: React.FC = () => {
                       Hunt Cost
                     </ThemedText>
                     <ThemedText style={styles.costBreakdown}>
-                      Base Cost: {selectedRegion.huntingCost} coins
+                      Coins Cost: {selectedRegion.coinsCost} 💰
                     </ThemedText>
-                    {selectedRegion.legendPetId && selectedRegion.legendOwnerId !== profile.id && (
-                      <ThemedText style={styles.costBreakdown}>
-                        Legend Fee: {selectedRegion.legendFee} coins
-                      </ThemedText>
-                    )}
+                    <ThemedText style={styles.costBreakdown}>
+                      Energy Cost: {selectedRegion.energyCost} ⚡
+                    </ThemedText>
                     <ThemedText style={styles.totalCost}>
                       Total: {getRegionHuntCost(selectedRegion)} coins
                     </ThemedText>
@@ -388,28 +320,23 @@ export const HuntScreen: React.FC = () => {
                       style={styles.huntButton}
                       onPress={() => {
                         if (selectedRegion) {
-                          const regionData = {
-                            regionId: selectedRegion.id,
-                            regionName: selectedRegion.name,
-                            huntCost: getRegionHuntCost(selectedRegion),
-                          }
-                          setShowRegionModal(false)
-                          setSelectedRegion(null)
-                          router.push({
-                            pathname: '/hunting-session',
-                            params: regionData
-                          })
+                          handleStartHunt(selectedRegion)
                         }
                       }}
                       disabled={
                         !canAffordHunt(selectedRegion) || 
                         isRegionOnCooldown(selectedRegion.id) ||
-                        isHunting
+                        isStartingHunt ||
+                        profile.huntTickets <= 0
                       }
                     >
-                      {isRegionOnCooldown(selectedRegion.id) 
-                        ? `Cooldown: ${formatTime(cooldownTimers[selectedRegion.id] || 0)}`
-                        : 'Enter Dungeon'
+                      {isStartingHunt 
+                        ? 'Starting...'
+                        : isRegionOnCooldown(selectedRegion.id) 
+                          ? `Cooldown: ${formatTime(cooldownTimers[selectedRegion.id] || 0)}`
+                          : profile.huntTickets <= 0
+                            ? 'No Tickets'
+                            : 'Enter Dungeon'
                       }
                     </ButtonPrimary>
                     <ButtonSecondary 
@@ -430,6 +357,16 @@ export const HuntScreen: React.FC = () => {
       </TouchableOpacity>
     </Modal>
   )
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case 'easy': return colors.success
+      case 'medium': return colors.warning
+      case 'hard': return colors.error
+      case 'expert': return colors.error
+      default: return colors.gray
+    }
+  }
 
   const HuntResultModal = () => (
     <Modal visible={showHuntResult} animationType="fade" transparent>
@@ -506,25 +443,59 @@ export const HuntScreen: React.FC = () => {
     <ScreenContainer style={styles.screenContainer}>
       <HeaderBase title="Hunt" gradientColors={HEADER_GRADIENTS.hunt}>
         <View style={styles.currencyContainer}>
+          <ThemedText style={styles.currency}>🎫 {profile.huntTickets}/5</ThemedText>
           <ThemedText style={styles.currency}>💰 {currency.coins.toLocaleString()}</ThemedText>
           <ThemedText style={styles.currency}>💎 {currency.gems.toLocaleString()}</ThemedText>
         </View>
       </HeaderBase>
 
       <ThemedView style={styles.container}>
-        {isHunting && (
-          <View style={styles.huntingIndicator}>
-            <ThemedText style={styles.huntingText}>🔍 Hunting in progress...</ThemedText>
+        {isLoadingRegions ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <ThemedText style={styles.loadingText}>Loading regions...</ThemedText>
           </View>
-        )}
+        ) : regionsError ? (
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>❌ {regionsError}</ThemedText>
+            <ButtonPrimary onPress={loadRegions}>
+              Retry
+            </ButtonPrimary>
+          </View>
+        ) : (
+          <>
+            {isRefreshing && (
+              <View style={styles.refreshingOverlay}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <ThemedText style={styles.refreshingText}>🔄 Refreshing regions...</ThemedText>
+              </View>
+            )}
+            
+            {isHunting && (
+              <View style={styles.huntingIndicator}>
+                <ThemedText style={styles.huntingText}>🔍 Hunting in progress...</ThemedText>
+              </View>
+            )}
 
-        <FlatList
-          data={availableRegions}
-          renderItem={renderRegionCard}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.regionsList}
-        />
+            <FlatList
+              data={regions}
+              renderItem={renderRegionCard}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.regionsList}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={onRefresh}
+                  colors={[colors.primary]}
+                  tintColor={colors.primary}
+                  title="Pull to refresh regions"
+                  titleColor={colors.gray}
+                />
+              }
+            />
+          </>
+        )}
 
         <RegionDetailsModal />
         <HuntResultModal />
@@ -540,6 +511,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: metrics.medium,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: metrics.medium,
+  },
+  loadingText: {
+    fontSize: fontSizes.body,
+    color: colors.gray,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: metrics.medium,
+    padding: metrics.large,
+  },
+  errorText: {
+    fontSize: fontSizes.body,
+    color: colors.error,
+    textAlign: 'center',
   },
   currencyContainer: {
     flexDirection: 'row',
@@ -562,6 +555,25 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: fontSizes.body,
     fontWeight: '600',
+  },
+  refreshingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: metrics.large,
+    zIndex: 1000,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: metrics.borderRadius,
+    margin: metrics.medium,
+  },
+  refreshingText: {
+    color: colors.white,
+    fontSize: fontSizes.body,
+    fontWeight: '600',
+    marginTop: metrics.small,
   },
   regionsList: {
     paddingBottom: metrics.huge,

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TicketResetUtil } from '../utils/ticketReset';
 
 export interface Encounter {
   id: string;
@@ -31,15 +32,28 @@ export class HuntService {
       throw new NotFoundException('User not found');
     }
 
-    // Check if user has enough energy
-    if (user.energy < 10) {
-      throw new BadRequestException('Not enough energy (need 10)');
+    // Check and reset tickets if needed
+    await TicketResetUtil.checkAndResetTickets(this.prisma, userId);
+
+    // Refresh user data after potential ticket reset
+    const updatedUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!updatedUser) {
+      throw new NotFoundException('User not found after ticket reset');
     }
 
-    // Check if user has enough coins
-    const huntCost = 50;
-    if (user.coins < huntCost) {
-      throw new BadRequestException(`Not enough coins (need ${huntCost})`);
+    // Check if user has enough hunt tickets
+    if (updatedUser.huntTickets < 1) {
+      throw new BadRequestException(
+        'Not enough hunt tickets (need 1, resets daily)',
+      );
+    }
+
+    // Check pet limit before starting
+    if (updatedUser.petCount >= 100) {
+      throw new BadRequestException('Pet limit reached (100 max)');
     }
 
     // Check if region exists and is unlocked
@@ -51,7 +65,7 @@ export class HuntService {
       throw new NotFoundException('Region not found');
     }
 
-    if (region.unlockLevel > user.level) {
+    if (region.unlockLevel > updatedUser.level) {
       throw new BadRequestException(
         `Region requires level ${region.unlockLevel}`,
       );
@@ -61,15 +75,12 @@ export class HuntService {
     const existingSession = await this.prisma.huntSession.findFirst({
       where: {
         userId,
-        expiresAt: {
-          gt: new Date(),
-        },
       },
     });
 
     if (existingSession) {
       throw new BadRequestException(
-        'You already have an active hunt session',
+        'You already have an active hunt session. Complete or cancel it first.',
       );
     }
 
@@ -89,23 +100,20 @@ export class HuntService {
       encounters.push(encounter);
     }
 
-    // Deduct energy and coins
+    // Deduct hunt ticket
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        energy: user.energy - 10,
-        coins: user.coins - huntCost,
+        huntTickets: updatedUser.huntTickets - 1,
       },
     });
 
-    // Create session (expires in 30 minutes)
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    // Create session (no expiration)
     const session = await this.prisma.huntSession.create({
       data: {
         userId,
         regionId,
         encountersData: encounters as any,
-        expiresAt,
       },
       include: {
         region: true,
@@ -115,7 +123,7 @@ export class HuntService {
     return {
       session,
       encounters,
-      message: 'Hunt session started! You have 30 minutes to complete it.',
+      message: 'Hunt session started! Complete it anytime - no expiration.',
     };
   }
 
@@ -173,9 +181,6 @@ export class HuntService {
     const session = await this.prisma.huntSession.findFirst({
       where: {
         userId,
-        expiresAt: {
-          gt: new Date(),
-        },
       },
       include: {
         region: true,
@@ -198,18 +203,66 @@ export class HuntService {
     encounterId: string,
     ballType: string = 'pokeball',
   ) {
-    const session = await this.prisma.huntSession.findFirst({
+    // Map ball type to item ID
+    const ballItemId = {
+      pokeball: 'ball_pokeball',
+      greatball: 'ball_great',
+      ultraball: 'ball_ultra',
+    }[ballType];
+
+    if (!ballItemId) {
+      throw new BadRequestException('Invalid ball type');
+    }
+
+    // Check if user has the ball in inventory
+    const userItem = await this.prisma.userItem.findUnique({
       where: {
-        id: sessionId,
-        userId,
-        expiresAt: {
-          gt: new Date(),
+        userId_itemId: {
+          userId,
+          itemId: ballItemId,
         },
       },
     });
 
+    if (!userItem || userItem.quantity < 1) {
+      throw new BadRequestException(`You don't have any ${ballType}s`);
+    }
+
+    // Deduct ball from inventory BEFORE catch attempt
+    if (userItem.quantity === 1) {
+      await this.prisma.userItem.delete({
+        where: {
+          userId_itemId: { userId, itemId: ballItemId },
+        },
+      });
+    } else {
+      await this.prisma.userItem.update({
+        where: {
+          userId_itemId: { userId, itemId: ballItemId },
+        },
+        data: {
+          quantity: userItem.quantity - 1,
+        },
+      });
+    }
+
+    // Decrement itemCount
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        itemCount: { decrement: 1 },
+      },
+    });
+
+    const session = await this.prisma.huntSession.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+      },
+    });
+
     if (!session) {
-      throw new NotFoundException('Hunt session not found or expired');
+      throw new NotFoundException('Hunt session not found');
     }
 
     const encounters = session.encountersData as unknown as Encounter[];
@@ -242,6 +295,19 @@ export class HuntService {
     const success = Math.random() < catchRate;
 
     if (success) {
+      // Check pet limit before creating
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (user.petCount >= 100) {
+        throw new BadRequestException('Pet limit reached (100 max)');
+      }
+
       // Create pet
       const pet = await this.prisma.pet.create({
         data: {
@@ -256,6 +322,14 @@ export class HuntService {
           attack: encounter.attack,
           defense: encounter.defense,
           speed: encounter.speed,
+        },
+      });
+
+      // Increment petCount
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          petCount: { increment: 1 },
         },
       });
 
@@ -286,14 +360,11 @@ export class HuntService {
       where: {
         id: sessionId,
         userId,
-        expiresAt: {
-          gt: new Date(),
-        },
       },
     });
 
     if (!session) {
-      throw new NotFoundException('Hunt session not found or expired');
+      throw new NotFoundException('Hunt session not found');
     }
 
     await this.prisma.huntSession.delete({
@@ -302,6 +373,27 @@ export class HuntService {
 
     return {
       message: 'You fled from the hunt.',
+    };
+  }
+
+  async cancelSession(userId: string, sessionId: string) {
+    const session = await this.prisma.huntSession.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Hunt session not found');
+    }
+
+    await this.prisma.huntSession.delete({
+      where: { id: sessionId },
+    });
+
+    return {
+      message: 'Hunt session canceled.',
     };
   }
 
