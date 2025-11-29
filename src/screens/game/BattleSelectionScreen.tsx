@@ -131,6 +131,18 @@ export const BattleSelectionScreen: React.FC = () => {
 
   const handlePokemonSelect = (pet: Pet) => {
     if (selectedOpponent) {
+      // Check if user has enough battle tickets
+      if (!profile || profile.battleTickets < 1) {
+        Alert.alert(
+          'Cannot Start Battle',
+          'Not enough battle tickets (need 1, resets daily)',
+          [{ text: 'OK' }]
+        )
+        setShowPokemonSelection(false)
+        setSelectedOpponent(null)
+        return
+      }
+
       // Transform backend opponent moves structure: moves[].move -> moves[]
       const transformedMoves: Move[] = selectedOpponent.moves?.map(opponentMove => ({
         id: opponentMove.move.id,
@@ -297,6 +309,8 @@ export const BattleSelectionScreen: React.FC = () => {
           gems={profile.currency?.gems || 150}
           energy={80}
           maxEnergy={100}
+          battleTickets={profile.battleTickets}
+          huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}
         />
 

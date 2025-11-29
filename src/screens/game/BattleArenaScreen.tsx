@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Image, Animated, Dimensions, ScrollView, ImageBackground } from 'react-native'
+import { StyleSheet, View, TouchableOpacity, Image, Animated, Dimensions, ScrollView, ImageBackground, ActivityIndicator, Alert } from 'react-native'
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { getPokemonImage } from '@/assets/images'
@@ -11,6 +11,7 @@ import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { battleApi, petApi } from '@/services/api'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -35,34 +36,74 @@ export const BattleArenaScreen: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false)
   const [playerHpAnim] = useState(new Animated.Value(100))
   const [opponentHpAnim] = useState(new Animated.Value(100))
+  
+  // Battle session tracking for API
+  const [battleSessionId, setBattleSessionId] = useState<string | null>(null)
+  const [totalDamageDealt, setTotalDamageDealt] = useState(0)
+  const [totalDamageTaken, setTotalDamageTaken] = useState(0)
+  const [isStartingBattle, setIsStartingBattle] = useState(false)
+  const [isCompletingBattle, setIsCompletingBattle] = useState(false)
 
-  // Initialize battle from params
+  // Initialize battle from params and start battle session
   useEffect(() => {
-    if (params.playerPet && params.opponent && !battleState) {
-      const playerPet = JSON.parse(params.playerPet as string) as Pet
-      const opponent = JSON.parse(params.opponent as string) as Opponent
-      
-      // Determine who goes first based on speed
-      const playerGoesFirst = playerPet.stats.speed >= opponent.stats.speed
-      
-      setBattleState({
-        playerPet: {
-          ...playerPet,
-          currentHp: playerPet.stats.hp,
-          temporaryStats: { ...playerPet.stats }
-        },
-        opponentPet: {
-          ...opponent,
-          currentHp: opponent.stats.hp,
-          temporaryStats: { ...opponent.stats }
-        },
-        turn: playerGoesFirst ? 'player' : 'opponent',
-        turnCount: 1,
-        battleLog: [`Battle begins! ${playerPet.name} vs ${opponent.name}!`],
-        battleOver: false,
-        winner: null
-      })
+    const initBattle = async () => {
+      if (params.playerPet && params.opponent && !battleState) {
+        const playerPet = JSON.parse(params.playerPet as string) as Pet
+        const opponent = JSON.parse(params.opponent as string) as Opponent
+        
+        // Start battle session with backend
+        setIsStartingBattle(true)
+        try {
+          const response = await battleApi.startBattle(opponent.id, playerPet.id)
+          if (response.success && response.data.battle) {
+            setBattleSessionId(response.data.battle.id)
+            console.log('✅ Battle session started:', response.data.battle.id)
+          }
+        } catch (error) {
+          console.error('❌ Failed to start battle session:', error)
+          
+          // Show alert and navigate back
+          const errorMessage = error instanceof Error ? error.message : 'Failed to start battle'
+          Alert.alert(
+            'Cannot Start Battle',
+            errorMessage,
+            [
+              {
+                text: 'OK',
+                onPress: () => router.back()
+              }
+            ]
+          )
+          setIsStartingBattle(false)
+          return
+        } finally {
+          setIsStartingBattle(false)
+        }
+        
+        // Determine who goes first based on speed
+        const playerGoesFirst = playerPet.stats.speed >= opponent.stats.speed
+        
+        setBattleState({
+          playerPet: {
+            ...playerPet,
+            currentHp: playerPet.stats.hp,
+            temporaryStats: { ...playerPet.stats }
+          },
+          opponentPet: {
+            ...opponent,
+            currentHp: opponent.stats.hp,
+            temporaryStats: { ...opponent.stats }
+          },
+          turn: playerGoesFirst ? 'player' : 'opponent',
+          turnCount: 1,
+          battleLog: [`Battle begins! ${playerPet.name} vs ${opponent.name}!`],
+          battleOver: false,
+          winner: null
+        })
+      }
     }
+    
+    initBattle()
   }, [params.playerPet, params.opponent, battleState])
 
   // Handle opponent turn
@@ -99,6 +140,37 @@ export const BattleArenaScreen: React.FC = () => {
     }
     
     return Math.max(1, finalDamage)
+  }
+
+  const completeBattleSession = async (won: boolean) => {
+    if (!battleSessionId || !battleState) {
+      console.error('❌ Cannot complete battle: missing session ID or battle state')
+      return
+    }
+    
+    setIsCompletingBattle(true)
+    try {
+      console.log(`💾 Completing battle session ${battleSessionId}: won=${won}, dealt=${totalDamageDealt}, taken=${totalDamageTaken}`)
+      
+      const response = await battleApi.completeBattle(
+        battleSessionId,
+        won,
+        totalDamageDealt,
+        totalDamageTaken
+      )
+      
+      if (response.success) {
+        console.log('✅ Battle completed:', response.data)
+        
+        // Reload ALL user data to get updated pets, stats, coins, XP
+        // This triggers the saga which properly transforms the data
+        dispatch({ type: 'game/loadUserData' })
+      }
+    } catch (error) {
+      console.error('❌ Failed to complete battle:', error)
+    } finally {
+      setIsCompletingBattle(false)
+    }
   }
 
   const applyMoveEffects = (user: any, target: any, move: Move) => {
@@ -150,6 +222,9 @@ export const BattleArenaScreen: React.FC = () => {
       opponentPet.currentHp = Math.max(0, opponentPet.currentHp - damage)
       newLog.push(`Dealt ${damage} damage!`)
       
+      // Track damage dealt for API
+      setTotalDamageDealt(prev => prev + damage)
+      
       // Animate HP bar
       Animated.timing(opponentHpAnim, {
         toValue: (opponentPet.currentHp / opponentPet.temporaryStats.hp) * 100,
@@ -164,13 +239,7 @@ export const BattleArenaScreen: React.FC = () => {
     // Check if opponent fainted
     if (opponentPet.currentHp <= 0) {
       newLog.push(`${opponentPet.name} fainted!`)
-      
-      // Calculate XP gained
-      const xpGained = Math.floor(opponentPet.level * 50 * 1.5)
-      newLog.push(`${playerPet.name} gained ${xpGained} XP!`)
-      
-      // TODO: Dispatch XP gain action when API is integrated
-      // dispatch(gameActions.gainXp({ petId: playerPet.id, xp: xpGained }))
+      newLog.push(`Victory! Syncing with server...`)
       
       setBattleState({
         ...battleState,
@@ -180,6 +249,9 @@ export const BattleArenaScreen: React.FC = () => {
         winner: 'player'
       })
       setIsAnimating(false)
+      
+      // Complete battle via API
+      completeBattleSession(true)
       return
     }
     
@@ -229,6 +301,9 @@ export const BattleArenaScreen: React.FC = () => {
       playerPet.currentHp = Math.max(0, playerPet.currentHp - damage)
       newLog.push(`${playerPet.name} took ${damage} damage!`)
       
+      // Track damage taken for API
+      setTotalDamageTaken(prev => prev + damage)
+      
       // Animate HP bar
       Animated.timing(playerHpAnim, {
         toValue: (playerPet.currentHp / playerPet.temporaryStats.hp) * 100,
@@ -243,6 +318,7 @@ export const BattleArenaScreen: React.FC = () => {
     // Check if player fainted
     if (playerPet.currentHp <= 0) {
       newLog.push(`${playerPet.name} fainted!`)
+      newLog.push(`Defeat... Syncing with server...`)
       
       setBattleState({
         ...battleState,
@@ -252,6 +328,9 @@ export const BattleArenaScreen: React.FC = () => {
         winner: 'opponent'
       })
       setIsAnimating(false)
+      
+      // Complete battle via API
+      completeBattleSession(false)
       return
     }
     
@@ -272,7 +351,7 @@ export const BattleArenaScreen: React.FC = () => {
     }, 600)
   }
 
-  if (!battleState) {
+  if (!battleState || isStartingBattle) {
     return (
       <ImageBackground 
         source={require('@/assets/images/background/mobile_background.png')}
@@ -287,7 +366,10 @@ export const BattleArenaScreen: React.FC = () => {
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.container}>
-          <ThemedText>Loading battle...</ThemedText>
+          <ActivityIndicator size="large" color="#fff" />
+          <ThemedText style={{ marginTop: 16 }}>
+            {isStartingBattle ? 'Starting battle session...' : 'Loading battle...'}
+          </ThemedText>
         </View>
       </ImageBackground>
     )

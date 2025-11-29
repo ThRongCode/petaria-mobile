@@ -149,6 +149,38 @@ export default function PetDetailsScreen() {
               {pet.stats.hp} / {pet.stats.maxHp}
             </ThemedText>
           </View>
+
+          {/* HP Bar */}
+          <View style={styles.hpSection}>
+            <ThemedText style={styles.hpLabel}>HP</ThemedText>
+            <View style={styles.hpBarBackground}>
+              <View 
+                style={[
+                  styles.hpBarFill, 
+                  { width: `${(pet.stats.hp / pet.stats.maxHp) * 100}%` }
+                ]} 
+              />
+            </View>
+            <ThemedText style={styles.hpText}>
+              {pet.stats.hp} / {pet.stats.maxHp}
+            </ThemedText>
+          </View>
+
+          {/* XP Bar */}
+          <View style={styles.xpSection}>
+            <ThemedText style={styles.xpLabel}>EXP</ThemedText>
+            <View style={styles.xpBarBackground}>
+              <View 
+                style={[
+                  styles.xpBarFill, 
+                  { width: `${(pet.xp / pet.xpToNext) * 100}%` }
+                ]} 
+              />
+            </View>
+            <ThemedText style={styles.xpText}>
+              {pet.xp} / {pet.xpToNext}
+            </ThemedText>
+          </View>
         </Panel>
 
         {/* Tabs */}
@@ -222,7 +254,19 @@ const AboutTab: React.FC<{ pet: Pet }> = ({ pet }) => (
       </View>
       <View style={styles.infoItem}>
         <ThemedText style={styles.infoLabel}>✨ Experience</ThemedText>
-        <ThemedText style={styles.infoValue}>{pet.xp}</ThemedText>
+        <View style={styles.xpProgressContainer}>
+          <View style={styles.xpProgressBar}>
+            <View 
+              style={[
+                styles.xpProgressFill, 
+                { width: `${(pet.xp / pet.xpToNext) * 100}%` }
+              ]} 
+            />
+          </View>
+          <ThemedText style={styles.xpProgressText}>
+            {pet.xp} / {pet.xpToNext} XP
+          </ThemedText>
+        </View>
       </View>
       <View style={styles.infoItem}>
         <ThemedText style={styles.infoLabel}>🌟 Rarity</ThemedText>
@@ -490,6 +534,38 @@ const styles = StyleSheet.create({
     minWidth: 80,
     textAlign: 'right',
   },
+  xpSection: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  xpLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    width: 30,
+  },
+  xpBarBackground: {
+    flex: 1,
+    height: 8,
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  xpBarFill: {
+    height: '100%',
+    backgroundColor: '#FFD700',
+    borderRadius: 4,
+  },
+  xpText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFD700',
+    minWidth: 80,
+    textAlign: 'right',
+  },
 
   // Tabs
   tabsContainer: {
@@ -562,6 +638,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  xpProgressContainer: {
+    marginTop: 4,
+    gap: 4,
+  },
+  xpProgressBar: {
+    height: 6,
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  xpProgressFill: {
+    height: '100%',
+    backgroundColor: '#FFD700',
+    borderRadius: 3,
+  },
+  xpProgressText: {
+    fontSize: 11,
+    color: '#FFD700',
+    fontWeight: '600',
+    textAlign: 'right',
   },
 
   // Stats Tab

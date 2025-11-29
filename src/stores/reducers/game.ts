@@ -289,7 +289,9 @@ const gameSlice = createSlice({
       state.profile = { ...state.profile, ...action.payload }
     },
     
+    // @deprecated Use API calls instead - backend is source of truth
     addCurrency: (state, action: PayloadAction<{ coins?: number; gems?: number }>) => {
+      console.warn('⚠️ DEPRECATED: addCurrency is deprecated. Currency changes should come from API responses.')
       if (action.payload.coins) {
         state.profile.currency.coins += action.payload.coins
       }
@@ -298,7 +300,9 @@ const gameSlice = createSlice({
       }
     },
     
+    // @deprecated Use API calls instead - backend is source of truth
     addXp: (state, action: PayloadAction<{ amount: number }>) => {
+      console.warn('⚠️ DEPRECATED: addXp is deprecated. XP changes should come from API responses.')
       state.profile.xp += action.payload.amount
       
       // Check for level up
@@ -309,7 +313,9 @@ const gameSlice = createSlice({
       }
     },
     
+    // @deprecated Use API calls instead - backend is source of truth
     spendCurrency: (state, action: PayloadAction<{ coins?: number; gems?: number }>) => {
+      console.warn('⚠️ DEPRECATED: spendCurrency is deprecated. Currency changes should come from API responses.')
       if (action.payload.coins) {
         state.profile.currency.coins = Math.max(0, state.profile.currency.coins - action.payload.coins)
       }
@@ -325,7 +331,9 @@ const gameSlice = createSlice({
       state.profile.stats.petsOwned += 1
     },
     
+    // @deprecated Use API calls instead - backend is source of truth
     updatePet: (state, action: PayloadAction<{ petId: string; updates: Partial<Pet> }>) => {
+      console.warn('⚠️ DEPRECATED: updatePet is deprecated. Pet updates should come from API responses.')
       const petIndex = state.pets.findIndex(pet => pet.id === action.payload.petId)
       if (petIndex !== -1) {
         state.pets[petIndex] = { ...state.pets[petIndex], ...action.payload.updates }
@@ -338,7 +346,9 @@ const gameSlice = createSlice({
       state.profile.stats.petsOwned -= 1
     },
     
+    // @deprecated Use API calls instead - backend is source of truth
     levelUpPet: (state, action: PayloadAction<{ petId: string; xpGained: number }>) => {
+      console.warn('⚠️ DEPRECATED: levelUpPet is deprecated. Level-ups should be handled by backend after battles.')
       const petIndex = state.pets.findIndex(pet => pet.id === action.payload.petId)
       if (petIndex !== -1) {
         const pet = state.pets[petIndex]

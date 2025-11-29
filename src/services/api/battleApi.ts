@@ -72,29 +72,18 @@ export const battleApi = {
    */
   async startBattle(opponentId: string, petId: string) {
     const response = await realApiClient.post<{
-      battle: {
+      session: {
         id: string
         userId: string
         opponentId: string
         petId: string
-        battleData: any
-        completed: boolean
-        victory: boolean | null
+        battleType: string
         createdAt: string
       }
       opponent: {
         id: string
         name: string
         level: number
-        pets: Array<{
-          species: string
-          level: number
-          hp: number
-          maxHp: number
-          attack: number
-          defense: number
-          speed: number
-        }>
       }
       pet: {
         id: string
@@ -114,7 +103,12 @@ export const battleApi = {
 
     return {
       success: true,
-      data: response,
+      data: {
+        battle: response.session, // Map session to battle for backward compatibility
+        opponent: response.opponent,
+        pet: response.pet,
+        message: response.message,
+      },
       message: response.message,
     }
   },
@@ -122,37 +116,37 @@ export const battleApi = {
   /**
    * Complete battle
    */
-  async completeBattle(battleId: string, victory: boolean, petId: string) {
+  async completeBattle(
+    sessionId: string, 
+    won: boolean, 
+    damageDealt: number, 
+    damageTaken: number
+  ) {
     const response = await realApiClient.post<{
-      battle: {
-        id: string
-        completed: boolean
-        victory: boolean
+      won: boolean
+      xpReward: number
+      coinReward: number
+      pet: {
+        leveledUp: boolean
+        newLevel: number
+        currentHp: number
+        statChanges?: {
+          maxHp: number
+          attack: number
+          defense: number
+          speed: number
+        }
       }
-      rewards?: {
-        coins: number
-        xp: number
-      }
-      levelUp?: boolean
-      newStats?: {
-        level: number
-        hp: number
-        maxHp: number
-        attack: number
-        defense: number
-        speed: number
-      }
-      statChanges?: {
-        maxHp: number
-        attack: number
-        defense: number
-        speed: number
+      user: {
+        leveledUp: boolean
+        newLevel: number
       }
       message: string
     }>('/battle/complete', {
-      battleId,
-      victory,
-      petId,
+      sessionId,
+      won,
+      damageDealt,
+      damageTaken,
     })
 
     return {

@@ -11,6 +11,8 @@ interface TopBarProps {
   gems: number
   energy: number
   maxEnergy: number
+  battleTickets?: number
+  huntTickets?: number
   avatar?: any
   onSettingsPress?: () => void
 }
@@ -25,6 +27,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   gems,
   energy,
   maxEnergy,
+  battleTickets,
+  huntTickets,
   avatar,
   onSettingsPress,
 }) => {
@@ -64,6 +68,22 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Ionicons name="diamond" size={16} color="#00BFFF" />
             <ThemedText style={styles.currencyText}>{gems}</ThemedText>
           </Panel>
+
+          {/* Battle Tickets */}
+          {battleTickets !== undefined && (
+            <Panel variant="dark" style={styles.currencyPanel}>
+              <Ionicons name="sword" size={16} color="#FF6B6B" />
+              <ThemedText style={styles.currencyText}>{battleTickets}/20</ThemedText>
+            </Panel>
+          )}
+
+          {/* Hunt Tickets */}
+          {huntTickets !== undefined && (
+            <Panel variant="dark" style={styles.currencyPanel}>
+              <Ionicons name="leaf" size={16} color="#4CAF50" />
+              <ThemedText style={styles.currencyText}>{huntTickets}/5</ThemedText>
+            </Panel>
+          )}
         </View>
 
         {/* Settings Button */}
