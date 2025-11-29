@@ -258,7 +258,7 @@ export interface GameState {
   pets: Pet[]
   items: Item[]
   regions: Region[]
-  // opponents removed - now a constant in src/constants/opponents.ts
+  opponents: Opponent[]
   auctions: Auction[]
   battles: Battle[]
   activeBattle?: Battle
@@ -266,6 +266,10 @@ export interface GameState {
     [regionId: string]: number
   }
   notifications: GameNotification[]
+  isLoading: boolean
+  isLoadingPets: boolean
+  isLoadingItems: boolean
+  isLoadingRegions: boolean
 }
 
 export interface GameNotification {

@@ -99,6 +99,8 @@ export const SignInScreen: React.FC = () => {
                             placeholder="trainer@vnpet.com"
                             placeholderTextColor="rgba(255, 255, 255, 0.4)"
                             style={styles.input}
+                            inputContainerStyle={styles.inputContainer}
+                            inputStyle={styles.inputText}
                           />
                         </View>
                         {errors.email && (
@@ -123,6 +125,8 @@ export const SignInScreen: React.FC = () => {
                             placeholder="Enter your password"
                             placeholderTextColor="rgba(255, 255, 255, 0.4)"
                             style={styles.input}
+                            inputContainerStyle={styles.inputContainer}
+                            inputStyle={styles.inputText}
                           />
                         </View>
                         {errors.password && (
@@ -261,6 +265,14 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     color: '#fff',
+  },
+  inputContainer: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  inputText: {
+    color: '#fff',
+    fontSize: 16,
   },
   errorText: {
     color: '#FF6B6B',

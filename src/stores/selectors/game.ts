@@ -10,12 +10,18 @@ export const getUserInventory = (state: RootState) => state.game.inventory
 export const getAllPets = (state: RootState) => state.game.pets
 export const getAllItems = (state: RootState) => state.game.items
 export const getAllRegions = (state: RootState) => state.game.regions
-export const getAllOpponents = () => OPPONENTS // Now returns constant instead of state
+export const getAllOpponents = (state: RootState) => state.game.opponents
 export const getAllAuctions = (state: RootState) => state.game.auctions
 export const getAllBattles = (state: RootState) => state.game.battles
 export const getActiveBattle = (state: RootState) => state.game.activeBattle
 export const getNotifications = (state: RootState) => state.game.notifications
 export const getHuntingCooldowns = (state: RootState) => state.game.huntingCooldowns
+
+// Loading selectors
+export const getIsLoading = (state: RootState) => state.game.isLoading
+export const getIsLoadingPets = (state: RootState) => state.game.isLoadingPets
+export const getIsLoadingItems = (state: RootState) => state.game.isLoadingItems
+export const getIsLoadingRegions = (state: RootState) => state.game.isLoadingRegions
 
 // Currency selectors
 export const getUserCurrency = createSelector(

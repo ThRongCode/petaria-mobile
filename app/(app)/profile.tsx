@@ -1,3 +1,3 @@
-import { ProfileScreenNew } from '@/screens/game/ProfileScreenNew'
+import { ProfileScreen } from '@/screens/game/ProfileScreen'
 
-export default ProfileScreenNew
+export default ProfileScreen

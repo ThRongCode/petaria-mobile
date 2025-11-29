@@ -49,6 +49,9 @@ function* userLoginSaga(action: PayloadAction<IUserSignInPayload>): IterableIter
         token: { token, userId },
       }))
 
+      // Load user data from API (pets, items, regions, etc.)
+      yield put({ type: 'game/loadUserData' })
+
       // Navigate to app home
       router.replace('/(app)')
     } else {
@@ -108,6 +111,9 @@ function* userSignUpSaga(action: PayloadAction<IUserSignUpPayload>): IterableIte
         },
         token: { token, userId },
       }))
+
+      // Load user data from API (pets, items, regions, etc.)
+      yield put({ type: 'game/loadUserData' })
 
       // Navigate to app home
       router.replace('/(app)')

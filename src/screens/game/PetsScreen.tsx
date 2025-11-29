@@ -15,20 +15,22 @@ import { ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
-import { getUserProfile, getAllPets } from '@/stores/selectors'
+import { getUserProfile, getAllPets, getIsLoadingPets, getIsLoadingItems } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import { apiClient } from '@/services/api'
 import type { Pet, Item } from '@/stores/types/game'
 
 /**
- * PetsScreen Redesign - Modern collection view for Pokemon
+ * PetsScreen - Modern collection view for Pokemon
  * Grid layout with filtering and sorting options
  */
-export const PetsScreenNew: React.FC = () => {
+export const PetsScreen: React.FC = () => {
   const router = useRouter()
   const profile = useSelector(getUserProfile)
   const pets = useSelector(getAllPets) as Pet[]
+  const isLoadingPets = useSelector(getIsLoadingPets)
+  const isLoadingItems = useSelector(getIsLoadingItems)
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'favorites' | 'recent'>('all')
   const [selectedSort, setSelectedSort] = useState<'level' | 'name' | 'rarity'>('level')
   const [activeTab, setActiveTab] = useState<'pokemon' | 'items'>('pokemon')
@@ -263,13 +265,13 @@ export const PetsScreenNew: React.FC = () => {
 
             {/* Price */}
             <View style={styles.itemPrice}>
-              {item.price.coins && (
+              {item.price?.coins && (
                 <View style={styles.priceTag}>
                   <ThemedText style={styles.priceValue}>{item.price.coins}</ThemedText>
                   <ThemedText style={styles.priceIcon}>💰</ThemedText>
                 </View>
               )}
-              {item.price.gems && (
+              {item.price?.gems && (
                 <View style={styles.priceTag}>
                   <ThemedText style={styles.priceValue}>{item.price.gems}</ThemedText>
                   <ThemedText style={styles.priceIcon}>💎</ThemedText>
@@ -422,20 +424,26 @@ export const PetsScreenNew: React.FC = () => {
 
         {/* Pokemon Grid */}
         {activeTab === 'pokemon' && (
-          <FlatList
-            data={pets}
-            renderItem={renderPetCard}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={styles.gridRow}
-            contentContainerStyle={styles.gridContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={() => (
-              <View style={styles.emptyContainer}>
-                <Panel variant="dark" style={styles.emptyPanel}>
-                  <ThemedText style={styles.emptyIcon}>🎒</ThemedText>
-                  <ThemedText style={styles.emptyTitle}>No Pokemon Yet</ThemedText>
-                  <ThemedText style={styles.emptyText}>
+          isLoadingPets ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#FFD700" />
+              <ThemedText style={styles.loadingText}>Loading your Pokemon...</ThemedText>
+            </View>
+          ) : (
+            <FlatList
+              data={pets}
+              renderItem={renderPetCard}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={styles.gridRow}
+              contentContainerStyle={styles.gridContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyContainer}>
+                  <Panel variant="dark" style={styles.emptyPanel}>
+                    <ThemedText style={styles.emptyIcon}>🎒</ThemedText>
+                    <ThemedText style={styles.emptyTitle}>No Pokemon Yet</ThemedText>
+                    <ThemedText style={styles.emptyText}>
                     Start hunting to catch your first Pokemon!
                   </ThemedText>
                   <TouchableOpacity
@@ -454,7 +462,8 @@ export const PetsScreenNew: React.FC = () => {
                 </Panel>
               </View>
             )}
-          />
+            />
+          )
         )}
 
         {/* Items View */}
@@ -896,5 +905,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#B39DDB',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 100,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
   },
 })

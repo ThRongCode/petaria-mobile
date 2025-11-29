@@ -14,19 +14,43 @@ export const itemApi = {
       name: string
       description: string
       type: string
-      category: string
-      price: number
-      effect: any
+      rarity: string
+      effectHp: number | null
+      effectAttack: number | null
+      effectDefense: number | null
+      effectSpeed: number | null
+      effectXpBoost: number | null
+      isPermanent: boolean
+      priceCoins: number | null
+      priceGems: number | null
       imageUrl: string
-      purchasable: boolean
-      consumable: boolean
-      createdAt: string
-      updatedAt: string
     }>>('/item/catalog')
+
+    // Transform backend response to frontend Item type
+    const items = response.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      type: item.type as 'StatBoost' | 'Evolution' | 'Consumable' | 'Cosmetic',
+      rarity: item.rarity as 'Common' | 'Rare' | 'Epic' | 'Legendary',
+      effects: {
+        hp: item.effectHp ?? undefined,
+        attack: item.effectAttack ?? undefined,
+        defense: item.effectDefense ?? undefined,
+        speed: item.effectSpeed ?? undefined,
+        xpBoost: item.effectXpBoost ?? undefined,
+        permanent: item.isPermanent,
+      },
+      price: {
+        coins: item.priceCoins ?? undefined,
+        gems: item.priceGems ?? undefined,
+      },
+      image: item.imageUrl,
+    }))
 
     return {
       success: true,
-      data: response,
+      data: items,
     }
   },
 

@@ -18,10 +18,10 @@ import { useSelector } from 'react-redux'
 import { getUserProfile, getAllPets } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
-import type { Pet } from '@/stores/types/game'
+import type { Pet, Opponent } from '@/stores/types/game'
 import { battleApi } from '@/services/api'
 
-// Backend opponent type
+// Backend opponent type (matches Prisma schema with relations)
 interface BackendOpponent {
   id: string
   name: string
@@ -29,12 +29,34 @@ interface BackendOpponent {
   description?: string
   difficulty: string
   level: number
+  hp?: number
+  maxHp?: number
+  attack?: number
+  defense?: number
+  speed?: number
   coinReward?: number
   xpReward?: number
   rewardXp?: number
   rewardCoins?: number
   imageUrl?: string
   unlockLevel: number
+  moves?: Array<{
+    move: {
+      id: string
+      name: string
+      type: string
+      element: string
+      power: number
+      accuracy: number
+      pp: number
+      maxPp: number
+      description: string
+      effectDamage?: number
+      effectHealing?: number
+      effectStatusEffect?: string
+      effectStatBoost?: any
+    }
+  }>
   pets?: Array<{
     species: string
     level: number
@@ -109,12 +131,55 @@ export const BattleSelectionScreen: React.FC = () => {
 
   const handlePokemonSelect = (pet: Pet) => {
     if (selectedOpponent) {
+      // Transform backend opponent moves structure: moves[].move -> moves[]
+      const transformedMoves: Move[] = selectedOpponent.moves?.map(opponentMove => ({
+        id: opponentMove.move.id,
+        name: opponentMove.move.name,
+        type: opponentMove.move.type as 'Physical' | 'Special' | 'Status',
+        element: opponentMove.move.element as any,
+        power: opponentMove.move.power,
+        accuracy: opponentMove.move.accuracy,
+        pp: opponentMove.move.pp,
+        maxPp: opponentMove.move.maxPp,
+        description: opponentMove.move.description,
+        effects: {
+          damage: opponentMove.move.effectDamage,
+          healing: opponentMove.move.effectHealing,
+          statusEffect: opponentMove.move.effectStatusEffect as any,
+          statBoost: opponentMove.move.effectStatBoost,
+        }
+      })) || []
+
+      // Transform backend opponent to frontend Opponent type
+      const opponent: Opponent = {
+        id: selectedOpponent.id,
+        name: selectedOpponent.name,
+        species: selectedOpponent.species || 'unknown',
+        level: selectedOpponent.level,
+        difficulty: selectedOpponent.difficulty as 'Easy' | 'Normal' | 'Hard' | 'Expert' | 'Master',
+        stats: {
+          hp: selectedOpponent.hp || 100,
+          maxHp: selectedOpponent.maxHp || 100,
+          attack: selectedOpponent.attack || 50,
+          defense: selectedOpponent.defense || 50,
+          speed: selectedOpponent.speed || 50,
+        },
+        moves: transformedMoves,
+        image: selectedOpponent.imageUrl || '',
+        rewards: {
+          xp: selectedOpponent.rewardXp || 0,
+          coins: selectedOpponent.rewardCoins || 0,
+          items: [],
+        },
+        unlockLevel: selectedOpponent.unlockLevel,
+      }
+
       // Navigate to battle screen with battle type context
       router.push({
         pathname: '/battle-arena' as any,
         params: {
           playerPet: JSON.stringify(pet),
-          opponentId: selectedOpponent.id,
+          opponent: JSON.stringify(opponent),
           battleType: battleType,
         },
       })

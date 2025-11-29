@@ -1,3 +1,3 @@
-import { PetsScreenNew } from '@/screens/game/PetsScreenNew'
+import { PetsScreen } from '@/screens/game/PetsScreen'
 
-export default PetsScreenNew
+export default PetsScreen

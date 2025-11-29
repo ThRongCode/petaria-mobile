@@ -186,26 +186,104 @@ const createDummyData = () => {
   }
 }
 
-const dummyData = createDummyData()
+// Dummy data creation function removed - all data now loaded from API
 
 export const gameInitialState: GameState = {
-  profile: dummyData.profile,
-  inventory: dummyData.inventory,
-  pets: dummyData.pets,
-  items: dummyData.items,
-  regions: dummyData.regions,
-  // opponents removed - now imported as constant
-  auctions: dummyData.auctions,
-  battles: dummyData.battles,
+  profile: {
+    id: '',
+    username: '',
+    email: '',
+    avatar: '',
+    level: 1,
+    xp: 0,
+    xpToNext: 100,
+    currency: { coins: 0, gems: 0 },
+    huntTickets: 0,
+    battleTickets: 0,
+    lastTicketReset: new Date().toISOString(),
+    petCount: 0,
+    itemCount: 0,
+    stats: {
+      battlesWon: 0,
+      battlesLost: 0,
+      petsOwned: 0,
+      legendPetsOwned: 0,
+      huntsCompleted: 0,
+      auctionsSold: 0,
+      totalEarnings: 0,
+    },
+  },
+  inventory: { pets: [], items: {}, maxPetSlots: 20, maxItemSlots: 100 },
+  pets: [],
+  items: [],
+  regions: [],
+  auctions: [],
+  battles: [],
   activeBattle: undefined,
   huntingCooldowns: {},
-  notifications: dummyData.notifications,
+  notifications: [],
+  isLoading: false,
+  isLoadingPets: false,
+  isLoadingItems: false,
+  isLoadingRegions: false,
 }
 
 const gameSlice = createSlice({
   name: 'game',
   initialState: gameInitialState,
   reducers: {
+    // Trigger API data loading (handled by saga)
+    loadUserData: (state) => {
+      // This is just a trigger action, actual loading is done in saga
+      state.isLoading = true
+      console.log('🔄 Triggering user data load...')
+    },
+
+    setLoadingComplete: (state) => {
+      state.isLoading = false
+      state.isLoadingPets = false
+      state.isLoadingItems = false
+      state.isLoadingRegions = false
+    },
+
+    setLoadingPets: (state, action: PayloadAction<boolean>) => {
+      state.isLoadingPets = action.payload
+    },
+
+    setLoadingItems: (state, action: PayloadAction<boolean>) => {
+      state.isLoadingItems = action.payload
+    },
+
+    setLoadingRegions: (state, action: PayloadAction<boolean>) => {
+      state.isLoadingRegions = action.payload
+    },
+
+    // API Data Loading Actions
+    setProfile: (state, action: PayloadAction<UserProfile>) => {
+      state.profile = action.payload
+    },
+    
+    setPets: (state, action: PayloadAction<Pet[]>) => {
+      state.pets = action.payload
+      state.inventory.pets = action.payload.map(pet => pet.id)
+    },
+    
+    setItems: (state, action: PayloadAction<Item[]>) => {
+      state.items = action.payload
+    },
+    
+    setRegions: (state, action: PayloadAction<any[]>) => {
+      state.regions = action.payload
+    },
+    
+    setOpponents: (state, action: PayloadAction<Opponent[]>) => {
+      state.opponents = action.payload
+    },
+    
+    setInventory: (state, action: PayloadAction<{ items: Record<string, number> }>) => {
+      state.inventory.items = action.payload.items
+    },
+
     // Profile Actions
     updateProfile: (state, action: PayloadAction<Partial<UserProfile>>) => {
       state.profile = { ...state.profile, ...action.payload }
