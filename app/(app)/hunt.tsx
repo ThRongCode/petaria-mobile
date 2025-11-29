@@ -1,3 +1,3 @@
-import { HuntScreenNew } from '@/screens/game/HuntScreenNew'
+import { HuntScreen } from '@/screens/game/HuntScreen'
 
-export default HuntScreenNew
+export default HuntScreen

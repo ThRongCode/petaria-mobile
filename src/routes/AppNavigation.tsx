@@ -80,31 +80,6 @@ export const TabNavigation: React.FC = () => {
           href: null, // This hides the tab
         }}
       />
-      {/* Hide all backup screens */}
-      <Tabs.Screen
-        name="hunt.backup"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="battle.backup"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="pets.backup"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="profile.backup"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   )
 }
