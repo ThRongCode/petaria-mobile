@@ -351,6 +351,25 @@ class ApiClient {
         } as ApiResponse<T>
       }
 
+      // Pet favorite endpoints
+      if (segments[0] === 'pet' && segments[2] === 'favorite') {
+        const petId = segments[1]
+        if (method === 'POST') {
+          const result = await petApi.addToFavorites(petId)
+          return result as ApiResponse<T>
+        }
+        if (method === 'DELETE') {
+          const result = await petApi.removeFromFavorites(petId)
+          return result as ApiResponse<T>
+        }
+      }
+
+      // Get favorite pets list
+      if (segments[0] === 'pet' && segments[1] === 'favorites' && segments[2] === 'list' && method === 'GET') {
+        const result = await petApi.getFavoritePets()
+        return result as ApiResponse<T>
+      }
+
       // Game endpoints (removed - heal-all now in /pet/heal-all)
 
       // Auction endpoints - not implemented in backend yet
@@ -513,6 +532,27 @@ class ApiClient {
    */
   async healAllPets(): Promise<ApiResponse<{ healedCount: number; coinCost: number; coinsRemaining: number; message: string }>> {
     return this.request<{ healedCount: number; coinCost: number; coinsRemaining: number; message: string }>('/pet/heal-all', 'POST')
+  }
+
+  /**
+   * Add pet to favorites
+   */
+  async addPetToFavorites(petId: string): Promise<ApiResponse<{ message: string; isFavorite: boolean }>> {
+    return this.request<{ message: string; isFavorite: boolean }>(`/pet/${petId}/favorite`, 'POST')
+  }
+
+  /**
+   * Remove pet from favorites
+   */
+  async removePetFromFavorites(petId: string): Promise<ApiResponse<{ message: string; isFavorite: boolean }>> {
+    return this.request<{ message: string; isFavorite: boolean }>(`/pet/${petId}/favorite`, 'DELETE')
+  }
+
+  /**
+   * Get favorite pets
+   */
+  async getFavoritePets(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/pet/favorites/list', 'GET')
   }
 
   /**

@@ -123,4 +123,48 @@ export const petApi = {
       message: response.message,
     }
   },
+
+  /**
+   * Add pet to favorites
+   */
+  async addToFavorites(petId: string) {
+    const response = await realApiClient.post<{
+      message: string
+      isFavorite: boolean
+    }>(`/pet/${petId}/favorite`)
+
+    return {
+      success: true,
+      data: response,
+      message: response.message,
+    }
+  },
+
+  /**
+   * Remove pet from favorites
+   */
+  async removeFromFavorites(petId: string) {
+    const response = await realApiClient.delete<{
+      message: string
+      isFavorite: boolean
+    }>(`/pet/${petId}/favorite`)
+
+    return {
+      success: true,
+      data: response,
+      message: response.message,
+    }
+  },
+
+  /**
+   * Get favorite pets
+   */
+  async getFavoritePets() {
+    const response = await realApiClient.get('/pet/favorites/list')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
 }

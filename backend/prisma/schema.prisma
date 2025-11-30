@@ -38,6 +38,7 @@ model User {
   hunts           Hunt[]
   huntSessions    HuntSession[]
   battleSessions  BattleSession[]
+  favoritePets    FavoritePet[]
 
   @@map("users")
 }
@@ -67,9 +68,27 @@ model Pet {
   owner           User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   moves           PetMove[]
   battles         Battle[]
+  favoritedBy     FavoritePet[]
 
   @@index([ownerId])
   @@map("pets")
+}
+
+// ==================== FAVORITE PETS ====================
+
+model FavoritePet {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  petId     String   @map("pet_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet  Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, petId])
+  @@index([userId])
+  @@index([petId])
+  @@map("favorite_pets")
 }
 
 // ==================== ITEMS (Static Catalog) ====================

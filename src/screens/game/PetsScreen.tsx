@@ -14,12 +14,14 @@ import { TopBar, Panel, ItemDetailDialog } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { getUserProfile, getAllPets, getIsLoadingPets, getIsLoadingItems } from '@/stores/selectors'
+import { gameActions } from '@/stores/reducers'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import { apiClient } from '@/services/api'
 import type { Pet, Item } from '@/stores/types/game'
+import { SvgUri } from 'react-native-svg'
 
 /**
  * PetsScreen - Modern collection view for Pokemon
@@ -27,22 +29,23 @@ import type { Pet, Item } from '@/stores/types/game'
  */
 export const PetsScreen: React.FC = () => {
   const router = useRouter()
+  const dispatch = useDispatch()
   const profile = useSelector(getUserProfile)
   const pets = useSelector(getAllPets) as Pet[]
   const isLoadingPets = useSelector(getIsLoadingPets)
   const isLoadingItems = useSelector(getIsLoadingItems)
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'favorites' | 'recent'>('all')
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'favorites'>('all')
   const [selectedSort, setSelectedSort] = useState<'level' | 'name' | 'rarity'>('level')
   const [activeTab, setActiveTab] = useState<'pokemon' | 'items'>('pokemon')
   const [items, setItems] = useState<Item[]>([])
   const [loadingItems, setLoadingItems] = useState(false)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [showItemDialog, setShowItemDialog] = useState(false)
+  const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null)
 
   const filters = [
     { id: 'all' as const, label: 'All', icon: 'apps' },
     { id: 'favorites' as const, label: 'Favorites', icon: 'heart' },
-    { id: 'recent' as const, label: 'Recent', icon: 'time' },
   ]
 
   useEffect(() => {
@@ -80,6 +83,44 @@ export const PetsScreen: React.FC = () => {
       })
     }
   }
+
+  const handleToggleFavorite = async (pet: Pet, e: any) => {
+    e.stopPropagation()
+    
+    // Prevent multiple clicks
+    if (togglingFavorite === pet.id) return
+    
+    setTogglingFavorite(pet.id)
+    
+    try {
+      if (pet.isFavorite) {
+        const response = await apiClient.removePetFromFavorites(pet.id)
+        if (response.success) {
+          // Update local state
+          dispatch(gameActions.loadUserData())
+        }
+      } else {
+        const response = await apiClient.addPetToFavorites(pet.id)
+        if (response.success) {
+          // Update local state
+          dispatch(gameActions.loadUserData())
+        }
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error)
+      Alert.alert('Error', 'Failed to update favorite status')
+    } finally {
+      setTogglingFavorite(null)
+    }
+  }
+
+  // Filter pets based on selected filter
+  const filteredPets = pets.filter((pet) => {
+    if (selectedFilter === 'favorites') {
+      return pet.isFavorite === true
+    }
+    return true
+  })
 
   const getTypeColor = (type?: string) => {
     if (!type) return '#9E9E9E' // Default gray color for normal/unknown type
@@ -132,6 +173,22 @@ export const PetsScreen: React.FC = () => {
           <View style={styles.levelBadge}>
             <ThemedText style={styles.levelText}>Lv.{pet.level}</ThemedText>
           </View>
+          {/* Favorite Button */}
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={(e) => handleToggleFavorite(pet, e)}
+            disabled={togglingFavorite === pet.id}
+          >
+            {togglingFavorite === pet.id ? (
+              <ActivityIndicator size="small" color="#FFD700" />
+            ) : (
+              <Ionicons 
+                name={pet.isFavorite ? "bookmark" : "bookmark-outline"} 
+                size={24} 
+                color={pet.isFavorite ? "#FFD700" : "#FFFFFF"}
+              />
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Pet Info */}
@@ -161,13 +218,13 @@ export const PetsScreen: React.FC = () => {
                 style={[
                   styles.hpBarInner,
                   { 
-                    width: `${(pet.stats.hp / 200) * 100}%`,
-                    backgroundColor: pet.stats.hp > 100 ? '#4CAF50' : '#FFA726' 
+                    width: `${(pet.stats.hp / pet.stats.maxHp) * 100}%`,
+                    backgroundColor: pet.stats.hp > pet.stats.maxHp * 0.5 ? '#4CAF50' : pet.stats.hp > pet.stats.maxHp * 0.2 ? '#FFA726' : '#F44336'
                   }
                 ]} 
               />
             </View>
-            <ThemedText style={styles.hpValue}>{pet.stats.hp}</ThemedText>
+            <ThemedText style={styles.hpValue}>{pet.stats.hp}/{pet.stats.maxHp}</ThemedText>
           </View>
 
           {/* Stats Preview */}
@@ -433,7 +490,7 @@ export const PetsScreen: React.FC = () => {
             </View>
           ) : (
             <FlatList
-              data={pets}
+              data={filteredPets}
               renderItem={renderPetCard}
               keyExtractor={(item) => item.id}
               numColumns={2}
@@ -621,6 +678,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: '#FFD700',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 20,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   petInfo: {
     gap: 4,

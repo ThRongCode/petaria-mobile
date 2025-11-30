@@ -77,6 +77,7 @@ export interface Pet {
   isForSale: boolean
   mood: number // 0-100
   lastFed: number
+  isFavorite?: boolean
 }
 
 // Item Types

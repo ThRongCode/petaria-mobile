@@ -7,7 +7,7 @@ export class PetService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(userId: string) {
-    return this.prisma.pet.findMany({
+    const pets = await this.prisma.pet.findMany({
       where: { ownerId: userId },
       include: {
         moves: {
@@ -15,11 +15,23 @@ export class PetService {
             move: true,
           },
         },
+        favoritedBy: {
+          where: {
+            userId,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
+
+    // Add isFavorite flag to each pet
+    return pets.map((pet) => ({
+      ...pet,
+      isFavorite: pet.favoritedBy.length > 0,
+      favoritedBy: undefined, // Remove the relation data
+    }));
   }
 
   async findOne(id: string, userId: string) {
@@ -247,5 +259,112 @@ export class PetService {
       coinsRemaining: result.coinsRemaining,
       message: `Healed ${result.healedCount} Pokemon for ${HEAL_COST} coins`,
     };
+  }
+
+  /**
+   * Add a pet to user's favorites
+   */
+  async addToFavorites(userId: string, petId: string) {
+    // Verify the pet belongs to the user
+    const pet = await this.prisma.pet.findFirst({
+      where: {
+        id: petId,
+        ownerId: userId,
+      },
+    });
+
+    if (!pet) {
+      throw new BadRequestException('Pet not found or does not belong to you');
+    }
+
+    // Check if already favorited
+    const existing = await this.prisma.favoritePet.findUnique({
+      where: {
+        userId_petId: {
+          userId,
+          petId,
+        },
+      },
+    });
+
+    if (existing) {
+      return {
+        message: 'Pet is already in favorites',
+        isFavorite: true,
+      };
+    }
+
+    // Add to favorites
+    await this.prisma.favoritePet.create({
+      data: {
+        userId,
+        petId,
+      },
+    });
+
+    return {
+      message: 'Pet added to favorites',
+      isFavorite: true,
+    };
+  }
+
+  /**
+   * Remove a pet from user's favorites
+   */
+  async removeFromFavorites(userId: string, petId: string) {
+    const favorite = await this.prisma.favoritePet.findUnique({
+      where: {
+        userId_petId: {
+          userId,
+          petId,
+        },
+      },
+    });
+
+    if (!favorite) {
+      return {
+        message: 'Pet is not in favorites',
+        isFavorite: false,
+      };
+    }
+
+    await this.prisma.favoritePet.delete({
+      where: {
+        userId_petId: {
+          userId,
+          petId,
+        },
+      },
+    });
+
+    return {
+      message: 'Pet removed from favorites',
+      isFavorite: false,
+    };
+  }
+
+  /**
+   * Get all favorite pets for a user
+   */
+  async getFavoritePets(userId: string) {
+    const favorites = await this.prisma.favoritePet.findMany({
+      where: { userId },
+      include: {
+        pet: {
+          include: {
+            moves: {
+              include: {
+                move: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return favorites.map((fav) => fav.pet);
   }
 }

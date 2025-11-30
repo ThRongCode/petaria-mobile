@@ -61,4 +61,25 @@ export class PetController {
   healAll(@CurrentUser('id') userId: string) {
     return this.petService.healAll(userId);
   }
+
+  @Post(':id/favorite')
+  addToFavorites(
+    @Param('id') petId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.petService.addToFavorites(userId, petId);
+  }
+
+  @Delete(':id/favorite')
+  removeFromFavorites(
+    @Param('id') petId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.petService.removeFromFavorites(userId, petId);
+  }
+
+  @Get('favorites/list')
+  getFavorites(@CurrentUser('id') userId: string) {
+    return this.petService.getFavoritePets(userId);
+  }
 }

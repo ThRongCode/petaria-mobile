@@ -90,6 +90,7 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         isForSale: backendPet.isForSale || false,
         mood: backendPet.mood,
         lastFed: backendPet.lastFed ? new Date(backendPet.lastFed).getTime() : Date.now(),
+        isFavorite: backendPet.isFavorite || false,
       }))
       
       yield put(gameActions.setPets(pets))
