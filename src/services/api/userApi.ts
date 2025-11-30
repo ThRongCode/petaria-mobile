@@ -17,6 +17,7 @@ export const userApi = {
       xp: number
       coins: number
       gems: number
+      pokeballs: number
       huntTickets: number
       battleTickets: number
       lastTicketReset: string

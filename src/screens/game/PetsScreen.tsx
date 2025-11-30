@@ -15,11 +15,11 @@ import { ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector, useDispatch } from 'react-redux'
-import { getUserProfile, getAllPets, getIsLoadingPets, getIsLoadingItems } from '@/stores/selectors'
+import { getUserProfile, getAllPets, getIsLoadingPets, getIsLoadingItems, getUserInventory } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
-import { apiClient } from '@/services/api'
+import { apiClient, itemApi } from '@/services/api'
 import type { Pet, Item } from '@/stores/types/game'
 import { SvgUri } from 'react-native-svg'
 
@@ -32,6 +32,7 @@ export const PetsScreen: React.FC = () => {
   const dispatch = useDispatch()
   const profile = useSelector(getUserProfile)
   const pets = useSelector(getAllPets) as Pet[]
+  const inventory = useSelector(getUserInventory)
   const isLoadingPets = useSelector(getIsLoadingPets)
   const isLoadingItems = useSelector(getIsLoadingItems)
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'favorites'>('all')
@@ -49,17 +50,24 @@ export const PetsScreen: React.FC = () => {
   ]
 
   useEffect(() => {
-    if (activeTab === 'items' && items.length === 0) {
+    if (activeTab === 'items') {
       loadItems()
     }
-  }, [activeTab])
+  }, [activeTab, inventory.items])
 
   const loadItems = async () => {
     setLoadingItems(true)
     try {
-      const response = await apiClient.getItemsCatalog()
+      const response = await itemApi.getCatalog()
       if (response.success && response.data) {
-        setItems(response.data)
+        // Filter to show only owned items
+        const ownedItems = response.data
+          .filter(item => (inventory.items[item.id] || 0) > 0)
+          .map(item => ({
+            ...item,
+            quantity: inventory.items[item.id] || 0
+          }))
+        setItems(ownedItems)
       }
     } catch (error) {
       console.error('Failed to load items:', error)
@@ -82,6 +90,50 @@ export const PetsScreen: React.FC = () => {
         params: { item: JSON.stringify(selectedItem) }
       })
     }
+  }
+
+  const handleBuyItem = async (item: Item) => {
+    if (!item) return
+
+    // Check if user has enough currency
+    const cost = item.price.coins || item.price.gems || 0
+    const currency = item.price.coins ? 'coins' : 'gems'
+    const userBalance = item.price.coins ? profile.currency.coins : profile.currency.gems
+
+    if (userBalance < cost) {
+      Alert.alert(
+        'Insufficient Funds',
+        `You need ${cost} ${currency} to purchase ${item.name}. You have ${userBalance} ${currency}.`
+      )
+      return
+    }
+
+    Alert.alert(
+      'Purchase Item',
+      `Buy ${item.name} for ${cost} ${currency}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Buy',
+          onPress: async () => {
+            try {
+              const response = await itemApi.buyItem(item.id, 1)
+              if (response.success) {
+                Alert.alert('Success', `You purchased ${item.name}!`)
+                // Reload user data to update inventory and currency
+                dispatch(gameActions.loadUserData())
+                setShowItemDialog(false)
+              } else {
+                Alert.alert('Error', 'Failed to purchase item')
+              }
+            } catch (error) {
+              console.error('Error buying item:', error)
+              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to purchase item')
+            }
+          }
+        }
+      ]
+    )
   }
 
   const handleToggleFavorite = async (pet: Pet, e: any) => {
@@ -362,6 +414,7 @@ export const PetsScreen: React.FC = () => {
           username={profile.username}
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
+          pokeballs={profile.currency?.pokeballs || 0}
           energy={80}
           maxEnergy={100}
           battleTickets={profile.battleTickets}
@@ -437,7 +490,7 @@ export const PetsScreen: React.FC = () => {
                       activeTab === 'items' && styles.tabTextActive,
                     ]}
                   >
-                    Items
+                    Inventory
                   </ThemedText>
                 </LinearGradient>
               </TouchableOpacity>
@@ -533,6 +586,28 @@ export const PetsScreen: React.FC = () => {
                 <ActivityIndicator size="large" color="#FFD700" />
                 <ThemedText style={styles.loadingText}>Loading items...</ThemedText>
               </View>
+            ) : items.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Panel variant="dark" style={styles.emptyPanel}>
+                  <Ionicons name="cube-outline" size={64} color="rgba(255, 255, 255, 0.3)" />
+                  <ThemedText style={styles.emptyTitle}>No Items Yet</ThemedText>
+                  <ThemedText style={styles.emptyText}>
+                    Visit the shop to purchase items for your Pokémon
+                  </ThemedText>
+                  <TouchableOpacity
+                    style={styles.shopButton}
+                    onPress={() => router.push('/shop')}
+                  >
+                    <LinearGradient
+                      colors={['rgba(255, 215, 0, 0.3)', 'rgba(255, 152, 0, 0.5)']}
+                      style={styles.shopButtonGradient}
+                    >
+                      <Ionicons name="cart" size={20} color="#FFD700" />
+                      <ThemedText style={styles.shopButtonText}>Visit Shop</ThemedText>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Panel>
+              </View>
             ) : (
               <FlatList
                 data={items}
@@ -557,6 +632,7 @@ export const PetsScreen: React.FC = () => {
           setSelectedItem(null)
         }}
         onUse={handleUseItem}
+        userInventory={inventory.items}
       />
     </View>
   )
@@ -985,5 +1061,48 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.7)',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyPanel: {
+    padding: 40,
+    alignItems: 'center',
+    width: '100%',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  shopButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  shopButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+  },
+  shopButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFD700',
   },
 })

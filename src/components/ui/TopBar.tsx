@@ -9,6 +9,7 @@ interface TopBarProps {
   username: string
   coins: number
   gems: number
+  pokeballs?: number
   energy: number
   maxEnergy: number
   battleTickets?: number
@@ -25,6 +26,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   username,
   coins,
   gems,
+  pokeballs,
   energy,
   maxEnergy,
   battleTickets,
@@ -55,7 +57,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Spacer */}
         <View style={styles.spacer} />
 
-        {/* Currencies (Coins + Gems only) */}
+        {/* Currencies (Coins + Gems + Pokeballs) */}
         <View style={styles.currencies}>
           {/* Coins */}
           <Panel variant="dark" style={styles.currencyPanel}>
@@ -68,6 +70,14 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Ionicons name="diamond" size={16} color="#00BFFF" />
             <ThemedText style={styles.currencyText}>{gems}</ThemedText>
           </Panel>
+
+          {/* Pokeballs */}
+          {pokeballs !== undefined && (
+            <Panel variant="dark" style={styles.currencyPanel}>
+              <ThemedText style={styles.pokeballIcon}>⚾</ThemedText>
+              <ThemedText style={styles.currencyText}>{pokeballs}</ThemedText>
+            </Panel>
+          )}
         </View>
 
         {/* Settings Button */}
@@ -246,5 +256,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     minWidth: 45,
+  },
+  pokeballIcon: {
+    fontSize: 14,
   },
 })

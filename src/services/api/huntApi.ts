@@ -175,6 +175,42 @@ export const huntApi = {
   },
 
   /**
+   * Make a move in the hunt session
+   */
+  async move(sessionId: string, direction: 'up' | 'down' | 'left' | 'right') {
+    console.log('🔵 [huntApi] move() called')
+    console.log('🔵 [huntApi] sessionId:', sessionId)
+    console.log('🔵 [huntApi] direction:', direction)
+    console.log('🔵 [huntApi] Calling realApiClient.post("/hunt/move", { sessionId, direction })')
+    
+    const response = await realApiClient.post<{
+      direction: string
+      movesLeft: number
+      encounter: {
+        id: string
+        species: string
+        rarity: string
+        level: number
+        hp: number
+        maxHp: number
+        attack: number
+        defense: number
+        speed: number
+        caught: boolean
+      } | null
+      message: string
+    }>('/hunt/move', { sessionId, direction })
+
+    console.log('🔵 [huntApi] Response received:', response)
+
+    return {
+      success: true,
+      data: response,
+      message: response.message,
+    }
+  },
+
+  /**
    * Complete hunt session
    */
   async completeSession(sessionId: string) {

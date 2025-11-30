@@ -21,6 +21,7 @@ model User {
   xp              Int       @default(0)
   coins           Int       @default(1000)
   gems            Int       @default(50)
+  pokeballs       Int       @default(5)
   huntTickets     Int       @default(5) @map("hunt_tickets")
   battleTickets   Int       @default(20) @map("battle_tickets")
   lastTicketReset DateTime  @default(now()) @map("last_ticket_reset")

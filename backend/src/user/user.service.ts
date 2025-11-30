@@ -17,6 +17,7 @@ export class UserService {
         xp: true,
         coins: true,
         gems: true,
+        pokeballs: true,
         huntTickets: true,
         battleTickets: true,
         lastTicketReset: true,

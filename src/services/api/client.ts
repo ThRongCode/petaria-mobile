@@ -304,8 +304,45 @@ class ApiClient {
 
       // Hunt endpoints
       if (segments[0] === 'hunt') {
-        if (method === 'POST' && !segments[1]) {
+        console.log('🔷 [apiClient] Hunt endpoint detected, segments:', segments, 'method:', method)
+        
+        // Start hunt session
+        if (segments[1] === 'start' && method === 'POST') {
+          console.log('🔷 [apiClient] Routing to huntApi.startHunt')
           const result = await huntApi.startHunt(body.regionId)
+          return result as ApiResponse<T>
+        }
+        // Get current session
+        if (segments[1] === 'session' && method === 'GET') {
+          console.log('🔷 [apiClient] Routing to huntApi.getSession')
+          const result = await huntApi.getSession()
+          return result as ApiResponse<T>
+        }
+        // Delete/cancel session
+        if (segments[1] === 'session' && segments[2] && method === 'DELETE') {
+          console.log('🔷 [apiClient] Routing to huntApi.cancelSession')
+          const result = await huntApi.cancelSession(segments[2])
+          return result as ApiResponse<T>
+        }
+        // Move in dungeon
+        if (segments[1] === 'move' && method === 'POST') {
+          console.log('🔷 [apiClient] Routing to huntApi.move with body:', body)
+          const result = await huntApi.move(body.sessionId, body.direction)
+          return result as ApiResponse<T>
+        }
+        // Attempt catch
+        if (segments[1] === 'catch' && method === 'POST') {
+          const result = await huntApi.attemptCatch(body.sessionId, body.encounterId, body.ballType)
+          return result as ApiResponse<T>
+        }
+        // Flee
+        if (segments[1] === 'flee' && segments[2] && method === 'POST') {
+          const result = await huntApi.flee(segments[2])
+          return result as ApiResponse<T>
+        }
+        // Complete session
+        if (segments[1] === 'complete' && segments[2] && method === 'POST') {
+          const result = await huntApi.completeSession(segments[2])
           return result as ApiResponse<T>
         }
       }

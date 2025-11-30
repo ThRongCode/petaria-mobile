@@ -93,12 +93,18 @@ export class HuntService {
       throw new BadRequestException('No spawns available in this region');
     }
 
-    // Generate 3 encounters based on spawn rates
-    const encounters: Encounter[] = [];
-    for (let i = 0; i < 3; i++) {
-      const encounter = this.generateEncounter(spawns);
-      encounters.push(encounter);
-    }
+    // Initialize session data with move tracking
+    const sessionData = {
+      encounters: [] as Encounter[],
+      movesLeft: 10, // 10 moves per session
+      regionSpawns: spawns.map((s) => ({
+        species: s.species,
+        rarity: s.rarity,
+        minLevel: s.minLevel,
+        maxLevel: s.maxLevel,
+        spawnRate: s.spawnRate,
+      })),
+    };
 
     // Deduct hunt ticket
     await this.prisma.user.update({
@@ -113,7 +119,7 @@ export class HuntService {
       data: {
         userId,
         regionId,
-        encountersData: encounters as any,
+        encountersData: sessionData as any,
       },
       include: {
         region: true,
@@ -122,8 +128,10 @@ export class HuntService {
 
     return {
       session,
-      encounters,
-      message: 'Hunt session started! Complete it anytime - no expiration.',
+      movesLeft: sessionData.movesLeft,
+      encounters: [],
+      message:
+        'Hunt session started! Explore with 10 moves to find Pokemon.',
     };
   }
 
@@ -191,9 +199,123 @@ export class HuntService {
       throw new NotFoundException('No active hunt session found');
     }
 
+    const sessionData = session.encountersData as any;
+
     return {
       session,
-      encounters: session.encountersData as unknown as Encounter[],
+      encounters: sessionData.encounters || [],
+      movesLeft: sessionData.movesLeft || 0,
+    };
+  }
+
+  async move(
+    userId: string,
+    sessionId: string,
+    direction: 'up' | 'down' | 'left' | 'right',
+  ) {
+    const session = await this.prisma.huntSession.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+      },
+      include: {
+        region: true,
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Hunt session not found');
+    }
+
+    const sessionData = session.encountersData as any;
+
+    // Check if moves left
+    if (sessionData.movesLeft <= 0) {
+      throw new BadRequestException(
+        'No moves left! Please complete the session.',
+      );
+    }
+
+    // Random chance to encounter a Pokemon (50% chance)
+    const encounterChance = Math.random();
+    let newEncounter: Encounter | null = null;
+
+    if (encounterChance < 0.5 && sessionData.regionSpawns?.length > 0) {
+      // Generate new encounter
+      newEncounter = this.generateEncounterFromSpawns(
+        sessionData.regionSpawns,
+      );
+      sessionData.encounters.push(newEncounter);
+    }
+
+    // Decrease moves
+    sessionData.movesLeft -= 1;
+
+    // Update session
+    await this.prisma.huntSession.update({
+      where: { id: sessionId },
+      data: {
+        encountersData: sessionData as any,
+      },
+    });
+
+    return {
+      direction,
+      movesLeft: sessionData.movesLeft,
+      encounter: newEncounter,
+      message: newEncounter
+        ? `Wild ${newEncounter.species} appeared!`
+        : 'Nothing here... keep exploring!',
+    };
+  }
+
+  private generateEncounterFromSpawns(spawns: any[]): Encounter {
+    // Calculate total spawn rate
+    const totalRate = spawns.reduce((sum: number, s: any) => sum + s.spawnRate, 0);
+
+    // Pick a random spawn based on rates
+    let random = Math.random() * totalRate;
+    let selectedSpawn = spawns[0];
+
+    for (const spawn of spawns) {
+      random -= spawn.spawnRate;
+      if (random <= 0) {
+        selectedSpawn = spawn;
+        break;
+      }
+    }
+
+    // Generate level within min/max range
+    const level =
+      Math.floor(
+        Math.random() * (selectedSpawn.maxLevel - selectedSpawn.minLevel + 1),
+      ) + selectedSpawn.minLevel;
+
+    // Generate stats based on level and rarity
+    const rarityMultiplier = {
+      common: 1.0,
+      uncommon: 1.2,
+      rare: 1.5,
+      epic: 1.8,
+      legendary: 2.0,
+    }[selectedSpawn.rarity.toLowerCase()] || 1.0;
+
+    const baseHp = 20 + level * 5;
+    const baseAttack = 5 + level * 2;
+    const baseDefense = 5 + level * 2;
+    const baseSpeed = 5 + level * 2;
+
+    return {
+      id: `encounter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      species: selectedSpawn.species,
+      rarity: selectedSpawn.rarity,
+      level,
+      hp: Math.floor(baseHp * rarityMultiplier),
+      maxHp: Math.floor(baseHp * rarityMultiplier),
+      attack: Math.floor(baseAttack * rarityMultiplier),
+      defense: Math.floor(baseDefense * rarityMultiplier),
+      speed: Math.floor(baseSpeed * rarityMultiplier),
+      caught: false,
     };
   }
 
@@ -203,54 +325,21 @@ export class HuntService {
     encounterId: string,
     ballType: string = 'pokeball',
   ) {
-    // Map ball type to item ID
-    const ballItemId = {
-      pokeball: 'ball_pokeball',
-      greatball: 'ball_great',
-      ultraball: 'ball_ultra',
-    }[ballType];
-
-    if (!ballItemId) {
-      throw new BadRequestException('Invalid ball type');
-    }
-
-    // Check if user has the ball in inventory
-    const userItem = await this.prisma.userItem.findUnique({
-      where: {
-        userId_itemId: {
-          userId,
-          itemId: ballItemId,
-        },
-      },
+    // Check if user has pokeballs (only regular pokeballs for now)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pokeballs: true },
     });
 
-    if (!userItem || userItem.quantity < 1) {
-      throw new BadRequestException(`You don't have any ${ballType}s`);
+    if (!user || user.pokeballs < 1) {
+      throw new BadRequestException(`You don't have any pokeballs`);
     }
 
-    // Deduct ball from inventory BEFORE catch attempt
-    if (userItem.quantity === 1) {
-      await this.prisma.userItem.delete({
-        where: {
-          userId_itemId: { userId, itemId: ballItemId },
-        },
-      });
-    } else {
-      await this.prisma.userItem.update({
-        where: {
-          userId_itemId: { userId, itemId: ballItemId },
-        },
-        data: {
-          quantity: userItem.quantity - 1,
-        },
-      });
-    }
-
-    // Decrement itemCount
+    // Deduct pokeball BEFORE catch attempt
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        itemCount: { decrement: 1 },
+        pokeballs: { decrement: 1 },
       },
     });
 
@@ -265,8 +354,9 @@ export class HuntService {
       throw new NotFoundException('Hunt session not found');
     }
 
-    const encounters = session.encountersData as unknown as Encounter[];
-    const encounter = encounters.find((e) => e.id === encounterId);
+    const sessionData = session.encountersData as any;
+    const encounters = sessionData.encounters || [];
+    const encounter = encounters.find((e: Encounter) => e.id === encounterId);
 
     if (!encounter) {
       throw new NotFoundException('Encounter not found');
@@ -335,10 +425,11 @@ export class HuntService {
 
       // Mark encounter as caught
       encounter.caught = true;
+      sessionData.encounters = encounters;
       await this.prisma.huntSession.update({
         where: { id: sessionId },
         data: {
-          encountersData: encounters as any,
+          encountersData: sessionData as any,
         },
       });
 

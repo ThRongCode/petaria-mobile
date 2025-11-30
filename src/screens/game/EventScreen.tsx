@@ -204,6 +204,7 @@ export const EventScreen: React.FC = () => {
           username={profile.username}
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
+          pokeballs={profile.currency?.pokeballs || 0}
           energy={80}
           maxEnergy={100}
           battleTickets={profile.battleTickets}

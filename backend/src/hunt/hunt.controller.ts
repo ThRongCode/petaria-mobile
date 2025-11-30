@@ -2,6 +2,7 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/c
 import { HuntService } from './hunt.service';
 import { StartHuntDto } from './dto/start-hunt.dto';
 import { CatchPetDto } from './dto/catch-pet.dto';
+import { MoveDto } from './dto/move.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -21,6 +22,11 @@ export class HuntController {
   @Get('session')
   getSession(@CurrentUser('id') userId: string) {
     return this.huntService.getSession(userId);
+  }
+
+  @Post('move')
+  move(@CurrentUser('id') userId: string, @Body() moveDto: MoveDto) {
+    return this.huntService.move(userId, moveDto.sessionId, moveDto.direction);
   }
 
   @Post('catch')

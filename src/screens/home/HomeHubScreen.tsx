@@ -136,11 +136,12 @@ export const HomeHubScreen: React.FC = () => {
           username={profile.username}
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
+          pokeballs={profile.currency?.pokeballs || 0}
           energy={80}
           maxEnergy={100}
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
-          onSettingsPress={() => router.push('/profile')}
+          onSettingsPress={() => router.push('/(app)/profile')}
         />
 
         {/* Main Content Area */}
@@ -234,6 +235,21 @@ export const HomeHubScreen: React.FC = () => {
                 </ThemedText>
               </LinearGradient>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => router.push('/shop')}
+            >
+              <LinearGradient
+                colors={['#FFB300', '#FF8F00']}
+                style={styles.featureGradient}
+              >
+                <ThemedText style={styles.featureTitle}>🛒 Item Shop</ThemedText>
+                <ThemedText style={styles.featureSubtitle}>
+                  Purchase items and supplies
+                </ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
 
           {/* Daily Quest Banner */}
@@ -291,8 +307,8 @@ export const HomeHubScreen: React.FC = () => {
             <IconButton
               icon="gift"
               label="Shop"
-              onPress={() => {}}
-              locked={true}
+              onPress={() => router.push('/shop')}
+              locked={false}
             />
             <IconButton
               icon="newspaper"

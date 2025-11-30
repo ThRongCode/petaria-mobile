@@ -18,6 +18,8 @@ interface ItemDetailDialogProps {
   item: Item | null
   onClose: () => void
   onUse?: () => void
+  onBuy?: (item: Item) => void
+  userInventory?: Record<string, number>
 }
 
 export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
@@ -25,8 +27,13 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
   item,
   onClose,
   onUse,
+  onBuy,
+  userInventory = {},
 }) => {
   if (!item) return null
+
+  const userOwnsItem = (userInventory[item.id] || 0) > 0
+  const itemQuantity = userInventory[item.id] || 0
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -168,6 +175,19 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
                 </View>
               )}
 
+              {/* Quantity Owned */}
+              {userOwnsItem && (
+                <View style={styles.section}>
+                  <ThemedText style={styles.sectionTitle}>In Inventory</ThemedText>
+                  <View style={styles.quantityContainer}>
+                    <Ionicons name="cube" size={20} color="#4CAF50" />
+                    <ThemedText style={styles.quantityText}>
+                      {itemQuantity} owned
+                    </ThemedText>
+                  </View>
+                </View>
+              )}
+
               {/* Price */}
               <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Price</ThemedText>
@@ -196,7 +216,24 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
 
             {/* Action Buttons */}
             <View style={styles.actions}>
-              {isUsable && onUse && (
+              {onBuy && (
+                <TouchableOpacity onPress={() => onBuy(item)} style={styles.actionButton}>
+                  <LinearGradient
+                    colors={['rgba(255, 193, 7, 0.3)', 'rgba(255, 152, 0, 0.5)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.actionGradient}
+                  >
+                    <View style={styles.actionButtonBorder}>
+                      <Ionicons name="cart" size={20} color="#FFC107" />
+                      <ThemedText style={[styles.actionButtonText, { color: '#FFC107' }]}>
+                        Buy Item
+                      </ThemedText>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+              {isUsable && onUse && userOwnsItem && (
                 <TouchableOpacity onPress={onUse} style={styles.actionButton}>
                   <LinearGradient
                     colors={['rgba(76, 175, 80, 0.3)', 'rgba(46, 125, 50, 0.5)']}
@@ -367,6 +404,22 @@ const styles = StyleSheet.create({
   priceCurrency: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.7)',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4CAF50',
   },
   actions: {
     gap: 12,

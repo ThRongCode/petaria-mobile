@@ -195,6 +195,7 @@ export interface AuctionBid {
 export interface Currency {
   coins: number
   gems: number
+  pokeballs?: number
 }
 
 export interface Transaction {

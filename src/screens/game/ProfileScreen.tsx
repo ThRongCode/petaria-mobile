@@ -80,9 +80,9 @@ export const ProfileScreen: React.FC = () => {
 
   const stats = [
     { label: 'Total Battles', value: profile.stats?.battlesWon || 0, icon: 'flame', color: '#F44336' },
-    { label: 'Pokemon Caught', value: profile.stats?.petsOwned || 0, icon: 'pokeball', color: '#4CAF50' },
+    { label: 'Pokemon Caught', value: profile.stats?.petsOwned || 0, icon: 'cube', color: '#4CAF50' },
+    { label: 'Pokeballs', value: profile.currency?.pokeballs || 0, icon: 'baseball', color: '#FF6B6B' },
     { label: 'Hunts Completed', value: profile.stats?.huntsCompleted || 0, icon: 'map', color: '#2196F3' },
-    { label: 'Days Active', value: 42, icon: 'calendar', color: '#9C27B0' },
   ]
 
   const achievements = [
@@ -128,6 +128,7 @@ export const ProfileScreen: React.FC = () => {
           username={profile.username}
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
+          pokeballs={profile.currency?.pokeballs || 0}
           energy={80}
           maxEnergy={100}
           battleTickets={profile.battleTickets}

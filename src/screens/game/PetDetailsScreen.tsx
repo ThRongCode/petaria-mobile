@@ -86,6 +86,7 @@ export default function PetDetailsScreen() {
         username={userProfile?.username || 'Trainer'}
         coins={userProfile?.currency?.coins || 0}
         gems={userProfile?.currency?.gems || 0}
+        pokeballs={userProfile?.currency?.pokeballs || 0}
         energy={80}
         maxEnergy={100}
         battleTickets={userProfile?.battleTickets}

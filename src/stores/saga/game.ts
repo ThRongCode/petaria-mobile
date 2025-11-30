@@ -25,6 +25,7 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         currency: {
           coins: profileResponse.data.coins,
           gems: profileResponse.data.gems,
+          pokeballs: profileResponse.data.pokeballs,
         },
         huntTickets: profileResponse.data.huntTickets,
         battleTickets: profileResponse.data.battleTickets,

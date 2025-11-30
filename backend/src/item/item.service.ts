@@ -66,7 +66,30 @@ export class ItemService {
       throw new BadRequestException('Item is not purchasable');
     }
 
-    // Deduct currency
+    // Special handling for pokeballs - add to currency instead of inventory
+    if (itemId === 'pokeball') {
+      const updateData = currency === 'coin' 
+        ? { coins: user.coins - totalCost, pokeballs: { increment: quantity } }
+        : { gems: user.gems - totalCost, pokeballs: { increment: quantity } };
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+      });
+
+      return {
+        message: 'Pokeballs purchased successfully',
+        item: item.name,
+        quantity,
+        totalCost,
+        currency,
+        remainingCoins: updatedUser.coins,
+        remainingGems: updatedUser.gems,
+        pokeballs: updatedUser.pokeballs,
+      };
+    }
+
+    // Deduct currency for regular items
     const updateData = currency === 'coin' 
       ? { coins: user.coins - totalCost }
       : { gems: user.gems - totalCost };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Image, Modal, Animated, ImageBackground, Alert, ActivityIndicator } from 'react-native'
+import { StyleSheet, View, ScrollView, TouchableOpacity, Image, Modal, Animated, ImageBackground, Alert, ActivityIndicator } from 'react-native'
 import { ThemedText } from '@/components'
 import { Panel, TopBar, IconButton, CustomAlert } from '@/components/ui'
 import { useSelector } from 'react-redux'
@@ -53,9 +53,11 @@ export const HuntingSessionScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  const [currentEncounterIndex, setCurrentEncounterIndex] = useState(0)
+  const [movesLeft, setMovesLeft] = useState(10)
+  const [currentEncounter, setCurrentEncounter] = useState<BackendEncounter | null>(null)
   const [showEncounter, setShowEncounter] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)
+  const [isMoving, setIsMoving] = useState(false)
   const [sessionStarted, setSessionStarted] = useState(false)
   const [sessionRewards, setSessionRewards] = useState({
     totalXp: 0,
@@ -84,34 +86,49 @@ export const HuntingSessionScreen: React.FC = () => {
     setShowAlert(true)
   }
 
-  // Load session from API
+  // Load or start session
   useEffect(() => {
-    const loadSession = async () => {
-      console.log('🎯 Loading hunt session:', params.sessionId)
+    const initSession = async () => {
+      console.log('🎯 Initializing hunt session...')
+      console.log('🎯 params.sessionId:', params.sessionId)
+      console.log('🎯 params.regionId:', params.regionId)
       setIsLoading(true)
       setError(null)
       
       try {
-        const result = await huntApi.getSession()
-        console.log('✅ Loaded session:', result)
-        
-        if (result.success && result.data) {
-          setSession(result.data.session)
-          setEncounters(result.data.encounters)
+        // If regionId is provided, start a new session directly (don't check for existing)
+        if (params.regionId) {
+          console.log('🚀 Starting new hunt session for region:', params.regionId)
+          const startResult = await huntApi.startHunt(params.regionId)
+          console.log('✅ Started new session:', startResult)
           
-          // Show first uncaught encounter
-          const firstUncaught = result.data.encounters.findIndex((e: BackendEncounter) => !e.caught)
-          if (firstUncaught !== -1) {
-            setCurrentEncounterIndex(firstUncaught)
-            setShowEncounter(true)
+          if (startResult.success && startResult.data) {
+            setSession(startResult.data.session)
+            setEncounters(startResult.data.encounters || [])
+            setMovesLeft(startResult.data.movesLeft || 10)
+          } else {
+            throw new Error('Failed to start hunt session')
+          }
+        } else if (params.sessionId) {
+          // If sessionId is provided (resuming), get the existing session
+          console.log('🔄 Resuming existing session:', params.sessionId)
+          const result = await huntApi.getSession()
+          console.log('✅ Found existing session:', result)
+          
+          if (result.success && result.data) {
+            setSession(result.data.session)
+            setEncounters(result.data.encounters || [])
+            setMovesLeft(result.data.movesLeft || 10)
+          } else {
+            throw new Error('Session not found')
           }
         } else {
-          throw new Error('Failed to load session')
+          throw new Error('No region or session specified')
         }
       } catch (error) {
-        console.error('❌ Error loading session:', error)
-        setError(error instanceof Error ? error.message : 'Failed to load session')
-        Alert.alert('Error', 'Failed to load hunt session', [
+        console.error('❌ Error initializing session:', error)
+        setError(error instanceof Error ? error.message : 'Failed to initialize hunt session')
+        Alert.alert('Error', 'Failed to start hunt session', [
           { text: 'Go Back', onPress: () => router.back() }
         ])
       } finally {
@@ -119,10 +136,8 @@ export const HuntingSessionScreen: React.FC = () => {
       }
     }
 
-    if (params.sessionId) {
-      loadSession()
-    }
-  }, [params.sessionId])
+    initSession()
+  }, [params.sessionId, params.regionId])
 
   useEffect(() => {
     if (!sessionStarted && params.regionId) {
@@ -130,30 +145,20 @@ export const HuntingSessionScreen: React.FC = () => {
     }
   }, [params.sessionId])
 
-  // Calculate actions left based on uncaught encounters
-  const actionsLeft = encounters.filter(e => !e.caught).length
+  // Actions left is now movesLeft from session
+  const actionsLeft = movesLeft
 
-  const getCurrentEncounter = (): BackendEncounter | null => {
-    return encounters[currentEncounterIndex] || null
+  const closeEncounter = () => {
+    setShowEncounter(false)
+    setCurrentEncounter(null)
   }
 
-  const moveToNextEncounter = () => {
-    const nextIndex = encounters.findIndex((e, i) => i > currentEncounterIndex && !e.caught)
-    if (nextIndex !== -1) {
-      setCurrentEncounterIndex(nextIndex)
-      setShowEncounter(true)
-    } else {
-      // No more encounters, complete session
-      completeSession()
-    }
-  }
-
-  const endSession = () => {
-    completeSession()
+  const exitSession = () => {
+    // Just navigate back - session remains active for resuming later
+    router.back()
   }
 
   const attemptCapture = async () => {
-    const currentEncounter = getCurrentEncounter()
     if (!currentEncounter || currentEncounter.caught || !session || isCapturing) return
 
     console.log('🎯 Attempting to catch:', currentEncounter.species)
@@ -166,8 +171,9 @@ export const HuntingSessionScreen: React.FC = () => {
       if (result.success && result.data) {
         if (result.data.success && result.data.pet) {
           // Successfully caught
-          const updatedEncounters = [...encounters]
-          updatedEncounters[currentEncounterIndex] = { ...currentEncounter, caught: true }
+          const updatedEncounters = encounters.map(e => 
+            e.id === currentEncounter.id ? { ...e, caught: true } : e
+          )
           setEncounters(updatedEncounters)
           
           setSessionRewards(prev => ({ 
@@ -181,9 +187,8 @@ export const HuntingSessionScreen: React.FC = () => {
             [{ 
               text: 'Continue', 
               onPress: () => {
-                setShowEncounter(false)
+                closeEncounter()
                 setIsCapturing(false)
-                setTimeout(() => moveToNextEncounter(), 300)
               }
             }]
           )
@@ -200,9 +205,8 @@ export const HuntingSessionScreen: React.FC = () => {
               text: 'Run Away',
               style: 'cancel',
               onPress: () => {
-                setShowEncounter(false)
+                closeEncounter()
                 setIsCapturing(false)
-                setTimeout(() => moveToNextEncounter(), 300)
               }
             }]
           )
@@ -210,8 +214,31 @@ export const HuntingSessionScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('❌ Error attempting catch:', error)
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to catch Pokemon')
       setIsCapturing(false)
+      
+      // Handle specific error for no pokeballs
+      const errorMessage = error instanceof Error ? error.message : 'Failed to catch Pokemon'
+      if (errorMessage.toLowerCase().includes('pokeball')) {
+        showCustomAlert(
+          'Out of Pokéballs!',
+          'You need Pokéballs to catch Pokémon. Visit the Items tab in your collection to purchase more.',
+          [
+            { text: 'Continue Exploring', style: 'cancel' },
+            {
+              text: 'Go to Items',
+              onPress: () => {
+                router.back()
+                // Small delay to ensure navigation completes
+                setTimeout(() => {
+                  router.push('/pets')
+                }, 100)
+              }
+            }
+          ]
+        )
+      } else {
+        Alert.alert('Error', errorMessage)
+      }
     }
   }
 
@@ -224,10 +251,7 @@ export const HuntingSessionScreen: React.FC = () => {
         {
           text: 'Flee',
           style: 'destructive',
-          onPress: () => {
-            setShowEncounter(false)
-            setTimeout(() => moveToNextEncounter(), 300)
-          }
+          onPress: () => closeEncounter()
         }
       ]
     )
@@ -262,7 +286,20 @@ export const HuntingSessionScreen: React.FC = () => {
     }
   }
 
-  const makeMove = (direction: 'up' | 'down' | 'left' | 'right') => {
+  const makeMove = async (direction: 'up' | 'down' | 'left' | 'right') => {
+    console.log('🎯 makeMove called with direction:', direction)
+    console.log('🎯 session:', session?.id)
+    console.log('🎯 isMoving:', isMoving)
+    console.log('🎯 movesLeft:', movesLeft)
+    
+    if (!session || isMoving || movesLeft <= 0) {
+      console.log('❌ Move blocked:', { hasSession: !!session, isMoving, movesLeft })
+      return
+    }
+
+    console.log('✅ Move allowed, calling API...')
+    setIsMoving(true)
+
     // Animate movement
     Animated.sequence([
       Animated.timing(moveAnimation, {
@@ -277,12 +314,45 @@ export const HuntingSessionScreen: React.FC = () => {
       }),
     ]).start()
 
-    // Show the current encounter
-    setShowEncounter(true)
+    try {
+      console.log('📡 Calling huntApi.move with sessionId:', session.id, 'direction:', direction)
+      const result = await huntApi.move(session.id, direction)
+      console.log('🚶 Move result:', result)
+
+      if (result.success && result.data) {
+        setMovesLeft(result.data.movesLeft)
+
+        if (result.data.encounter) {
+          // Found a Pokemon!
+          const newEncounter = result.data.encounter
+          setEncounters(prev => [...prev, newEncounter])
+          setCurrentEncounter(newEncounter)
+          setShowEncounter(true)
+        } else {
+          // Nothing found
+          Alert.alert('Nothing Here', result.data.message || 'Keep exploring!')
+        }
+
+        // Auto-complete if no moves left
+        if (result.data.movesLeft === 0) {
+          setTimeout(() => {
+            showCustomAlert(
+              'Out of Moves!',
+              'You\'ve used all your moves. Time to complete the session.',
+              [{ text: 'Complete Session', onPress: completeSession }]
+            )
+          }, 1000)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error moving:', error)
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to move')
+    } finally {
+      setIsMoving(false)
+    }
   }
 
   const EncounterModal = () => {
-    const currentEncounter = getCurrentEncounter()
     if (!currentEncounter) return null
     
     return (
@@ -370,6 +440,7 @@ export const HuntingSessionScreen: React.FC = () => {
         username={profile?.username || 'Trainer'}
         coins={currency?.coins || 0}
         gems={currency?.gems || 0}
+        pokeballs={currency?.pokeballs || 0}
         energy={80}
         maxEnergy={100}
         battleTickets={profile?.battleTickets}
@@ -377,7 +448,7 @@ export const HuntingSessionScreen: React.FC = () => {
         onSettingsPress={() => router.push('/profile')}
       />
 
-      <View style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         {/* Header Panel */}
         <Panel variant="dark" style={styles.headerPanel}>
           <View style={styles.headerContent}>
@@ -444,12 +515,16 @@ export const HuntingSessionScreen: React.FC = () => {
           {/* Up Button */}
           <View style={styles.movementRow}>
             <TouchableOpacity 
-              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
+              style={[styles.movementButton, (actionsLeft <= 0 || isMoving) && styles.disabledButton]}
               onPress={() => makeMove('up')}
-              disabled={actionsLeft <= 0}
+              disabled={actionsLeft <= 0 || isMoving}
             >
               <Panel variant="dark" style={styles.buttonPanel}>
-                <Ionicons name="arrow-up" size={28} color="#FFD700" />
+                {isMoving ? (
+                  <ActivityIndicator size="small" color="#FFD700" />
+                ) : (
+                  <Ionicons name="arrow-up" size={28} color="#FFD700" />
+                )}
                 <ThemedText style={styles.movementLabel}>Up</ThemedText>
               </Panel>
             </TouchableOpacity>
@@ -458,12 +533,16 @@ export const HuntingSessionScreen: React.FC = () => {
           {/* Left and Right Buttons */}
           <View style={styles.movementRow}>
             <TouchableOpacity 
-              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
+              style={[styles.movementButton, (actionsLeft <= 0 || isMoving) && styles.disabledButton]}
               onPress={() => makeMove('left')}
-              disabled={actionsLeft <= 0}
+              disabled={actionsLeft <= 0 || isMoving}
             >
               <Panel variant="dark" style={styles.buttonPanel}>
-                <Ionicons name="arrow-back" size={28} color="#FFD700" />
+                {isMoving ? (
+                  <ActivityIndicator size="small" color="#FFD700" />
+                ) : (
+                  <Ionicons name="arrow-back" size={28} color="#FFD700" />
+                )}
                 <ThemedText style={styles.movementLabel}>Left</ThemedText>
               </Panel>
             </TouchableOpacity>
@@ -471,12 +550,16 @@ export const HuntingSessionScreen: React.FC = () => {
             <View style={styles.dpadSpacer} />
             
             <TouchableOpacity 
-              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
+              style={[styles.movementButton, (actionsLeft <= 0 || isMoving) && styles.disabledButton]}
               onPress={() => makeMove('right')}
-              disabled={actionsLeft <= 0}
+              disabled={actionsLeft <= 0 || isMoving}
             >
               <Panel variant="dark" style={styles.buttonPanel}>
-                <Ionicons name="arrow-forward" size={28} color="#FFD700" />
+                {isMoving ? (
+                  <ActivityIndicator size="small" color="#FFD700" />
+                ) : (
+                  <Ionicons name="arrow-forward" size={28} color="#FFD700" />
+                )}
                 <ThemedText style={styles.movementLabel}>Right</ThemedText>
               </Panel>
             </TouchableOpacity>
@@ -485,12 +568,16 @@ export const HuntingSessionScreen: React.FC = () => {
           {/* Down Button */}
           <View style={styles.movementRow}>
             <TouchableOpacity 
-              style={[styles.movementButton, actionsLeft <= 0 && styles.disabledButton]}
+              style={[styles.movementButton, (actionsLeft <= 0 || isMoving) && styles.disabledButton]}
               onPress={() => makeMove('down')}
-              disabled={actionsLeft <= 0}
+              disabled={actionsLeft <= 0 || isMoving}
             >
               <Panel variant="dark" style={styles.buttonPanel}>
-                <Ionicons name="arrow-down" size={28} color="#FFD700" />
+                {isMoving ? (
+                  <ActivityIndicator size="small" color="#FFD700" />
+                ) : (
+                  <Ionicons name="arrow-down" size={28} color="#FFD700" />
+                )}
                 <ThemedText style={styles.movementLabel}>Down</ThemedText>
               </Panel>
             </TouchableOpacity>
@@ -500,25 +587,17 @@ export const HuntingSessionScreen: React.FC = () => {
         {/* Exit button */}
         <View style={styles.exitContainer}>
           <TouchableOpacity
-            onPress={() => {
-              showCustomAlert(
-                'Exit Hunting Session?',
-                'Are you sure you want to exit? You will lose any remaining actions.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Exit', onPress: endSession, style: 'destructive' }
-                ]
-              )
-            }}
+            onPress={exitSession}
             style={styles.exitButtonContainer}
           >
             <LinearGradient
-              colors={['#EF5350', '#E53935']}
+              colors={['#757575', '#616161']}
               style={styles.exitButton}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <ThemedText style={styles.exitButtonText}>Exit Session</ThemedText>
+              <Ionicons name="arrow-back" size={18} color="#FFF" style={{ marginRight: 6 }} />
+              <ThemedText style={styles.exitButtonText}>Save & Exit</ThemedText>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -533,7 +612,7 @@ export const HuntingSessionScreen: React.FC = () => {
           buttons={alertConfig.buttons}
           onDismiss={() => setShowAlert(false)}
         />
-      </View>
+      </ScrollView>
     </ImageBackground>
   )
 }
@@ -544,7 +623,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
   headerPanel: {
     marginBottom: 16,
@@ -663,6 +745,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   exitButtonText: {
     fontSize: 16,

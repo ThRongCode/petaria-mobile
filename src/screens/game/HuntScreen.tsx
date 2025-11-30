@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 import { TopBar, Panel } from '@/components/ui'
 import { ThemedText } from '@/components'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
@@ -41,6 +41,27 @@ export const HuntScreen: React.FC = () => {
   const [regions, setRegions] = useState<BackendRegion[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeSession, setActiveSession] = useState<any>(null)
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  // Check for active session
+  const checkActiveSession = async () => {
+    setCheckingSession(true)
+    try {
+      const result = await huntApi.getSession()
+      if (result.success && result.data) {
+        console.log('✅ Found active hunt session:', result.data)
+        setActiveSession(result.data)
+      } else {
+        setActiveSession(null)
+      }
+    } catch (error) {
+      console.log('ℹ️ No active hunt session found')
+      setActiveSession(null)
+    } finally {
+      setCheckingSession(false)
+    }
+  }
 
   // Load regions from API
   const loadRegions = async () => {
@@ -67,10 +88,92 @@ export const HuntScreen: React.FC = () => {
     loadRegions()
   }, [])
 
+  // Refresh active session when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      checkActiveSession()
+    }, [])
+  )
+
+  const handleCancelSession = async () => {
+    if (!activeSession) return
+
+    Alert.alert(
+      'Cancel Hunt?',
+      'Are you sure you want to cancel your current hunt? You will lose all progress.',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await huntApi.cancelSession(activeSession.session.id)
+              setActiveSession(null)
+              // Small delay to ensure backend processes the deletion
+              await new Promise(resolve => setTimeout(resolve, 300))
+              Alert.alert('Hunt Cancelled', 'Your hunt session has been cancelled.')
+            } catch (error) {
+              console.error('Error canceling session:', error)
+              Alert.alert('Error', 'Failed to cancel hunt session')
+            }
+          }
+        }
+      ]
+    )
+  }
+
+  const handleResumeHunt = () => {
+    if (!activeSession) return
+    
+    router.push({
+      pathname: '/hunting-session',
+      params: {
+        sessionId: activeSession.session.id,
+        regionName: activeSession.session.region.name,
+      }
+    })
+  }
+
   const handleStartHunt = (region: BackendRegion) => {
     // Check if user level meets requirement
     if (profile.level < region.unlockLevel) {
       Alert.alert('Locked', `This region requires level ${region.unlockLevel}`)
+      return
+    }
+
+    // Check if there's an active session
+    if (activeSession) {
+      Alert.alert(
+        'Active Hunt Detected',
+        `You have an active hunt in ${activeSession.session.region.name}. Starting a new hunt will cancel your current progress.`,
+        [
+          { text: 'Resume Current', onPress: handleResumeHunt },
+          {
+            text: 'Cancel & Start New',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await huntApi.cancelSession(activeSession.session.id)
+                setActiveSession(null)
+                // Small delay to ensure backend processes the deletion
+                await new Promise(resolve => setTimeout(resolve, 300))
+                // Navigate to new hunt
+                router.push({
+                  pathname: '/hunting-session',
+                  params: {
+                    regionId: region.id,
+                    regionName: region.name,
+                  }
+                })
+              } catch (error) {
+                console.error('Error canceling session:', error)
+                Alert.alert('Error', 'Failed to cancel current hunt')
+              }
+            }
+          }
+        ]
+      )
       return
     }
     
@@ -129,6 +232,7 @@ export const HuntScreen: React.FC = () => {
           username={profile.username}
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
+          pokeballs={profile.currency?.pokeballs || 0}
           energy={80}
           maxEnergy={100}
           battleTickets={profile.battleTickets}
@@ -146,8 +250,50 @@ export const HuntScreen: React.FC = () => {
           </Panel>
         </View>
 
+        {/* Active Hunt Session Card */}
+        {activeSession && (
+          <View style={styles.activeHuntContainer}>
+            <Panel variant="dark" style={styles.activeHuntPanel}>
+              <View style={styles.activeHuntHeader}>
+                <Ionicons name="walk" size={24} color="#4CAF50" />
+                <ThemedText style={styles.activeHuntTitle}>
+                  Active Hunt
+                </ThemedText>
+              </View>
+              <View style={styles.activeHuntContent}>
+                <ThemedText style={styles.activeHuntRegion}>
+                  📍 {activeSession.session.region.name}
+                </ThemedText>
+                <ThemedText style={styles.activeHuntMoves}>
+                  {activeSession.movesLeft} moves remaining
+                </ThemedText>
+              </View>
+              <View style={styles.activeHuntButtons}>
+                <TouchableOpacity
+                  style={[styles.activeHuntButton, styles.resumeButton]}
+                  onPress={handleResumeHunt}
+                >
+                  <Ionicons name="play" size={20} color="#FFF" />
+                  <ThemedText style={styles.activeHuntButtonText}>
+                    Resume
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.activeHuntButton, styles.cancelButton]}
+                  onPress={handleCancelSession}
+                >
+                  <Ionicons name="close" size={20} color="#FFF" />
+                  <ThemedText style={styles.activeHuntButtonText}>
+                    Cancel
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </Panel>
+          </View>
+        )}
+
         {/* Loading State */}
-        {isLoading && regions.length === 0 && (
+        {(isLoading || checkingSession) && regions.length === 0 && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#4CAF50" />
             <ThemedText style={styles.loadingText}>
@@ -517,5 +663,61 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.7)',
     lineHeight: 20,
+  },
+  // Active Hunt Card Styles
+  activeHuntContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  activeHuntPanel: {
+    padding: 16,
+  },
+  activeHuntHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  activeHuntTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  activeHuntContent: {
+    marginBottom: 16,
+  },
+  activeHuntRegion: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  activeHuntMoves: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  activeHuntButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  activeHuntButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 6,
+  },
+  resumeButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelButton: {
+    backgroundColor: '#FF6B6B',
+  },
+  activeHuntButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 })

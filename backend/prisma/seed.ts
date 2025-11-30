@@ -157,6 +157,17 @@ async function main() {
         priceCoins: 30,
         imageUrl: '/items/shampoo.png',
       },
+
+      // Pokeballs
+      {
+        id: 'pokeball',
+        name: 'Pokeball',
+        description: 'A device for catching wild Pokemon',
+        type: 'Pokeball',
+        rarity: 'common',
+        priceCoins: 100,
+        imageUrl: '/items/pokeball.png',
+      },
     ],
   });
   console.log('✅ Seeded items');
