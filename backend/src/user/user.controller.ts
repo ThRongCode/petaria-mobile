@@ -27,4 +27,16 @@ export class UserController {
   getStats(@CurrentUser() user: any) {
     return this.userService.getStats(user.id);
   }
+
+  // DEV ONLY: Add battle tickets for testing
+  @Post('dev/add-battle-tickets')
+  addBattleTickets(@CurrentUser() user: any) {
+    return this.userService.addBattleTickets(user.id);
+  }
+
+  // DEV ONLY: Add hunt tickets for testing
+  @Post('dev/add-hunt-tickets')
+  addHuntTickets(@CurrentUser() user: any) {
+    return this.userService.addHuntTickets(user.id);
+  }
 }

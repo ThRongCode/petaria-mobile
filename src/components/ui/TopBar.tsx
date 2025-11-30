@@ -55,7 +55,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Spacer */}
         <View style={styles.spacer} />
 
-        {/* Currencies */}
+        {/* Currencies (Coins + Gems only) */}
         <View style={styles.currencies}>
           {/* Coins */}
           <Panel variant="dark" style={styles.currencyPanel}>
@@ -68,22 +68,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Ionicons name="diamond" size={16} color="#00BFFF" />
             <ThemedText style={styles.currencyText}>{gems}</ThemedText>
           </Panel>
-
-          {/* Battle Tickets */}
-          {battleTickets !== undefined && (
-            <Panel variant="dark" style={styles.currencyPanel}>
-              <Ionicons name="sword" size={16} color="#FF6B6B" />
-              <ThemedText style={styles.currencyText}>{battleTickets}/20</ThemedText>
-            </Panel>
-          )}
-
-          {/* Hunt Tickets */}
-          {huntTickets !== undefined && (
-            <Panel variant="dark" style={styles.currencyPanel}>
-              <Ionicons name="leaf" size={16} color="#4CAF50" />
-              <ThemedText style={styles.currencyText}>{huntTickets}/5</ThemedText>
-            </Panel>
-          )}
         </View>
 
         {/* Settings Button */}
@@ -96,6 +80,29 @@ export const TopBar: React.FC<TopBarProps> = ({
           </Panel>
         </TouchableOpacity>
       </View>
+
+      {/* Middle Row: Tickets */}
+      {(battleTickets !== undefined || huntTickets !== undefined) && (
+        <View style={styles.ticketsRow}>
+          {/* Battle Tickets */}
+          {battleTickets !== undefined && (
+            <Panel variant="dark" style={styles.ticketPanel}>
+              <Ionicons name="shield" size={16} color="#FF6B6B" />
+              <ThemedText style={styles.ticketLabel}>Battle</ThemedText>
+              <ThemedText style={styles.ticketText}>{battleTickets}/20</ThemedText>
+            </Panel>
+          )}
+
+          {/* Hunt Tickets */}
+          {huntTickets !== undefined && (
+            <Panel variant="dark" style={styles.ticketPanel}>
+              <Ionicons name="leaf" size={16} color="#4CAF50" />
+              <ThemedText style={styles.ticketLabel}>Hunt</ThemedText>
+              <ThemedText style={styles.ticketText}>{huntTickets}/5</ThemedText>
+            </Panel>
+          )}
+        </View>
+      )}
 
       {/* Bottom Row: Energy Bar - Full Width */}
       <View style={styles.energyRow}>
@@ -186,8 +193,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  ticketsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  ticketPanel: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  ticketLabel: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
+  },
+  ticketText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
   energyRow: {
-    marginTop: 8,
+    marginTop: 6,
   },
   energyContainer: {
     flexDirection: 'row',

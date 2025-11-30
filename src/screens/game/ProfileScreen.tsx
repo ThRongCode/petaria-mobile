@@ -15,7 +15,8 @@ import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { useAppDispatch } from '@/stores/store'
-import { userActions } from '@/stores/reducers'
+import { userActions, gameActions } from '@/stores/reducers'
+import { userApi } from '@/services/api'
 
 /**
  * ProfileScreen - Trainer profile with stats and achievements
@@ -45,6 +46,36 @@ export const ProfileScreen: React.FC = () => {
         },
       ]
     )
+  }
+
+  const handleAddBattleTickets = async () => {
+    try {
+      console.log('🎫 Adding battle tickets...')
+      const response = await userApi.addBattleTickets()
+      if (response.success) {
+        Alert.alert('Success', response.data.message)
+        // Reload user data to refresh tickets
+        dispatch(gameActions.loadUserData())
+      }
+    } catch (error) {
+      console.error('❌ Error adding battle tickets:', error)
+      Alert.alert('Error', 'Failed to add battle tickets')
+    }
+  }
+
+  const handleAddHuntTickets = async () => {
+    try {
+      console.log('🎫 Adding hunt tickets...')
+      const response = await userApi.addHuntTickets()
+      if (response.success) {
+        Alert.alert('Success', response.data.message)
+        // Reload user data to refresh tickets
+        dispatch(gameActions.loadUserData())
+      }
+    } catch (error) {
+      console.error('❌ Error adding hunt tickets:', error)
+      Alert.alert('Error', 'Failed to add hunt tickets')
+    }
   }
 
   const stats = [
@@ -237,6 +268,40 @@ export const ProfileScreen: React.FC = () => {
               </Panel>
             </View>
           ))}
+        </View>
+
+        {/* DEV Tools */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>🛠️ Dev Tools</ThemedText>
+          <View style={styles.devButtonsRow}>
+            <TouchableOpacity style={styles.devButton} onPress={handleAddBattleTickets}>
+              <LinearGradient
+                colors={['rgba(255, 107, 107, 0.3)', 'rgba(198, 40, 40, 0.5)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.devGradient}
+              >
+                <View style={styles.devButtonContent}>
+                  <Ionicons name="shield" size={18} color="#FF6B6B" />
+                  <ThemedText style={styles.devButtonText}>+5 Battle</ThemedText>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.devButton} onPress={handleAddHuntTickets}>
+              <LinearGradient
+                colors={['rgba(76, 175, 80, 0.3)', 'rgba(56, 142, 60, 0.5)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.devGradient}
+              >
+                <View style={styles.devButtonContent}>
+                  <Ionicons name="leaf" size={18} color="#4CAF50" />
+                  <ThemedText style={styles.devButtonText}>+5 Hunt</ThemedText>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Action Buttons */}
@@ -520,5 +585,31 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  devButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  devButton: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  devGradient: {
+    padding: 2,
+  },
+  devButtonContent: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+  },
+  devButtonText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 })

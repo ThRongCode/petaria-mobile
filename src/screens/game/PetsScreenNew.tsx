@@ -305,6 +305,8 @@ export const PetsScreenNew: React.FC = () => {
           gems={profile.currency?.gems || 150}
           energy={80}
           maxEnergy={100}
+          battleTickets={profile.battleTickets}
+          huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}
         />
 

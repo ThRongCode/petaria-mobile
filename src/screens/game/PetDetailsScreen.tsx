@@ -50,6 +50,8 @@ export default function PetDetailsScreen() {
           gems={userProfile?.currency?.gems || 0}
           energy={80}
           maxEnergy={100}
+          battleTickets={userProfile?.battleTickets}
+          huntTickets={userProfile?.huntTickets}
         />
         <View style={styles.errorContainer}>
           <Panel variant="dark" style={styles.errorPanel}>
@@ -86,6 +88,8 @@ export default function PetDetailsScreen() {
         gems={userProfile?.currency?.gems || 0}
         energy={80}
         maxEnergy={100}
+        battleTickets={userProfile?.battleTickets}
+        huntTickets={userProfile?.huntTickets}
         onSettingsPress={() => router.push('/profile')}
       />
       

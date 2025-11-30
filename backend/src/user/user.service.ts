@@ -101,4 +101,58 @@ export class UserService {
         : 0,
     };
   }
+
+  // DEV ONLY: Add 5 battle tickets for testing
+  async addBattleTickets(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { battleTickets: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        battleTickets: Math.min(user.battleTickets + 5, 20), // Max 20
+      },
+      select: {
+        battleTickets: true,
+      },
+    });
+
+    return {
+      message: 'Added 5 battle tickets',
+      battleTickets: updatedUser.battleTickets,
+    };
+  }
+
+  // DEV ONLY: Add 5 hunt tickets for testing
+  async addHuntTickets(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { huntTickets: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        huntTickets: Math.min(user.huntTickets + 5, 5), // Max 5
+      },
+      select: {
+        huntTickets: true,
+      },
+    });
+
+    return {
+      message: 'Added 5 hunt tickets',
+      huntTickets: updatedUser.huntTickets,
+    };
+  }
 }

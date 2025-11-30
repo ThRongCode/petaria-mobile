@@ -108,4 +108,34 @@ export const userApi = {
       data: response,
     }
   },
+
+  /**
+   * DEV ONLY: Add 5 battle tickets for testing
+   */
+  async addBattleTickets() {
+    const response = await realApiClient.post<{
+      message: string
+      battleTickets: number
+    }>('/user/dev/add-battle-tickets')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
+   * DEV ONLY: Add 5 hunt tickets for testing
+   */
+  async addHuntTickets() {
+    const response = await realApiClient.post<{
+      message: string
+      huntTickets: number
+    }>('/user/dev/add-hunt-tickets')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
 }

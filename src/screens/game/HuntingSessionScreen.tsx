@@ -372,6 +372,8 @@ export const HuntingSessionScreen: React.FC = () => {
         gems={currency?.gems || 0}
         energy={80}
         maxEnergy={100}
+        battleTickets={profile?.battleTickets}
+        huntTickets={profile?.huntTickets}
         onSettingsPress={() => router.push('/profile')}
       />
 
