@@ -172,4 +172,80 @@ export class PetService {
       itemUsed: item.name,
     };
   }
+
+  async healAll(userId: string) {
+    const HEAL_COST = 200;
+
+    // Get user to check coins
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.coins < HEAL_COST) {
+      throw new BadRequestException(
+        `Not enough coins. Need ${HEAL_COST}, have ${user.coins}`,
+      );
+    }
+
+    // Get all user's pets that need healing (hp < maxHp)
+    const petsNeedingHeal = await this.prisma.pet.findMany({
+      where: {
+        ownerId: userId,
+      },
+      select: {
+        id: true,
+        hp: true,
+        maxHp: true,
+      },
+    });
+
+    const petsToHeal = petsNeedingHeal.filter((pet) => pet.hp < pet.maxHp);
+
+    if (petsToHeal.length === 0) {
+      // All Pokemon are already healthy - return success without charging
+      return {
+        healedCount: 0,
+        coinCost: 0,
+        coinsRemaining: user.coins,
+        message: 'All Pokemon are already at full health',
+      };
+    }
+
+    // Heal all pets to max HP and deduct coins in a transaction
+    const result = await this.prisma.$transaction(async (prisma) => {
+      // Heal each pet individually to set hp = maxHp
+      for (const pet of petsToHeal) {
+        await prisma.pet.update({
+          where: { id: pet.id },
+          data: { hp: pet.maxHp },
+        });
+      }
+
+      // Deduct coins from user
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          coins: {
+            decrement: HEAL_COST,
+          },
+        },
+      });
+
+      return {
+        healedCount: petsToHeal.length,
+        coinsRemaining: updatedUser.coins,
+      };
+    });
+
+    return {
+      healedCount: result.healedCount,
+      coinCost: HEAL_COST,
+      coinsRemaining: result.coinsRemaining,
+      message: `Healed ${result.healedCount} Pokemon for ${HEAL_COST} coins`,
+    };
+  }
 }

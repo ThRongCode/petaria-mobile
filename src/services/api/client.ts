@@ -6,6 +6,7 @@ import { petApi } from './petApi'
 import { huntApi } from './huntApi'
 import { battleApi } from './battleApi'
 import { itemApi } from './itemApi'
+import { realApiClient } from './realApiClient'
 import type {
   ApiResponse,
   LoginRequest,
@@ -341,17 +342,16 @@ class ApiClient {
         }
       }
 
-      // Game endpoints
-      if (segments[0] === 'game') {
-        if (segments[1] === 'heal-center' && method === 'POST') {
-          // Heal center not implemented in backend - would need to loop through pets
-          // For now, return mock response
-          return {
-            success: true,
-            data: { healedCount: 0 },
-          } as ApiResponse<T>
-        }
+      // Pet heal-all endpoint
+      if (segments[0] === 'pet' && segments[1] === 'heal-all' && method === 'POST') {
+        const result = await realApiClient.post('/pet/heal-all', {})
+        return {
+          success: true,
+          data: result as any,
+        } as ApiResponse<T>
       }
+
+      // Game endpoints (removed - heal-all now in /pet/heal-all)
 
       // Auction endpoints - not implemented in backend yet
       if (segments[0] === 'auctions' || segments[0] === 'auction') {
@@ -509,12 +509,10 @@ class ApiClient {
   }
 
   /**
-   * Heal all user's Pokemon to full HP
+   * Heal all user's Pokemon to full HP (costs 200 coins)
    */
-  async healAllPets(userId: string): Promise<ApiResponse<{ healedCount: number }>> {
-    return this.request<{ healedCount: number }>('/game/heal-center', 'POST', {
-      userId,
-    })
+  async healAllPets(): Promise<ApiResponse<{ healedCount: number; coinCost: number; coinsRemaining: number; message: string }>> {
+    return this.request<{ healedCount: number; coinCost: number; coinsRemaining: number; message: string }>('/pet/heal-all', 'POST')
   }
 
   /**

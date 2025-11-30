@@ -15,6 +15,28 @@ import { battleApi, petApi } from '@/services/api'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
+// Type Effectiveness Chart (Pokemon-style)
+const TYPE_EFFECTIVENESS: Record<string, { strong: string[], weak: string[], immune: string[] }> = {
+  Normal: { strong: [], weak: ['Rock', 'Steel'], immune: ['Ghost'] },
+  Fire: { strong: ['Grass', 'Ice', 'Bug', 'Steel'], weak: ['Fire', 'Water', 'Rock', 'Dragon'], immune: [] },
+  Water: { strong: ['Fire', 'Ground', 'Rock'], weak: ['Water', 'Grass', 'Dragon'], immune: [] },
+  Grass: { strong: ['Water', 'Ground', 'Rock'], weak: ['Fire', 'Grass', 'Poison', 'Flying', 'Bug', 'Dragon', 'Steel'], immune: [] },
+  Electric: { strong: ['Water', 'Flying'], weak: ['Electric', 'Grass', 'Dragon'], immune: ['Ground'] },
+  Ice: { strong: ['Grass', 'Ground', 'Flying', 'Dragon'], weak: ['Fire', 'Water', 'Ice', 'Steel'], immune: [] },
+  Fighting: { strong: ['Normal', 'Ice', 'Rock', 'Dark', 'Steel'], weak: ['Poison', 'Flying', 'Psychic', 'Bug', 'Fairy'], immune: ['Ghost'] },
+  Poison: { strong: ['Grass', 'Fairy'], weak: ['Poison', 'Ground', 'Rock', 'Ghost'], immune: ['Steel'] },
+  Ground: { strong: ['Fire', 'Electric', 'Poison', 'Rock', 'Steel'], weak: ['Grass', 'Bug'], immune: ['Flying'] },
+  Flying: { strong: ['Grass', 'Fighting', 'Bug'], weak: ['Electric', 'Rock', 'Steel'], immune: [] },
+  Psychic: { strong: ['Fighting', 'Poison'], weak: ['Psychic', 'Steel'], immune: ['Dark'] },
+  Bug: { strong: ['Grass', 'Psychic', 'Dark'], weak: ['Fire', 'Fighting', 'Poison', 'Flying', 'Ghost', 'Steel', 'Fairy'], immune: [] },
+  Rock: { strong: ['Fire', 'Ice', 'Flying', 'Bug'], weak: ['Fighting', 'Ground', 'Steel'], immune: [] },
+  Ghost: { strong: ['Psychic', 'Ghost'], weak: ['Dark'], immune: ['Normal'] },
+  Dragon: { strong: ['Dragon'], weak: ['Steel'], immune: ['Fairy'] },
+  Dark: { strong: ['Psychic', 'Ghost'], weak: ['Fighting', 'Dark', 'Fairy'], immune: [] },
+  Steel: { strong: ['Ice', 'Rock', 'Fairy'], weak: ['Fire', 'Water', 'Electric', 'Steel'], immune: [] },
+  Fairy: { strong: ['Fighting', 'Dragon', 'Dark'], weak: ['Fire', 'Poison', 'Steel'], immune: [] },
+}
+
 interface BattleState {
   playerPet: Pet & { currentHp: number; temporaryStats: any }
   opponentPet: Opponent & { currentHp: number; temporaryStats: any }
@@ -86,12 +108,12 @@ export const BattleArenaScreen: React.FC = () => {
         setBattleState({
           playerPet: {
             ...playerPet,
-            currentHp: playerPet.stats.hp,
+            currentHp: playerPet.stats.hp, // Use actual current HP from pet
             temporaryStats: { ...playerPet.stats }
           },
           opponentPet: {
             ...opponent,
-            currentHp: opponent.stats.hp,
+            currentHp: opponent.stats.hp, // Opponent starts with max HP
             temporaryStats: { ...opponent.stats }
           },
           turn: playerGoesFirst ? 'player' : 'opponent',
@@ -100,6 +122,12 @@ export const BattleArenaScreen: React.FC = () => {
           battleOver: false,
           winner: null
         })
+        
+        // Set initial HP bar animations to correct percentages
+        const playerHpPercent = (playerPet.stats.hp / playerPet.stats.maxHp) * 100
+        const opponentHpPercent = (opponent.stats.hp / opponent.stats.maxHp) * 100
+        playerHpAnim.setValue(playerHpPercent)
+        opponentHpAnim.setValue(opponentHpPercent)
       }
     }
     
@@ -120,8 +148,13 @@ export const BattleArenaScreen: React.FC = () => {
     }
   }, [battleState?.turn, battleState?.turnCount, isAnimating])
 
-  const calculateDamage = (attacker: any, defender: any, move: Move): number => {
-    if (move.power === 0) return 0 // Status moves
+  const calculateDamage = (attacker: any, defender: any, move: Move): { damage: number, effectiveness: number } => {
+    if (move.power === 0) return { damage: 0, effectiveness: 1 } // Status moves
+    
+    // Miss chance (check first)
+    if (Math.random() * 100 > move.accuracy) {
+      return { damage: -1, effectiveness: 1 } // Miss
+    }
     
     const attack = attacker.temporaryStats.attack
     const defense = defender.temporaryStats.defense
@@ -130,19 +163,57 @@ export const BattleArenaScreen: React.FC = () => {
     // Pokemon-like damage formula (simplified)
     const baseDamage = Math.floor(((((2 * level / 5 + 2) * move.power * attack / defense) / 50) + 2))
     
-    // Add some randomness (85-100% damage)
-    const randomFactor = (Math.random() * 0.15 + 0.85)
-    const finalDamage = Math.floor(baseDamage * randomFactor)
+    // Calculate type effectiveness
+    let effectiveness = 1.0
+    const moveElement = move.element
+    const defenderType = defender.type || getTypeFromSpecies(defender.species)
     
-    // Miss chance
-    if (Math.random() * 100 > move.accuracy) {
-      return -1 // Miss
+    console.log(`⚔️ Type Check: ${move.name} (${moveElement}) vs ${defender.species || defender.name} (${defenderType})`)
+    
+    if (moveElement && defenderType && TYPE_EFFECTIVENESS[moveElement]) {
+      const typeChart = TYPE_EFFECTIVENESS[moveElement]
+      if (typeChart.immune.includes(defenderType)) {
+        effectiveness = 0
+      } else if (typeChart.strong.includes(defenderType)) {
+        effectiveness = 2.0
+      } else if (typeChart.weak.includes(defenderType)) {
+        effectiveness = 0.5
+      }
+      console.log(`   Effectiveness: ${effectiveness}x`)
     }
     
-    return Math.max(1, finalDamage)
+    // Add some randomness (85-100% damage)
+    const randomFactor = (Math.random() * 0.15 + 0.85)
+    const finalDamage = Math.floor(baseDamage * effectiveness * randomFactor)
+    
+    // Return actual damage (can be 0 for immune matchups)
+    return { damage: finalDamage, effectiveness }
+  }
+  
+  // Helper function to infer type from species name
+  const getTypeFromSpecies = (species: string): string => {
+    const lowerSpecies = species.toLowerCase()
+    if (lowerSpecies.includes('char') || lowerSpecies.includes('fire')) return 'Fire'
+    if (lowerSpecies.includes('squir') || lowerSpecies.includes('water')) return 'Water'
+    if (lowerSpecies.includes('bulb') || lowerSpecies.includes('grass') || lowerSpecies.includes('leaf')) return 'Grass'
+    if (lowerSpecies.includes('pika') || lowerSpecies.includes('electric') || lowerSpecies.includes('thunder')) return 'Electric'
+    if (lowerSpecies.includes('ice') || lowerSpecies.includes('frost')) return 'Ice'
+    if (lowerSpecies.includes('dragon')) return 'Dragon'
+    if (lowerSpecies.includes('ghost')) return 'Ghost'
+    if (lowerSpecies.includes('psychic')) return 'Psychic'
+    if (lowerSpecies.includes('dark')) return 'Dark'
+    if (lowerSpecies.includes('steel') || lowerSpecies.includes('metal')) return 'Steel'
+    if (lowerSpecies.includes('fairy')) return 'Fairy'
+    if (lowerSpecies.includes('rock') || lowerSpecies.includes('stone')) return 'Rock'
+    if (lowerSpecies.includes('ground') || lowerSpecies.includes('sand')) return 'Ground'
+    if (lowerSpecies.includes('fighting') || lowerSpecies.includes('fight')) return 'Fighting'
+    if (lowerSpecies.includes('poison')) return 'Poison'
+    if (lowerSpecies.includes('bug')) return 'Bug'
+    if (lowerSpecies.includes('fly') || lowerSpecies.includes('bird')) return 'Flying'
+    return 'Normal'
   }
 
-  const completeBattleSession = async (won: boolean) => {
+  const completeBattleSession = async (won: boolean, finalHp: number) => {
     if (!battleSessionId || !battleState) {
       console.error('❌ Cannot complete battle: missing session ID or battle state')
       return
@@ -150,13 +221,14 @@ export const BattleArenaScreen: React.FC = () => {
     
     setIsCompletingBattle(true)
     try {
-      console.log(`💾 Completing battle session ${battleSessionId}: won=${won}, dealt=${totalDamageDealt}, taken=${totalDamageTaken}`)
+      console.log(`💾 Completing battle session ${battleSessionId}: won=${won}, finalHp=${finalHp}, dealt=${totalDamageDealt}, taken=${totalDamageTaken}`)
       
       const response = await battleApi.completeBattle(
         battleSessionId,
         won,
         totalDamageDealt,
-        totalDamageTaken
+        totalDamageTaken,
+        finalHp
       )
       
       if (response.success) {
@@ -211,23 +283,33 @@ export const BattleArenaScreen: React.FC = () => {
     setIsAnimating(true)
     const { playerPet, opponentPet } = battleState
     
-    let newLog = [...battleState.battleLog, `${playerPet.name} used ${move.name}!`]
+    let newLog = [...battleState.battleLog]
     
     // Calculate damage
-    const damage = calculateDamage(playerPet, opponentPet, move)
+    const { damage, effectiveness } = calculateDamage(playerPet, opponentPet, move)
     
     if (damage === -1) {
-      newLog.push(`${playerPet.name}'s attack missed!`)
+      newLog.push(`${playerPet.name} used ${move.name}!`)
+      newLog.push(`But it missed!`)
+    } else if (damage === 0 && effectiveness === 0) {
+      newLog.push(`${playerPet.name} used ${move.name}!`)
+      newLog.push(`It doesn't affect ${opponentPet.name}...`)
     } else if (damage > 0) {
+      newLog.push(`${playerPet.name} used ${move.name}!`)
+      if (effectiveness > 1) {
+        newLog.push(`It's super effective!`)
+      } else if (effectiveness < 1) {
+        newLog.push(`It's not very effective...`)
+      }
+      newLog.push(`It dealt ${damage} damage!`)
       opponentPet.currentHp = Math.max(0, opponentPet.currentHp - damage)
-      newLog.push(`Dealt ${damage} damage!`)
       
       // Track damage dealt for API
       setTotalDamageDealt(prev => prev + damage)
       
       // Animate HP bar
       Animated.timing(opponentHpAnim, {
-        toValue: (opponentPet.currentHp / opponentPet.temporaryStats.hp) * 100,
+        toValue: (opponentPet.currentHp / opponentPet.temporaryStats.maxHp) * 100,
         duration: 500,
         useNativeDriver: false
       }).start()
@@ -250,8 +332,8 @@ export const BattleArenaScreen: React.FC = () => {
       })
       setIsAnimating(false)
       
-      // Complete battle via API
-      completeBattleSession(true)
+      // Complete battle via API with final HP
+      completeBattleSession(true, playerPet.currentHp)
       return
     }
     
@@ -290,23 +372,33 @@ export const BattleArenaScreen: React.FC = () => {
     // Opponent picks a random move
     const randomMove = opponentPet.moves[Math.floor(Math.random() * opponentPet.moves.length)]
     
-    let newLog = [...battleState.battleLog, `${opponentPet.name} used ${randomMove.name}!`]
+    let newLog = [...battleState.battleLog]
     
     // Calculate damage
-    const damage = calculateDamage(opponentPet, playerPet, randomMove)
+    const { damage, effectiveness } = calculateDamage(opponentPet, playerPet, randomMove)
     
     if (damage === -1) {
-      newLog.push(`${opponentPet.name}'s attack missed!`)
+      newLog.push(`${opponentPet.name} used ${randomMove.name}!`)
+      newLog.push(`But it missed!`)
+    } else if (damage === 0 && effectiveness === 0) {
+      newLog.push(`${opponentPet.name} used ${randomMove.name}!`)
+      newLog.push(`It doesn't affect ${playerPet.name}...`)
     } else if (damage > 0) {
+      newLog.push(`${opponentPet.name} used ${randomMove.name}!`)
+      if (effectiveness > 1) {
+        newLog.push(`It's super effective!`)
+      } else if (effectiveness < 1) {
+        newLog.push(`It's not very effective...`)
+      }
+      newLog.push(`It dealt ${damage} damage!`)
       playerPet.currentHp = Math.max(0, playerPet.currentHp - damage)
-      newLog.push(`${playerPet.name} took ${damage} damage!`)
       
       // Track damage taken for API
       setTotalDamageTaken(prev => prev + damage)
       
       // Animate HP bar
       Animated.timing(playerHpAnim, {
-        toValue: (playerPet.currentHp / playerPet.temporaryStats.hp) * 100,
+        toValue: (playerPet.currentHp / playerPet.temporaryStats.maxHp) * 100,
         duration: 500,
         useNativeDriver: false
       }).start()
@@ -329,8 +421,8 @@ export const BattleArenaScreen: React.FC = () => {
       })
       setIsAnimating(false)
       
-      // Complete battle via API
-      completeBattleSession(false)
+      // Complete battle via API with final HP
+      completeBattleSession(false, playerPet.currentHp)
       return
     }
     
@@ -358,6 +450,10 @@ export const BattleArenaScreen: React.FC = () => {
         style={styles.background}
         resizeMode="cover"
       >
+        <LinearGradient
+          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
+          style={styles.gradientOverlay}
+        />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -365,9 +461,9 @@ export const BattleArenaScreen: React.FC = () => {
           <ThemedText style={styles.headerTitle}>Battle Arena</ThemedText>
           <View style={{ width: 40 }} />
         </View>
-        <View style={styles.container}>
-          <ActivityIndicator size="large" color="#fff" />
-          <ThemedText style={{ marginTop: 16 }}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <ThemedText style={styles.loadingText}>
             {isStartingBattle ? 'Starting battle session...' : 'Loading battle...'}
           </ThemedText>
         </View>
@@ -377,8 +473,8 @@ export const BattleArenaScreen: React.FC = () => {
 
   const { playerPet, opponentPet, turn, battleLog, battleOver } = battleState
   
-  const playerHpPercentage = (playerPet.currentHp / playerPet.temporaryStats.hp) * 100
-  const opponentHpPercentage = (opponentPet.currentHp / opponentPet.temporaryStats.hp) * 100
+  const playerHpPercentage = (playerPet.currentHp / playerPet.temporaryStats.maxHp) * 100
+  const opponentHpPercentage = (opponentPet.currentHp / opponentPet.temporaryStats.maxHp) * 100
   
   const getHpColor = (percentage: number) => {
     if (percentage > 50) return '#4CAF50'
@@ -470,7 +566,7 @@ export const BattleArenaScreen: React.FC = () => {
                     </View>
                   </View>
                   <ThemedText style={styles.hpNumbers}>
-                    {playerPet.currentHp} / {playerPet.temporaryStats.hp}
+                    {playerPet.currentHp} / {playerPet.temporaryStats.maxHp}
                   </ThemedText>
                 </Panel>
               </View>
@@ -479,11 +575,13 @@ export const BattleArenaScreen: React.FC = () => {
 
           {/* Bottom Section: Compact Action Box */}
           <View style={styles.bottomSection}>
-            {/* Battle Log */}
+            {/* Battle Log - Show last 3 messages */}
             <Panel variant="dark" style={styles.battleLogBox}>
-              <ThemedText style={styles.battleLogText}>
-                {battleLog[battleLog.length - 1]}
-              </ThemedText>
+              {battleLog.slice(-3).map((message, index) => (
+                <ThemedText key={index} style={styles.battleLogText}>
+                  {message}
+                </ThemedText>
+              ))}
             </Panel>
             
             {/* Action Box - Compact */}
@@ -598,6 +696,23 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
   },
   
   // Battle field area - Pokemon side by side

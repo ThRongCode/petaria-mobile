@@ -120,7 +120,8 @@ export const battleApi = {
     sessionId: string, 
     won: boolean, 
     damageDealt: number, 
-    damageTaken: number
+    damageTaken: number,
+    finalHp: number
   ) {
     const response = await realApiClient.post<{
       won: boolean
@@ -147,6 +148,7 @@ export const battleApi = {
       won,
       damageDealt,
       damageTaken,
+      finalHp,
     })
 
     return {

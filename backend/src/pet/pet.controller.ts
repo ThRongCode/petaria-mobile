@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Post,
 } from '@nestjs/common';
 import { PetService } from './pet.service';
 import { UpdatePetDto } from './dto/update-pet.dto';
@@ -54,5 +55,10 @@ export class PetController {
     @Body() healPetDto: HealPetDto,
   ) {
     return this.petService.heal(id, userId, healPetDto.itemId);
+  }
+
+  @Post('heal-all')
+  healAll(@CurrentUser('id') userId: string) {
+    return this.petService.healAll(userId);
   }
 }

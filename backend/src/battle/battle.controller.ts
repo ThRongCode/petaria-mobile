@@ -51,6 +51,7 @@ export class BattleController {
       completeBattleDto.won,
       completeBattleDto.damageDealt,
       completeBattleDto.damageTaken,
+      completeBattleDto.finalHp,
     );
   }
 

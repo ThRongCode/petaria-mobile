@@ -144,6 +144,7 @@ export class BattleService {
     won: boolean,
     damageDealt: number,
     damageTaken: number,
+    finalHp: number,
   ) {
     const session = await this.prisma.battleSession.findFirst({
       where: {
@@ -192,8 +193,8 @@ export class BattleService {
       coinReward = Math.floor(opponent.rewardCoins * 0.3);
     }
 
-    // Update pet HP
-    const newHp = Math.max(0, pet.hp - damageTaken);
+    // Use finalHp from frontend (accurate after battle)
+    const newHp = finalHp;
     let leveledUp = false;
     let newLevel = pet.level;
     let statChanges = {};

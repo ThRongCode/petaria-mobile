@@ -6,16 +6,17 @@ import {
   ImageBackground,
   TouchableOpacity,
   Dimensions,
-  ActivityIndicator 
+  ActivityIndicator,
+  Alert
 } from 'react-native'
 import { TopBar, Panel, IconButton, QuestPopup } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
+import { gameActions } from '@/stores/reducers'
 import { apiClient } from '@/services/api/client'
-import { showCustomAlert } from '@/components/ui/CustomAlert'
 import { Ionicons } from '@expo/vector-icons'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
@@ -27,38 +28,78 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window')
  */
 export const HomeHubScreen: React.FC = () => {
   const router = useRouter()
+  const dispatch = useDispatch()
   const profile = useSelector(getUserProfile)
   const [questPopupVisible, setQuestPopupVisible] = useState(false)
   const [healingLoading, setHealingLoading] = useState(false)
   const [lastHealTime, setLastHealTime] = useState<number | null>(null)
 
   const handleHealAllPets = async () => {
-    try {
-      setHealingLoading(true)
-      const response = await apiClient.healAllPets(profile.id)
-      
-      if (response.success && response.data) {
-        const healedCount = response.data.healedCount
-        setLastHealTime(Date.now())
-        
-        showCustomAlert(
-          'Healing Complete!',
-          `Successfully healed ${healedCount} Pokemon to full HP! ✨`,
-          [{ text: 'Great!', style: 'default' }]
-        )
-      } else {
-        throw new Error(response.error?.message || 'Failed to heal Pokemon')
-      }
-    } catch (error) {
-      console.error('Failed to heal Pokemon:', error)
-      showCustomAlert(
-        'Healing Failed',
-        'Unable to heal your Pokemon at this time. Please try again.',
-        [{ text: 'OK', style: 'cancel' }]
-      )
-    } finally {
-      setHealingLoading(false)
-    }
+    const HEAL_COST = 200
+
+    // Show confirmation popup
+    Alert.alert(
+      'Healing Center',
+      `Heal all your Pokemon to full HP for ${HEAL_COST} coins?\n\nYour current balance: ${profile.currency?.coins || 0} coins`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Heal for 200 coins',
+          style: 'default',
+          onPress: async () => {
+            try {
+              setHealingLoading(true)
+              const response = await apiClient.healAllPets()
+              
+              if (response.success && response.data) {
+                const { healedCount, coinCost, coinsRemaining, message } = response.data
+                setLastHealTime(Date.now())
+                
+                // Update coins in Redux store (only if coins were spent)
+                if (coinCost > 0) {
+                  dispatch(gameActions.updateProfile({
+                    currency: { ...profile.currency, coins: coinsRemaining }
+                  }))
+                }
+                
+                // Reload all user data (pets HP, inventory, etc)
+                dispatch(gameActions.loadUserData())
+                
+                // Show appropriate message based on whether healing was needed
+                if (healedCount === 0) {
+                  Alert.alert(
+                    'All Healthy! 💚',
+                    message || 'All Pokemon are already at full health',
+                    [{ text: 'OK', style: 'default' }]
+                  )
+                } else {
+                  Alert.alert(
+                    'Healing Complete!',
+                    `Successfully healed ${healedCount} Pokemon to full HP! ✨\n\nCoins spent: ${coinCost}\nRemaining: ${coinsRemaining}`,
+                    [{ text: 'Great!', style: 'default' }]
+                  )
+                }
+              } else {
+                throw new Error(response.error?.message || 'Failed to heal Pokemon')
+              }
+            } catch (error) {
+              console.error('Failed to heal Pokemon:', error)
+              const errorMessage = error instanceof Error ? error.message : 'Unable to heal your Pokemon at this time'
+              Alert.alert(
+                'Healing Failed',
+                errorMessage,
+                [{ text: 'OK', style: 'cancel' }]
+              )
+            } finally {
+              setHealingLoading(false)
+            }
+          },
+        },
+      ]
+    )
   }
 
   const canHealToday = () => {
@@ -135,14 +176,14 @@ export const HomeHubScreen: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.healButton,
-                (!canHealToday() || healingLoading) && styles.healButtonDisabled
+                healingLoading && styles.healButtonDisabled
               ]}
               onPress={handleHealAllPets}
-              disabled={!canHealToday() || healingLoading}
+              disabled={healingLoading}
             >
               <LinearGradient
                 colors={
-                  !canHealToday() || healingLoading
+                  healingLoading
                     ? ['rgba(100,100,100,0.3)', 'rgba(60,60,60,0.3)']
                     : ['rgba(255,107,157,0.4)', 'rgba(147,51,234,0.4)']
                 }
@@ -152,23 +193,14 @@ export const HomeHubScreen: React.FC = () => {
                   <ActivityIndicator color="#FFF" size="small" />
                 ) : (
                   <>
-                    <Ionicons name="heart-circle" size={24} color={!canHealToday() ? '#666' : '#FFD700'} />
-                    <ThemedText style={[
-                      styles.healButtonText,
-                      !canHealToday() && styles.healButtonTextDisabled
-                    ]}>
-                      {canHealToday() ? 'Heal All Pokemon' : 'Used Today (24h cooldown)'}
+                    <Ionicons name="heart-circle" size={24} color="#FFD700" />
+                    <ThemedText style={styles.healButtonText}>
+                      Heal All Pokemon (200 coins)
                     </ThemedText>
                   </>
                 )}
               </LinearGradient>
             </TouchableOpacity>
-
-            {!canHealToday() && (
-              <ThemedText style={styles.cooldownText}>
-                Come back tomorrow for another free healing!
-              </ThemedText>
-            )}
           </Panel>
 
           {/* Quick Actions - Featured Buttons */}

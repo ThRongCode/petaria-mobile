@@ -26,6 +26,7 @@ export interface Opponent {
   id: string
   name: string
   species: string
+  type?: 'Normal' | 'Fire' | 'Water' | 'Grass' | 'Electric' | 'Ice' | 'Fighting' | 'Poison' | 'Ground' | 'Flying' | 'Psychic' | 'Bug' | 'Rock' | 'Ghost' | 'Dragon' | 'Dark' | 'Steel' | 'Fairy'
   level: number
   difficulty: 'Easy' | 'Normal' | 'Hard' | 'Expert' | 'Master'
   stats: {
@@ -50,6 +51,7 @@ export interface Pet {
   id: string
   name: string
   species: string
+  type?: 'Normal' | 'Fire' | 'Water' | 'Grass' | 'Electric' | 'Ice' | 'Fighting' | 'Poison' | 'Ground' | 'Flying' | 'Psychic' | 'Bug' | 'Rock' | 'Ghost' | 'Dragon' | 'Dark' | 'Steel' | 'Fairy'
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary'
   level: number
   xp: number

@@ -10,15 +10,15 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native'
-import { TopBar, Panel, PokemonSelectionDialog } from '@/components/ui'
+import { TopBar, Panel } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
-import { getUserProfile, getAllPets } from '@/stores/selectors'
+import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
-import type { Pet, Opponent } from '@/stores/types/game'
+import type { Opponent, Move } from '@/stores/types/game'
 import { battleApi } from '@/services/api'
 
 // Backend opponent type (matches Prisma schema with relations)
@@ -76,13 +76,10 @@ export const BattleSelectionScreen: React.FC = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
   const profile = useSelector(getUserProfile)
-  const pets = useSelector(getAllPets) as Pet[]
   
   const [opponents, setOpponents] = useState<BackendOpponent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedOpponent, setSelectedOpponent] = useState<BackendOpponent | null>(null)
-  const [showPokemonSelection, setShowPokemonSelection] = useState(false)
 
   const battleType = params.battleType as string
   const battleName = params.battleName as string
@@ -125,79 +122,57 @@ export const BattleSelectionScreen: React.FC = () => {
   }
 
   const handleOpponentSelect = (opponent: BackendOpponent) => {
-    setSelectedOpponent(opponent)
-    setShowPokemonSelection(true)
-  }
-
-  const handlePokemonSelect = (pet: Pet) => {
-    if (selectedOpponent) {
-      // Check if user has enough battle tickets
-      if (!profile || profile.battleTickets < 1) {
-        Alert.alert(
-          'Cannot Start Battle',
-          'Not enough battle tickets (need 1, resets daily)',
-          [{ text: 'OK' }]
-        )
-        setShowPokemonSelection(false)
-        setSelectedOpponent(null)
-        return
+    // Transform backend opponent moves structure: moves[].move -> moves[]
+    const transformedMoves: Move[] = opponent.moves?.map(opponentMove => ({
+      id: opponentMove.move.id,
+      name: opponentMove.move.name,
+      type: opponentMove.move.type as 'Physical' | 'Special' | 'Status',
+      element: opponentMove.move.element as any,
+      power: opponentMove.move.power,
+      accuracy: opponentMove.move.accuracy,
+      pp: opponentMove.move.pp,
+      maxPp: opponentMove.move.maxPp,
+      description: opponentMove.move.description,
+      effects: {
+        damage: opponentMove.move.effectDamage,
+        healing: opponentMove.move.effectHealing,
+        statusEffect: opponentMove.move.effectStatusEffect as any,
+        statBoost: opponentMove.move.effectStatBoost,
       }
+    })) || []
 
-      // Transform backend opponent moves structure: moves[].move -> moves[]
-      const transformedMoves: Move[] = selectedOpponent.moves?.map(opponentMove => ({
-        id: opponentMove.move.id,
-        name: opponentMove.move.name,
-        type: opponentMove.move.type as 'Physical' | 'Special' | 'Status',
-        element: opponentMove.move.element as any,
-        power: opponentMove.move.power,
-        accuracy: opponentMove.move.accuracy,
-        pp: opponentMove.move.pp,
-        maxPp: opponentMove.move.maxPp,
-        description: opponentMove.move.description,
-        effects: {
-          damage: opponentMove.move.effectDamage,
-          healing: opponentMove.move.effectHealing,
-          statusEffect: opponentMove.move.effectStatusEffect as any,
-          statBoost: opponentMove.move.effectStatBoost,
-        }
-      })) || []
-
-      // Transform backend opponent to frontend Opponent type
-      const opponent: Opponent = {
-        id: selectedOpponent.id,
-        name: selectedOpponent.name,
-        species: selectedOpponent.species || 'unknown',
-        level: selectedOpponent.level,
-        difficulty: selectedOpponent.difficulty as 'Easy' | 'Normal' | 'Hard' | 'Expert' | 'Master',
-        stats: {
-          hp: selectedOpponent.hp || 100,
-          maxHp: selectedOpponent.maxHp || 100,
-          attack: selectedOpponent.attack || 50,
-          defense: selectedOpponent.defense || 50,
-          speed: selectedOpponent.speed || 50,
-        },
-        moves: transformedMoves,
-        image: selectedOpponent.imageUrl || '',
-        rewards: {
-          xp: selectedOpponent.rewardXp || 0,
-          coins: selectedOpponent.rewardCoins || 0,
-          items: [],
-        },
-        unlockLevel: selectedOpponent.unlockLevel,
-      }
-
-      // Navigate to battle screen with battle type context
-      router.push({
-        pathname: '/battle-arena' as any,
-        params: {
-          playerPet: JSON.stringify(pet),
-          opponent: JSON.stringify(opponent),
-          battleType: battleType,
-        },
-      })
+    // Transform backend opponent to frontend Opponent type
+    const transformedOpponent: Opponent = {
+      id: opponent.id,
+      name: opponent.name,
+      species: opponent.species || 'unknown',
+      level: opponent.level,
+      difficulty: opponent.difficulty as 'Easy' | 'Normal' | 'Hard' | 'Expert' | 'Master',
+      stats: {
+        hp: opponent.hp || 100,
+        maxHp: opponent.maxHp || 100,
+        attack: opponent.attack || 50,
+        defense: opponent.defense || 50,
+        speed: opponent.speed || 50,
+      },
+      moves: transformedMoves,
+      image: opponent.imageUrl || '',
+      rewards: {
+        xp: opponent.rewardXp || 0,
+        coins: opponent.rewardCoins || 0,
+        items: [],
+      },
+      unlockLevel: opponent.unlockLevel,
     }
-    setShowPokemonSelection(false)
-    setSelectedOpponent(null)
+
+    // Navigate to Pokemon selection screen
+    router.push({
+      pathname: '/pokemon-selection' as any,
+      params: {
+        opponent: JSON.stringify(transformedOpponent),
+        battleType: battleType,
+      },
+    })
   }
 
   const renderOpponentCard = ({ item: opponent }: { item: BackendOpponent }) => {
@@ -360,17 +335,6 @@ export const BattleSelectionScreen: React.FC = () => {
           />
         )}
       </View>
-
-      {/* Pokemon Selection Dialog */}
-      <PokemonSelectionDialog
-        visible={showPokemonSelection}
-        pets={pets}
-        onSelect={handlePokemonSelect}
-        onClose={() => {
-          setShowPokemonSelection(false)
-          setSelectedOpponent(null)
-        }}
-      />
     </View>
   )
 }

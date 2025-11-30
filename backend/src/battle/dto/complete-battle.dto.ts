@@ -18,4 +18,9 @@ export class CompleteBattleDto {
   @IsInt()
   @Min(0)
   damageTaken: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  @Min(0)
+  finalHp: number;
 }
