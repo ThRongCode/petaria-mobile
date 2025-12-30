@@ -85,7 +85,7 @@ export interface Item {
   id: string
   name: string
   description: string
-  type: 'StatBoost' | 'Evolution' | 'Consumable' | 'Cosmetic'
+  type: 'StatBoost' | 'Evolution' | 'Consumable' | 'Cosmetic' | 'Pokeball'
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary'
   effects: {
     hp?: number

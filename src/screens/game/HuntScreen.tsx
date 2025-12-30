@@ -56,6 +56,7 @@ export const HuntScreen: React.FC = () => {
         setActiveSession(null)
       }
     } catch (error) {
+      // Backend auto-completes sessions with 0 moves, so 404 is expected
       console.log('ℹ️ No active hunt session found')
       setActiveSession(null)
     } finally {

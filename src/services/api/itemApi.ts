@@ -27,26 +27,40 @@ export const itemApi = {
     }>>('/item/catalog')
 
     // Transform backend response to frontend Item type
-    const items = response.map((item) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      type: item.type as 'StatBoost' | 'Evolution' | 'Consumable' | 'Cosmetic',
-      rarity: item.rarity as 'Common' | 'Rare' | 'Epic' | 'Legendary',
-      effects: {
-        hp: item.effectHp ?? undefined,
-        attack: item.effectAttack ?? undefined,
-        defense: item.effectDefense ?? undefined,
-        speed: item.effectSpeed ?? undefined,
-        xpBoost: item.effectXpBoost ?? undefined,
-        permanent: item.isPermanent,
-      },
-      price: {
-        coins: item.priceCoins ?? undefined,
-        gems: item.priceGems ?? undefined,
-      },
-      image: item.imageUrl,
-    }))
+    const items = response.map((item) => {
+      // Capitalize rarity (backend uses lowercase)
+      const capitalizeRarity = (r: string): 'Common' | 'Rare' | 'Epic' | 'Legendary' => {
+        const rarityMap: Record<string, 'Common' | 'Rare' | 'Epic' | 'Legendary'> = {
+          common: 'Common',
+          uncommon: 'Rare', // Map uncommon to Rare
+          rare: 'Rare',
+          epic: 'Epic',
+          legendary: 'Legendary',
+        }
+        return rarityMap[r.toLowerCase()] || 'Common'
+      }
+
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        type: item.type as 'StatBoost' | 'Evolution' | 'Consumable' | 'Cosmetic' | 'Pokeball',
+        rarity: capitalizeRarity(item.rarity),
+        effects: {
+          hp: item.effectHp ?? undefined,
+          attack: item.effectAttack ?? undefined,
+          defense: item.effectDefense ?? undefined,
+          speed: item.effectSpeed ?? undefined,
+          xpBoost: item.effectXpBoost ?? undefined,
+          permanent: item.isPermanent,
+        },
+        price: {
+          coins: item.priceCoins ?? undefined,
+          gems: item.priceGems ?? undefined,
+        },
+        image: item.imageUrl,
+      }
+    })
 
     return {
       success: true,

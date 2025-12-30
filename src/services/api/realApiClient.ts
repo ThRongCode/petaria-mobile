@@ -62,8 +62,17 @@ class RealApiClient {
       async (error: AxiosError) => {
         const originalRequest = error.config
 
-        // Log error in development
-        if (__DEV__) {
+        // Determine if this is an expected error (not a real API issue)
+        const isExpected404 = error.response?.status === 404 && 
+          (error.config?.url?.includes('/hunt/session') || 
+           error.config?.url?.includes('/battle/session'))
+        
+        // Expected 400 errors (user-facing validation like "no pokeballs")
+        const isExpected400 = error.response?.status === 400 &&
+          (error.config?.url?.includes('/hunt/catch'))
+        
+        // Only log unexpected errors in development
+        if (__DEV__ && !isExpected404 && !isExpected400) {
           console.error('[API Response Error]', {
             url: error.config?.url,
             status: error.response?.status,

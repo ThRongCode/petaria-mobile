@@ -66,6 +66,7 @@ export const huntApi = {
         speed: number
         caught: boolean
       }>
+      movesLeft: number
       message: string
     }>('/hunt/start', { regionId })
 
@@ -105,6 +106,7 @@ export const huntApi = {
         speed: number
         caught: boolean
       }>
+      movesLeft: number
     }>('/hunt/session')
 
     return {

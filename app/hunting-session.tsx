@@ -1,3 +1,3 @@
-import { HuntingSessionScreen } from '@/screens/game/HuntingSessionScreen'
+import { HuntingSessionScreen } from '@/features/hunt/screens'
 
 export default HuntingSessionScreen

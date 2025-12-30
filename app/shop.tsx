@@ -33,10 +33,11 @@ export default function ShopScreen() {
   const [loading, setLoading] = useState(true)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [showItemDialog, setShowItemDialog] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'consumable' | 'boost' | 'evolution'>('all')
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'consumable' | 'boost' | 'evolution' | 'pokeball'>('all')
 
   const categories = [
     { id: 'all' as const, label: 'All Items', icon: 'apps' },
+    { id: 'pokeball' as const, label: 'Pokeballs', icon: 'baseball' },
     { id: 'consumable' as const, label: 'Consumables', icon: 'flask' },
     { id: 'boost' as const, label: 'Stat Boosts', icon: 'trending-up' },
     { id: 'evolution' as const, label: 'Evolution', icon: 'sparkles' },
@@ -112,6 +113,7 @@ export default function ShopScreen() {
 
   const filteredItems = items.filter(item => {
     if (selectedCategory === 'all') return true
+    if (selectedCategory === 'pokeball') return item.type === 'Pokeball'
     if (selectedCategory === 'consumable') return item.type === 'Consumable'
     if (selectedCategory === 'boost') return item.type === 'StatBoost'
     if (selectedCategory === 'evolution') return item.type === 'Evolution'

@@ -200,11 +200,36 @@ export class HuntService {
     }
 
     const sessionData = session.encountersData as any;
+    const movesLeft = sessionData.movesLeft || 0;
+
+    // Auto-complete session if no moves left
+    if (movesLeft === 0) {
+      console.log(`🏁 Auto-completing session ${session.id} (0 moves left)`);
+      
+      const encounters = sessionData.encounters || [];
+      const caughtCount = encounters.filter((e: any) => e.caught).length;
+      
+      // Delete the session
+      await this.prisma.huntSession.delete({
+        where: { id: session.id },
+      });
+
+      // Update user stats
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          huntsCompleted: { increment: 1 },
+        },
+      });
+
+      // Return as if no session exists, but with completion info
+      throw new NotFoundException('No active hunt session found');
+    }
 
     return {
       session,
       encounters: sessionData.encounters || [],
-      movesLeft: sessionData.movesLeft || 0,
+      movesLeft,
     };
   }
 
@@ -503,8 +528,10 @@ export class HuntService {
       throw new NotFoundException('Hunt session not found');
     }
 
-    const encounters = session.encountersData as unknown as Encounter[];
-    const petsCaught = encounters.filter((e) => e.caught).length;
+    // encountersData is an object with { encounters: [], movesLeft: number, regionSpawns: [] }
+    const sessionData = session.encountersData as any;
+    const encounters = sessionData.encounters || [];
+    const petsCaught = encounters.filter((e: any) => e.caught).length;
 
     // Save to hunt history
     await this.prisma.hunt.create({
@@ -512,6 +539,14 @@ export class HuntService {
         userId,
         regionId: session.regionId,
         petsCaught,
+      },
+    });
+
+    // Update user stats
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        huntsCompleted: { increment: 1 },
       },
     });
 
