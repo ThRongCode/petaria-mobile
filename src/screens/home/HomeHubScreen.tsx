@@ -254,28 +254,51 @@ export const HomeHubScreen: React.FC = () => {
 
           {/* Daily Quest Banner */}
           <TouchableOpacity 
-            onPress={() => setQuestPopupVisible(true)}
+            onPress={() => router.push('/quests')}
             style={styles.questBanner}
           >
             <Panel variant="dark" style={styles.questPanel}>
               <View style={styles.questContent}>
-                <View>
+                <View style={styles.questTextContent}>
                   <ThemedText style={styles.questTitle}>
-                    📋 Daily Quest
+                    📋 Daily Quests
                   </ThemedText>
                   <ThemedText style={styles.questDescription}>
-                    Catch 3 Pokemon today
-                  </ThemedText>
-                  <ThemedText style={styles.questProgress}>
-                    Progress: 0 / 3
+                    Complete quests to earn rewards!
                   </ThemedText>
                 </View>
-                <View style={styles.questReward}>
-                  <ThemedText style={styles.rewardText}>+5000</ThemedText>
-                  <ThemedText style={styles.rewardIcon}>💰</ThemedText>
+                <View style={styles.questArrow}>
+                  <Ionicons name="chevron-forward" size={24} color="#FFD700" />
                 </View>
               </View>
             </Panel>
+          </TouchableOpacity>
+
+          {/* Events Banner */}
+          <TouchableOpacity 
+            onPress={() => router.push('/events')}
+            style={styles.questBanner}
+          >
+            <LinearGradient
+              colors={['#FF6B00', '#FF9800']}
+              style={styles.eventsBannerGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <View style={styles.questContent}>
+                <View style={styles.questTextContent}>
+                  <ThemedText style={styles.questTitle}>
+                    🎉 Special Events
+                  </ThemedText>
+                  <ThemedText style={[styles.questDescription, { color: 'rgba(255,255,255,0.9)' }]}>
+                    Time-limited hunts with rare Pokémon!
+                  </ThemedText>
+                </View>
+                <View style={styles.questArrow}>
+                  <Ionicons name="chevron-forward" size={24} color="#fff" />
+                </View>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
 
           {/* Navigation Grid */}
@@ -497,6 +520,8 @@ const styles = StyleSheet.create({
   },
   questBanner: {
     marginVertical: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   questPanel: {
     padding: 16,
@@ -505,6 +530,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  questTextContent: {
+    flex: 1,
+  },
+  questArrow: {
+    marginLeft: 12,
   },
   questTitle: {
     fontSize: 16,
@@ -531,6 +562,10 @@ const styles = StyleSheet.create({
   },
   rewardIcon: {
     fontSize: 24,
+  },
+  eventsBannerGradient: {
+    padding: 16,
+    borderRadius: 12,
   },
   navigationGrid: {
     flexDirection: 'row',

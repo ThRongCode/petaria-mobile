@@ -1,14 +1,43 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import {
+  getSpeciesBaseStats,
+  calculateFinalStat,
+  getRarityMultiplier,
+} from '../src/config/species-stats.config';
+import { loadRegionsConfig } from './config-loader';
 
 const prisma = new PrismaClient();
+
+// Helper to calculate stats for seeded pets
+function calculatePetStats(
+  species: string,
+  level: number,
+  rarity: string,
+  ivs: { ivHp: number; ivAttack: number; ivDefense: number; ivSpeed: number },
+) {
+  const baseStats = getSpeciesBaseStats(species);
+  const rarityMult = getRarityMultiplier(rarity);
+  
+  return {
+    maxHp: calculateFinalStat(baseStats.hp, ivs.ivHp, level, rarityMult),
+    attack: calculateFinalStat(baseStats.attack, ivs.ivAttack, level, rarityMult),
+    defense: calculateFinalStat(baseStats.defense, ivs.ivDefense, level, rarityMult),
+    speed: calculateFinalStat(baseStats.speed, ivs.ivSpeed, level, rarityMult),
+  };
+}
 
 async function main() {
   console.log('🌱 Starting database seeding...');
 
   // Clear existing data (in reverse order of dependencies)
+  await prisma.eventSpawn.deleteMany();
+  await prisma.event.deleteMany();
+  await prisma.userQuest.deleteMany();
+  await prisma.questTemplate.deleteMany();
   await prisma.opponentMove.deleteMany();
   await prisma.petMove.deleteMany();
+  await prisma.favoritePet.deleteMany();
   await prisma.userItem.deleteMany();
   await prisma.hunt.deleteMany();
   await prisma.huntSession.deleteMany();
@@ -145,6 +174,88 @@ async function main() {
         effectXpBoost: 100,
         priceGems: 20,
         imageUrl: '/items/rare-candy.png',
+      },
+
+      // Evolution Stones
+      {
+        id: 'fire-stone',
+        name: 'Fire Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It has a fiery orange color.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/fire-stone.png',
+      },
+      {
+        id: 'water-stone',
+        name: 'Water Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It has a deep blue color.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/water-stone.png',
+      },
+      {
+        id: 'thunder-stone',
+        name: 'Thunder Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It has a yellow color with lightning patterns.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/thunder-stone.png',
+      },
+      {
+        id: 'leaf-stone',
+        name: 'Leaf Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It has a verdant green color.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/leaf-stone.png',
+      },
+      {
+        id: 'moon-stone',
+        name: 'Moon Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It glows softly with moonlight.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/moon-stone.png',
+      },
+      {
+        id: 'sun-stone',
+        name: 'Sun Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It radiates warmth like sunlight.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/sun-stone.png',
+      },
+      {
+        id: 'ice-stone',
+        name: 'Ice Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It is cold to the touch.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/ice-stone.png',
+      },
+      {
+        id: 'dusk-stone',
+        name: 'Dusk Stone',
+        description: 'A peculiar stone that makes certain species of Pokemon evolve. It holds shadows within.',
+        type: 'Evolution',
+        rarity: 'rare',
+        priceCoins: 1000,
+        priceGems: 15,
+        imageUrl: '/items/dusk-stone.png',
       },
 
       // Cosmetic Items
@@ -368,40 +479,64 @@ async function main() {
   });
   console.log('✅ Seeded moves');
 
-  // Seed Test User's Starter Pets
+  // Seed Test User's Starter Pets (with IVs and calculated stats)
+  const pikachu = {
+    species: 'Pikachu',
+    level: 15,
+    rarity: 'rare',
+    ivs: { ivHp: 12, ivAttack: 10, ivDefense: 8, ivSpeed: 14 },
+  };
+  const pikachuStats = calculatePetStats(pikachu.species, pikachu.level, pikachu.rarity, pikachu.ivs);
+
   const starterPet1 = await prisma.pet.create({
     data: {
       id: 'test-pet-1',
       ownerId: testUser.id,
-      species: 'Pikachu',
+      species: pikachu.species,
       nickname: 'Sparky',
-      level: 15,
+      level: pikachu.level,
       xp: 200,
-      rarity: 'rare',
-      hp: 80,
-      maxHp: 80,
-      attack: 55,
-      defense: 40,
-      speed: 90,
+      rarity: pikachu.rarity,
+      hp: pikachuStats.maxHp,
+      maxHp: pikachuStats.maxHp,
+      attack: pikachuStats.attack,
+      defense: pikachuStats.defense,
+      speed: pikachuStats.speed,
+      ivHp: pikachu.ivs.ivHp,
+      ivAttack: pikachu.ivs.ivAttack,
+      ivDefense: pikachu.ivs.ivDefense,
+      ivSpeed: pikachu.ivs.ivSpeed,
       mood: 80,
       evolutionStage: 1,
     },
   });
 
+  const charmander = {
+    species: 'Charmander',
+    level: 12,
+    rarity: 'rare',
+    ivs: { ivHp: 9, ivAttack: 13, ivDefense: 7, ivSpeed: 11 },
+  };
+  const charmanderStats = calculatePetStats(charmander.species, charmander.level, charmander.rarity, charmander.ivs);
+
   const starterPet2 = await prisma.pet.create({
     data: {
       id: 'test-pet-2',
       ownerId: testUser.id,
-      species: 'Charmander',
+      species: charmander.species,
       nickname: 'Blaze',
-      level: 12,
+      level: charmander.level,
       xp: 150,
-      rarity: 'rare',
-      hp: 70,
-      maxHp: 70,
-      attack: 52,
-      defense: 43,
-      speed: 65,
+      rarity: charmander.rarity,
+      hp: charmanderStats.maxHp,
+      maxHp: charmanderStats.maxHp,
+      attack: charmanderStats.attack,
+      defense: charmanderStats.defense,
+      speed: charmanderStats.speed,
+      ivHp: charmander.ivs.ivHp,
+      ivAttack: charmander.ivs.ivAttack,
+      ivDefense: charmander.ivs.ivDefense,
+      ivSpeed: charmander.ivs.ivSpeed,
       mood: 75,
       evolutionStage: 1,
     },
@@ -424,119 +559,41 @@ async function main() {
   });
   console.log('✅ Seeded test user starter pets');
 
-  // Seed Regions
-  const region1 = await prisma.region.create({
-    data: {
-      id: 'meadow-valley',
-      name: 'Meadow Valley',
-      description: 'A peaceful valley with gentle creatures',
-      difficulty: 'easy',
-      energyCost: 5,
-      coinsCost: 0,
-      imageUrl: '/regions/meadow-valley.png',
-      unlockLevel: 1,
-    },
-  });
+  // Seed Regions from JSON config
+  const regionsConfig = loadRegionsConfig();
+  console.log(`📦 Loading ${regionsConfig.length} regions from config...`);
 
-  const region2 = await prisma.region.create({
-    data: {
-      id: 'forest-grove',
-      name: 'Forest Grove',
-      description: 'Dense forest with grass-type pets',
-      difficulty: 'medium',
-      energyCost: 8,
-      coinsCost: 100,
-      imageUrl: '/regions/forest-grove.png',
-      unlockLevel: 5,
-    },
-  });
+  for (const regionConfig of regionsConfig) {
+    // Create region
+    await prisma.region.create({
+      data: {
+        id: regionConfig.id,
+        name: regionConfig.name,
+        description: regionConfig.description,
+        difficulty: regionConfig.difficulty,
+        energyCost: regionConfig.energyCost,
+        coinsCost: regionConfig.coinsCost,
+        imageUrl: regionConfig.imageUrl,
+        unlockLevel: regionConfig.unlockLevel,
+      },
+    });
 
-  const region3 = await prisma.region.create({
-    data: {
-      id: 'volcanic-peak',
-      name: 'Volcanic Peak',
-      description: 'Hot mountain with fire-type pets',
-      difficulty: 'hard',
-      energyCost: 10,
-      coinsCost: 300,
-      imageUrl: '/regions/volcanic-peak.png',
-      unlockLevel: 10,
-    },
-  });
+    // Create spawns for this region
+    if (regionConfig.spawns && regionConfig.spawns.length > 0) {
+      await prisma.regionSpawn.createMany({
+        data: regionConfig.spawns.map(spawn => ({
+          regionId: regionConfig.id,
+          species: spawn.species,
+          spawnRate: spawn.spawnRate,
+          rarity: spawn.rarity,
+          minLevel: spawn.minLevel,
+          maxLevel: spawn.maxLevel,
+        })),
+      });
+    }
+  }
 
-  const region4 = await prisma.region.create({
-    data: {
-      id: 'crystal-lake',
-      name: 'Crystal Lake',
-      description: 'Serene lake with water-type pets',
-      difficulty: 'hard',
-      energyCost: 10,
-      coinsCost: 300,
-      imageUrl: '/regions/crystal-lake.png',
-      unlockLevel: 10,
-    },
-  });
-
-  const region5 = await prisma.region.create({
-    data: {
-      id: 'thunder-plains',
-      name: 'Thunder Plains',
-      description: 'Stormy plains with electric-type pets',
-      difficulty: 'expert',
-      energyCost: 12,
-      coinsCost: 500,
-      imageUrl: '/regions/thunder-plains.png',
-      unlockLevel: 15,
-    },
-  });
-
-  console.log('✅ Seeded regions');
-
-  // Seed Region Spawns (Define what pets spawn in each region)
-  await prisma.regionSpawn.createMany({
-    data: [
-      // Meadow Valley spawns (Level 1-10)
-      { regionId: region1.id, species: 'Fluffbit', spawnRate: 30, rarity: 'common', minLevel: 1, maxLevel: 5 },
-      { regionId: region1.id, species: 'Hoplet', spawnRate: 25, rarity: 'common', minLevel: 2, maxLevel: 6 },
-      { regionId: region1.id, species: 'Chirpie', spawnRate: 20, rarity: 'common', minLevel: 3, maxLevel: 7 },
-      { regionId: region1.id, species: 'Sparkpup', spawnRate: 15, rarity: 'uncommon', minLevel: 4, maxLevel: 8 },
-      { regionId: region1.id, species: 'Leafling', spawnRate: 8, rarity: 'uncommon', minLevel: 5, maxLevel: 10 },
-      { regionId: region1.id, species: 'Shinybit', spawnRate: 2, rarity: 'rare', minLevel: 8, maxLevel: 10 },
-
-      // Forest Grove spawns (Level 8-15)
-      { regionId: region2.id, species: 'Leafling', spawnRate: 30, rarity: 'common', minLevel: 8, maxLevel: 12 },
-      { regionId: region2.id, species: 'Vinelet', spawnRate: 25, rarity: 'common', minLevel: 9, maxLevel: 13 },
-      { regionId: region2.id, species: 'Mossbug', spawnRate: 20, rarity: 'uncommon', minLevel: 10, maxLevel: 14 },
-      { regionId: region2.id, species: 'Thornback', spawnRate: 15, rarity: 'uncommon', minLevel: 11, maxLevel: 15 },
-      { regionId: region2.id, species: 'Bloomtail', spawnRate: 8, rarity: 'rare', minLevel: 12, maxLevel: 15 },
-      { regionId: region2.id, species: 'Ancient Oak', spawnRate: 2, rarity: 'epic', minLevel: 14, maxLevel: 15 },
-
-      // Volcanic Peak spawns (Level 12-20)
-      { regionId: region3.id, species: 'Emberpup', spawnRate: 30, rarity: 'common', minLevel: 12, maxLevel: 15 },
-      { regionId: region3.id, species: 'Flameling', spawnRate: 25, rarity: 'common', minLevel: 13, maxLevel: 16 },
-      { regionId: region3.id, species: 'Lavabeast', spawnRate: 20, rarity: 'uncommon', minLevel: 14, maxLevel: 17 },
-      { regionId: region3.id, species: 'Scorchclaw', spawnRate: 15, rarity: 'uncommon', minLevel: 15, maxLevel: 18 },
-      { regionId: region3.id, species: 'Infernowolf', spawnRate: 8, rarity: 'rare', minLevel: 17, maxLevel: 20 },
-      { regionId: region3.id, species: 'Phoenix', spawnRate: 2, rarity: 'legendary', minLevel: 19, maxLevel: 20 },
-
-      // Crystal Lake spawns (Level 12-20)
-      { regionId: region4.id, species: 'Splashfin', spawnRate: 30, rarity: 'common', minLevel: 12, maxLevel: 15 },
-      { regionId: region4.id, species: 'Bubbler', spawnRate: 25, rarity: 'common', minLevel: 13, maxLevel: 16 },
-      { regionId: region4.id, species: 'Tidecrab', spawnRate: 20, rarity: 'uncommon', minLevel: 14, maxLevel: 17 },
-      { regionId: region4.id, species: 'Aquashell', spawnRate: 15, rarity: 'uncommon', minLevel: 15, maxLevel: 18 },
-      { regionId: region4.id, species: 'Waveserpent', spawnRate: 8, rarity: 'rare', minLevel: 17, maxLevel: 20 },
-      { regionId: region4.id, species: 'Leviathan', spawnRate: 2, rarity: 'legendary', minLevel: 19, maxLevel: 20 },
-
-      // Thunder Plains spawns (Level 15-25)
-      { regionId: region5.id, species: 'Sparkpup', spawnRate: 30, rarity: 'common', minLevel: 15, maxLevel: 18 },
-      { regionId: region5.id, species: 'Voltmouse', spawnRate: 25, rarity: 'common', minLevel: 16, maxLevel: 19 },
-      { regionId: region5.id, species: 'Zapperbolt', spawnRate: 20, rarity: 'uncommon', minLevel: 17, maxLevel: 20 },
-      { regionId: region5.id, species: 'Thunderwing', spawnRate: 15, rarity: 'uncommon', minLevel: 19, maxLevel: 22 },
-      { regionId: region5.id, species: 'Stormdrake', spawnRate: 8, rarity: 'rare', minLevel: 21, maxLevel: 24 },
-      { regionId: region5.id, species: 'Zeus Beast', spawnRate: 2, rarity: 'legendary', minLevel: 23, maxLevel: 25 },
-    ],
-  });
-  console.log('✅ Seeded region spawns');
+  console.log('✅ Seeded regions and spawns from JSON config');
 
   // Seed Opponents
   const opponent1 = await prisma.opponent.create({
@@ -665,6 +722,250 @@ async function main() {
     ],
   });
   console.log('✅ Seeded opponent moves');
+
+  // ==================== SEED QUEST TEMPLATES ====================
+  await prisma.questTemplate.createMany({
+    data: [
+      // Daily Quests - Hunt Category
+      {
+        id: 'daily-catch-3',
+        name: 'Catch 3 Pokemon',
+        description: 'Catch any 3 Pokemon in the wild',
+        type: 'daily',
+        category: 'hunt',
+        targetType: 'catch_pokemon',
+        targetCount: 3,
+        rewardCoins: 100,
+        rewardXp: 50,
+        difficulty: 'easy',
+        sortOrder: 1,
+      },
+      {
+        id: 'daily-catch-5',
+        name: 'Pokemon Hunter',
+        description: 'Catch 5 Pokemon today',
+        type: 'daily',
+        category: 'hunt',
+        targetType: 'catch_pokemon',
+        targetCount: 5,
+        rewardCoins: 200,
+        rewardXp: 100,
+        difficulty: 'normal',
+        sortOrder: 2,
+      },
+      {
+        id: 'daily-catch-rare',
+        name: 'Rare Find',
+        description: 'Catch a Rare or better Pokemon',
+        type: 'daily',
+        category: 'hunt',
+        targetType: 'catch_rarity',
+        targetCount: 1,
+        targetRarity: 'Rare',
+        rewardCoins: 300,
+        rewardGems: 5,
+        rewardXp: 150,
+        difficulty: 'hard',
+        sortOrder: 3,
+      },
+      {
+        id: 'daily-hunts-3',
+        name: 'Explorer',
+        description: 'Complete 3 hunts in any region',
+        type: 'daily',
+        category: 'hunt',
+        targetType: 'complete_hunts',
+        targetCount: 3,
+        rewardCoins: 150,
+        rewardXp: 75,
+        difficulty: 'easy',
+        sortOrder: 4,
+      },
+
+      // Daily Quests - Battle Category
+      {
+        id: 'daily-win-3',
+        name: 'Battle Beginner',
+        description: 'Win 3 battles',
+        type: 'daily',
+        category: 'battle',
+        targetType: 'win_battles',
+        targetCount: 3,
+        rewardCoins: 150,
+        rewardXp: 75,
+        difficulty: 'easy',
+        sortOrder: 5,
+      },
+      {
+        id: 'daily-win-5',
+        name: 'Battle Champion',
+        description: 'Win 5 battles today',
+        type: 'daily',
+        category: 'battle',
+        targetType: 'win_battles',
+        targetCount: 5,
+        rewardCoins: 300,
+        rewardXp: 150,
+        difficulty: 'normal',
+        sortOrder: 6,
+      },
+
+      // Daily Quests - Care Category
+      {
+        id: 'daily-feed-3',
+        name: 'Pet Caretaker',
+        description: 'Feed your pets 3 times',
+        type: 'daily',
+        category: 'care',
+        targetType: 'feed_pet',
+        targetCount: 3,
+        rewardCoins: 100,
+        rewardXp: 50,
+        difficulty: 'easy',
+        sortOrder: 7,
+      },
+      {
+        id: 'daily-use-item',
+        name: 'Item User',
+        description: 'Use 2 items on your pets',
+        type: 'daily',
+        category: 'care',
+        targetType: 'use_item',
+        targetCount: 2,
+        rewardCoins: 100,
+        rewardXp: 50,
+        difficulty: 'easy',
+        sortOrder: 8,
+      },
+
+      // Daily Quests - Evolution
+      {
+        id: 'daily-evolve-1',
+        name: 'Evolution Master',
+        description: 'Evolve a Pokemon',
+        type: 'daily',
+        category: 'evolution',
+        targetType: 'evolve_pet',
+        targetCount: 1,
+        rewardCoins: 500,
+        rewardGems: 10,
+        rewardXp: 200,
+        difficulty: 'hard',
+        sortOrder: 9,
+      },
+
+      // Daily Quests - Shopping
+      {
+        id: 'daily-buy-item',
+        name: 'Shopper',
+        description: 'Buy 1 item from the shop',
+        type: 'daily',
+        category: 'shop',
+        targetType: 'buy_item',
+        targetCount: 1,
+        rewardCoins: 50,
+        rewardXp: 25,
+        difficulty: 'easy',
+        sortOrder: 10,
+      },
+
+      // Weekly Quests (assigned manually or with special logic)
+      {
+        id: 'weekly-catch-20',
+        name: 'Weekly Collector',
+        description: 'Catch 20 Pokemon this week',
+        type: 'weekly',
+        category: 'hunt',
+        targetType: 'catch_pokemon',
+        targetCount: 20,
+        rewardCoins: 1000,
+        rewardGems: 20,
+        rewardXp: 500,
+        difficulty: 'normal',
+        sortOrder: 100,
+      },
+      {
+        id: 'weekly-battles-15',
+        name: 'Weekly Warrior',
+        description: 'Win 15 battles this week',
+        type: 'weekly',
+        category: 'battle',
+        targetType: 'win_battles',
+        targetCount: 15,
+        rewardCoins: 800,
+        rewardGems: 15,
+        rewardXp: 400,
+        difficulty: 'normal',
+        sortOrder: 101,
+      },
+    ],
+  });
+  console.log('✅ Seeded quest templates');
+
+  // ==================== SEED SAMPLE EVENTS ====================
+  // Create a sample event that starts now and lasts 7 days
+  const now = new Date();
+  const eventEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const sampleEvent = await prisma.event.create({
+    data: {
+      name: 'Pikachu Festival',
+      description: 'Pikachu are appearing more frequently! Catch them while you can!',
+      type: 'rare_spawn',
+      startTime: now,
+      endTime: eventEnd,
+      isActive: true,
+      bannerUrl: '/events/pikachu-festival.png',
+      priority: 10,
+      config: {
+        spawnBonus: 0.3,
+        xpMultiplier: 1.5,
+        featuredSpecies: ['Pikachu', 'Pichu', 'Raichu'],
+      },
+      eventSpawns: {
+        create: [
+          {
+            species: 'Pikachu',
+            rarity: 'Rare',
+            spawnRate: 0.25, // 25% spawn rate during event
+            minLevel: 5,
+            maxLevel: 20,
+            isGuaranteed: false,
+          },
+          {
+            species: 'Pichu',
+            rarity: 'Epic',
+            spawnRate: 0.1, // 10% spawn rate during event
+            minLevel: 1,
+            maxLevel: 10,
+            isGuaranteed: false,
+          },
+        ],
+      },
+    },
+  });
+  console.log('✅ Seeded sample event: Pikachu Festival');
+
+  // Create a future event
+  const futureStart = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const futureEnd = new Date(futureStart.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+  await prisma.event.create({
+    data: {
+      name: 'Double XP Weekend',
+      description: 'Earn double XP from all battles and catches!',
+      type: 'double_xp',
+      startTime: futureStart,
+      endTime: futureEnd,
+      isActive: true,
+      bannerUrl: '/events/double-xp.png',
+      priority: 5,
+      config: {
+        xpMultiplier: 2,
+      },
+    },
+  });
+  console.log('✅ Seeded upcoming event: Double XP Weekend');
 
   console.log('🎉 Database seeding completed successfully!');
 }

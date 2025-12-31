@@ -2,14 +2,21 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketResetUtil } from '../utils/ticketReset';
 import { PetStatsUtil } from '../utils/petStats';
+import { QuestService } from '../quest/quest.service';
 
 @Injectable()
 export class BattleService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => QuestService))
+    private questService: QuestService,
+  ) {}
 
   async listOpponents(userLevel: number) {
     return this.prisma.opponent.findMany({
@@ -207,17 +214,24 @@ export class BattleService {
       newLevel = pet.level + 1;
       leveledUp = true;
 
-      // Random stat growth (5-10% increase per stat)
-      const newMaxHp = PetStatsUtil.calculateStatGrowth(pet.maxHp);
-      const newAttack = PetStatsUtil.calculateStatGrowth(pet.attack);
-      const newDefense = PetStatsUtil.calculateStatGrowth(pet.defense);
-      const newSpeed = PetStatsUtil.calculateStatGrowth(pet.speed);
+      // Recalculate stats using deterministic formula (based on species, IVs, level)
+      const newStats = PetStatsUtil.calculateStats(
+        pet.species,
+        newLevel,
+        pet.rarity,
+        {
+          ivHp: pet.ivHp,
+          ivAttack: pet.ivAttack,
+          ivDefense: pet.ivDefense,
+          ivSpeed: pet.ivSpeed,
+        },
+      );
 
       statChanges = {
-        maxHp: newMaxHp,
-        attack: newAttack,
-        defense: newDefense,
-        speed: newSpeed,
+        maxHp: newStats.maxHp,
+        attack: newStats.attack,
+        defense: newStats.defense,
+        speed: newStats.speed,
       };
 
       await this.prisma.pet.update({
@@ -225,11 +239,11 @@ export class BattleService {
         data: {
           level: newLevel,
           xp: newXp - xpForNextLevel,
-          hp: Math.min(newHp, newMaxHp), // Heal to new max if increased
-          maxHp: newMaxHp,
-          attack: newAttack,
-          defense: newDefense,
-          speed: newSpeed,
+          hp: Math.min(newHp, newStats.maxHp), // Heal to new max if increased
+          maxHp: newStats.maxHp,
+          attack: newStats.attack,
+          defense: newStats.defense,
+          speed: newStats.speed,
         },
       });
     } else {
@@ -288,6 +302,18 @@ export class BattleService {
     await this.prisma.battleSession.delete({
       where: { id: sessionId },
     });
+
+    // Update quest progress for winning battles
+    if (won) {
+      try {
+        await this.questService.updateProgress(userId, {
+          targetType: 'win_battles',
+          amount: 1,
+        });
+      } catch (error) {
+        console.error('Failed to update quest progress:', error);
+      }
+    }
 
     return {
       won,

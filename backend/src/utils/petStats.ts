@@ -1,22 +1,16 @@
+import {
+  getSpeciesBaseStats,
+  calculateFinalStat,
+  getRarityMultiplier,
+} from '../config/species-stats.config';
+
 /**
  * Utility class for pet stat calculations
+ * 
+ * Uses deterministic formula: finalStat = (baseStat + IV) × levelMultiplier × rarityMultiplier
+ * This ensures stats are predictable and easy to test/verify.
  */
 export class PetStatsUtil {
-  /**
-   * Calculate stat growth on level up with random 5-10% increase
-   * 
-   * @param currentStat - Current stat value
-   * @returns New stat value after growth
-   */
-  static calculateStatGrowth(currentStat: number): number {
-    // Random growth between 5% and 10%
-    const growthPercent = 0.05 + Math.random() * 0.05; // 5-10%
-    const increase = Math.ceil(currentStat * growthPercent);
-    
-    // Ensure at least +1 growth even for low stats
-    return currentStat + Math.max(1, increase);
-  }
-
   /**
    * Calculate XP required for next level
    * Formula: level * 100
@@ -29,21 +23,63 @@ export class PetStatsUtil {
   }
 
   /**
+   * Calculate all stats for a pet at a given level
+   * Uses the deterministic formula: (baseStat + IV) × levelMultiplier × rarityMultiplier
+   * 
+   * @param species - Pet species name
+   * @param level - Pet level
+   * @param rarity - Pet rarity
+   * @param ivs - Individual Values for each stat
+   * @returns Calculated stats
+   */
+  static calculateStats(
+    species: string,
+    level: number,
+    rarity: string,
+    ivs: {
+      ivHp: number;
+      ivAttack: number;
+      ivDefense: number;
+      ivSpeed: number;
+    },
+  ): {
+    maxHp: number;
+    attack: number;
+    defense: number;
+    speed: number;
+  } {
+    const baseStats = getSpeciesBaseStats(species);
+    const rarityMult = getRarityMultiplier(rarity);
+
+    return {
+      maxHp: calculateFinalStat(baseStats.hp, ivs.ivHp, level, rarityMult),
+      attack: calculateFinalStat(baseStats.attack, ivs.ivAttack, level, rarityMult),
+      defense: calculateFinalStat(baseStats.defense, ivs.ivDefense, level, rarityMult),
+      speed: calculateFinalStat(baseStats.speed, ivs.ivSpeed, level, rarityMult),
+    };
+  }
+
+  /**
    * Check if pet should level up and calculate new stats
+   * Stats are recalculated using the deterministic formula (not random growth)
    * 
    * @param currentXp - Current pet XP
    * @param currentLevel - Current pet level
-   * @param currentStats - Current pet stats (hp, attack, defense, speed)
-   * @returns Level up information
+   * @param species - Pet species name
+   * @param rarity - Pet rarity
+   * @param ivs - Individual Values for each stat
+   * @returns Level up information with recalculated stats
    */
   static checkLevelUp(
     currentXp: number,
     currentLevel: number,
-    currentStats: {
-      maxHp: number;
-      attack: number;
-      defense: number;
-      speed: number;
+    species: string,
+    rarity: string,
+    ivs: {
+      ivHp: number;
+      ivAttack: number;
+      ivDefense: number;
+      ivSpeed: number;
     },
   ): {
     leveledUp: boolean;
@@ -59,16 +95,14 @@ export class PetStatsUtil {
     const xpRequired = this.calculateXpForNextLevel(currentLevel);
 
     if (currentXp >= xpRequired) {
-      const newStats = {
-        maxHp: this.calculateStatGrowth(currentStats.maxHp),
-        attack: this.calculateStatGrowth(currentStats.attack),
-        defense: this.calculateStatGrowth(currentStats.defense),
-        speed: this.calculateStatGrowth(currentStats.speed),
-      };
+      const newLevel = currentLevel + 1;
+      
+      // Recalculate stats using deterministic formula
+      const newStats = this.calculateStats(species, newLevel, rarity, ivs);
 
       return {
         leveledUp: true,
-        newLevel: currentLevel + 1,
+        newLevel,
         remainingXp: currentXp - xpRequired,
         newStats,
       };

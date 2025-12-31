@@ -63,10 +63,18 @@ export interface Pet {
     defense: number
     speed: number
   }
+  // Individual Values (IVs) - random stats generated on capture (0-15)
+  ivs?: {
+    hp: number
+    attack: number
+    defense: number
+    speed: number
+  }
   moves: Move[]
   image: string
   evolutionStage: number
   maxEvolutionStage: number
+  canEvolve?: boolean // True if pet can evolve at current level
   evolutionRequirements?: {
     level: number
     itemId: string

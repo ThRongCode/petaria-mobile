@@ -10,6 +10,9 @@ import { ItemModule } from './item/item.module';
 import { HuntModule } from './hunt/hunt.module';
 import { BattleModule } from './battle/battle.module';
 import { RegionModule } from './region/region.module';
+import { QuestModule } from './quest/quest.module';
+import { EventModule } from './event/event.module';
+import { GameConfigModule } from './config/config.module';
 
 @Module({
   imports: [
@@ -17,6 +20,7 @@ import { RegionModule } from './region/region.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    GameConfigModule,
     PrismaModule,
     AuthModule,
     UserModule,
@@ -25,6 +29,8 @@ import { RegionModule } from './region/region.module';
     HuntModule,
     BattleModule,
     RegionModule,
+    QuestModule,
+    EventModule,
   ],
   controllers: [AppController],
   providers: [AppService],

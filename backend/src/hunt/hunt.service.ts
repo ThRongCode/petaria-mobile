@@ -2,9 +2,18 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketResetUtil } from '../utils/ticketReset';
+import {
+  getSpeciesBaseStats,
+  generateRandomIVs,
+  calculateFinalStat,
+  getRarityMultiplier,
+} from '../config/species-stats.config';
+import { QuestService } from '../quest/quest.service';
 
 export interface Encounter {
   id: string;
@@ -21,7 +30,11 @@ export interface Encounter {
 
 @Injectable()
 export class HuntService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => QuestService))
+    private questService: QuestService,
+  ) {}
 
   async startSession(userId: string, regionId: string) {
     const user = await this.prisma.user.findUnique({
@@ -316,30 +329,27 @@ export class HuntService {
         Math.random() * (selectedSpawn.maxLevel - selectedSpawn.minLevel + 1),
       ) + selectedSpawn.minLevel;
 
-    // Generate stats based on level and rarity
-    const rarityMultiplier = {
-      common: 1.0,
-      uncommon: 1.2,
-      rare: 1.5,
-      epic: 1.8,
-      legendary: 2.0,
-    }[selectedSpawn.rarity.toLowerCase()] || 1.0;
+    // Get species base stats and rarity multiplier
+    const baseStats = getSpeciesBaseStats(selectedSpawn.species);
+    const rarityMult = getRarityMultiplier(selectedSpawn.rarity);
 
-    const baseHp = 20 + level * 5;
-    const baseAttack = 5 + level * 2;
-    const baseDefense = 5 + level * 2;
-    const baseSpeed = 5 + level * 2;
+    // Calculate encounter stats (using average IVs for display, actual IVs generated on capture)
+    const avgIV = 7; // Middle of 0-15 range for encounter display
+    const hp = calculateFinalStat(baseStats.hp, avgIV, level, rarityMult);
+    const attack = calculateFinalStat(baseStats.attack, avgIV, level, rarityMult);
+    const defense = calculateFinalStat(baseStats.defense, avgIV, level, rarityMult);
+    const speed = calculateFinalStat(baseStats.speed, avgIV, level, rarityMult);
 
     return {
       id: `encounter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       species: selectedSpawn.species,
       rarity: selectedSpawn.rarity,
       level,
-      hp: Math.floor(baseHp * rarityMultiplier),
-      maxHp: Math.floor(baseHp * rarityMultiplier),
-      attack: Math.floor(baseAttack * rarityMultiplier),
-      defense: Math.floor(baseDefense * rarityMultiplier),
-      speed: Math.floor(baseSpeed * rarityMultiplier),
+      hp,
+      maxHp: hp,
+      attack,
+      defense,
+      speed,
       caught: false,
     };
   }
@@ -423,7 +433,19 @@ export class HuntService {
         throw new BadRequestException('Pet limit reached (100 max)');
       }
 
-      // Create pet
+      // Generate random IVs for this capture
+      const ivs = generateRandomIVs();
+      
+      // Get species base stats and calculate final stats with IVs
+      const baseStats = getSpeciesBaseStats(encounter.species);
+      const rarityMult = getRarityMultiplier(encounter.rarity);
+      
+      const finalHp = calculateFinalStat(baseStats.hp, ivs.ivHp, encounter.level, rarityMult);
+      const finalAttack = calculateFinalStat(baseStats.attack, ivs.ivAttack, encounter.level, rarityMult);
+      const finalDefense = calculateFinalStat(baseStats.defense, ivs.ivDefense, encounter.level, rarityMult);
+      const finalSpeed = calculateFinalStat(baseStats.speed, ivs.ivSpeed, encounter.level, rarityMult);
+
+      // Create pet with IVs and calculated stats
       const pet = await this.prisma.pet.create({
         data: {
           ownerId: userId,
@@ -432,11 +454,15 @@ export class HuntService {
           rarity: encounter.rarity,
           level: encounter.level,
           xp: 0,
-          hp: encounter.maxHp,
-          maxHp: encounter.maxHp,
-          attack: encounter.attack,
-          defense: encounter.defense,
-          speed: encounter.speed,
+          hp: finalHp,
+          maxHp: finalHp,
+          attack: finalAttack,
+          defense: finalDefense,
+          speed: finalSpeed,
+          ivHp: ivs.ivHp,
+          ivAttack: ivs.ivAttack,
+          ivDefense: ivs.ivDefense,
+          ivSpeed: ivs.ivSpeed,
         },
       });
 
@@ -457,6 +483,18 @@ export class HuntService {
           encountersData: sessionData as any,
         },
       });
+
+      // Update quest progress for catching Pokemon
+      try {
+        await this.questService.updateProgress(userId, {
+          targetType: 'catch_pokemon',
+          amount: 1,
+          species: encounter.species,
+          rarity: encounter.rarity,
+        });
+      } catch (error) {
+        console.error('Failed to update quest progress:', error);
+      }
 
       return {
         success: true,

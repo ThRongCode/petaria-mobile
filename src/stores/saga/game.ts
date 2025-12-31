@@ -72,6 +72,13 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
           defense: backendPet.defense,
           speed: backendPet.speed,
         },
+        // Individual Values (IVs) - random stats generated on capture
+        ivs: {
+          hp: backendPet.ivHp ?? 0,
+          attack: backendPet.ivAttack ?? 0,
+          defense: backendPet.ivDefense ?? 0,
+          speed: backendPet.ivSpeed ?? 0,
+        },
         moves: backendPet.moves?.map((petMove: any) => ({
           id: petMove.move.id,
           name: petMove.move.name,
@@ -85,7 +92,8 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         })) || [],
         image: backendPet.species, // Will be resolved by getPokemonImage
         evolutionStage: backendPet.evolutionStage,
-        maxEvolutionStage: 3, // Default, could be fetched from species data
+        maxEvolutionStage: backendPet.maxEvolutionStage ?? 3, // From backend, fallback to 3
+        canEvolve: backendPet.canEvolve ?? false, // From backend
         isLegendary: backendPet.rarity === 'Legendary',
         ownerId: backendPet.ownerId,
         isForSale: backendPet.isForSale || false,

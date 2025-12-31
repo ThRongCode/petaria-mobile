@@ -10,9 +10,17 @@ import { PetImages } from './pet-images'
 export const POKEMON_IMAGE_MAP: Record<string, any> = {
   // Starter Pokemon
   pikachu: PetImages.pikachu,
+  pichu: PetImages.pichu,
+  raichu: PetImages.raichu,
   bulbasaur: PetImages.bulbasaur,
+  ivysaur: PetImages.ivysaur,
+  venusaur: PetImages.venusaur,
   charmander: PetImages.charmander,
+  charmeleon: PetImages.charmeleon,
+  charizard: PetImages.charizard,
   squirtle: PetImages.squirtle,
+  wartortle: PetImages.wartortle,
+  blastoise: PetImages.blastoise,
   
   // Common Pokemon
   rattata: PetImages.rattata,
@@ -30,14 +38,16 @@ export const POKEMON_IMAGE_MAP: Record<string, any> = {
   pinsir: PetImages.pinsir,
   
   // Fire Types
-  charizard: PetImages.charizard,
   vulpix: PetImages.vulpix,
   growlithe: PetImages.growlithe,
   
   // Water Types
-  blastoise: PetImages.blastoise,
   psyduck: PetImages.psyduck,
   magikarp: PetImages.magikarp,
+  
+  // Electric Types
+  jolteon: PetImages.jolteon,
+  electabuzz: PetImages.electabuzz,
   
   // Legendary
   darkrai: PetImages.darkrai,

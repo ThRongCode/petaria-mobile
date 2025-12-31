@@ -11,6 +11,7 @@ import {
 import { PetService } from './pet.service';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { HealPetDto } from './dto/heal-pet.dto';
+import { EvolvePetDto } from './dto/evolve-pet.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -81,5 +82,30 @@ export class PetController {
   @Get('favorites/list')
   getFavorites(@CurrentUser('id') userId: string) {
     return this.petService.getFavoritePets(userId);
+  }
+
+  /**
+   * Get evolution options for a pet
+   * Returns available evolution paths and whether user has required items
+   */
+  @Get(':id/evolution')
+  getEvolutionOptions(
+    @Param('id') petId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.petService.getEvolutionOptions(petId, userId);
+  }
+
+  /**
+   * Evolve a pet using an evolution item
+   * Consumes the item and transforms the pet
+   */
+  @Post(':id/evolve')
+  evolve(
+    @Param('id') petId: string,
+    @CurrentUser('id') userId: string,
+    @Body() evolvePetDto: EvolvePetDto,
+  ) {
+    return this.petService.evolve(petId, userId, evolvePetDto.itemId);
   }
 }

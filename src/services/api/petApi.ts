@@ -22,10 +22,18 @@ export const petApi = {
       attack: number
       defense: number
       speed: number
+      // Individual Values (IVs)
+      ivHp: number
+      ivAttack: number
+      ivDefense: number
+      ivSpeed: number
       evolutionStage: number
+      maxEvolutionStage: number
+      canEvolve: boolean
       mood: number
       lastFed: string | null
       isForSale: boolean
+      isFavorite: boolean
       createdAt: string
       updatedAt: string
       moves: Array<{
@@ -165,6 +173,69 @@ export const petApi = {
     return {
       success: true,
       data: response,
+    }
+  },
+
+  /**
+   * Get evolution options for a pet
+   * Returns available evolution paths and whether user has required items
+   */
+  async getEvolutionOptions(petId: string) {
+    const response = await realApiClient.get<{
+      petId: string
+      species: string
+      level: number
+      canEvolve: boolean
+      currentStage: number
+      maxStage: number
+      evolvesFrom: string | null
+      availableEvolutions: Array<{
+        evolvesTo: string
+        levelRequired: number
+        itemRequired: string | null
+        description?: string
+        hasItem: boolean
+        itemQuantity: number | null
+      }>
+    }>(`/pet/${petId}/evolution`)
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
+   * Evolve a pet using an evolution stone
+   */
+  async evolvePet(petId: string, itemId: string) {
+    const response = await realApiClient.post<{
+      message: string
+      previousSpecies: string
+      newSpecies: string
+      pet: {
+        id: string
+        species: string
+        evolutionStage: number
+        maxHp: number
+        hp: number
+        attack: number
+        defense: number
+        speed: number
+      }
+      itemUsed: string
+      statsChanged: {
+        maxHp: { from: number; to: number }
+        attack: { from: number; to: number }
+        defense: { from: number; to: number }
+        speed: { from: number; to: number }
+      }
+    }>(`/pet/${petId}/evolve`, { itemId })
+
+    return {
+      success: true,
+      data: response,
+      message: response.message,
     }
   },
 }

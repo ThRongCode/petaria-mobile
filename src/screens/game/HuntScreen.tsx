@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native'
 import { TopBar, Panel } from '@/components/ui'
 import { ThemedText } from '@/components'
@@ -16,6 +17,14 @@ import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { huntApi } from '@/services/api'
+import { getPokemonImage } from '@/assets/images'
+
+// Spawn type for featured Pokémon
+interface RegionSpawn {
+  species: string
+  rarity: string
+  spawnRate: number
+}
 
 // Backend region type
 interface BackendRegion {
@@ -27,6 +36,9 @@ interface BackendRegion {
   coinsCost: number
   imageUrl: string
   unlockLevel: number
+  locked?: boolean
+  featuredSpawns?: RegionSpawn[]
+  rareSpawns?: RegionSpawn[]
 }
 
 /**
@@ -208,6 +220,17 @@ export const HuntScreen: React.FC = () => {
     }
   }
 
+  const getRarityColor = (rarity: string) => {
+    switch (rarity.toLowerCase()) {
+      case 'common': return '#9E9E9E'
+      case 'uncommon': return '#4CAF50'
+      case 'rare': return '#2196F3'
+      case 'epic': return '#9C27B0'
+      case 'legendary': return '#FFD700'
+      default: return '#9E9E9E'
+    }
+  }
+
   return (
     <View style={styles.container}>
       {/* Background */}
@@ -250,6 +273,28 @@ export const HuntScreen: React.FC = () => {
             </ThemedText>
           </Panel>
         </View>
+
+        {/* Events Banner */}
+        <TouchableOpacity 
+          style={styles.eventsBanner}
+          onPress={() => router.push('/events')}
+        >
+          <LinearGradient
+            colors={['#FF6B00', '#FF9800']}
+            style={styles.eventsBannerGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <View style={styles.eventsBannerContent}>
+              <Ionicons name="sparkles" size={24} color="#fff" />
+              <View style={styles.eventsBannerText}>
+                <ThemedText style={styles.eventsBannerTitle}>🎉 Events</ThemedText>
+                <ThemedText style={styles.eventsBannerSubtitle}>Check out special hunts!</ThemedText>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Active Hunt Session Card */}
         {activeSession && (
@@ -397,6 +442,37 @@ export const HuntScreen: React.FC = () => {
                         </ThemedText>
                       </View>
                     </View>
+
+                    {/* Featured Pokémon */}
+                    {region.featuredSpawns && region.featuredSpawns.length > 0 && (
+                      <View style={styles.featuredSection}>
+                        <ThemedText style={styles.featuredTitle}>Featured Pokémon</ThemedText>
+                        <View style={styles.featuredList}>
+                          {region.featuredSpawns.slice(0, 4).map((spawn, idx) => (
+                            <View key={idx} style={styles.featuredPokemon}>
+                              <Image
+                                source={getPokemonImage(spawn.species) as any}
+                                style={styles.pokemonImage}
+                                resizeMode="contain"
+                              />
+                              <ThemedText style={styles.pokemonName} numberOfLines={1}>
+                                {spawn.species}
+                              </ThemedText>
+                              <View style={[styles.rarityDot, { backgroundColor: getRarityColor(spawn.rarity) }]} />
+                            </View>
+                          ))}
+                        </View>
+                        {/* Rare Spawns indicator */}
+                        {region.rareSpawns && region.rareSpawns.length > 0 && (
+                          <View style={styles.rareSpawnsRow}>
+                            <Ionicons name="sparkles" size={14} color="#FFD700" />
+                            <ThemedText style={styles.rareSpawnsText}>
+                              Rare: {region.rareSpawns.map(s => s.species).join(', ')}
+                            </ThemedText>
+                          </View>
+                        )}
+                      </View>
+                    )}
 
                     {/* Action Button */}
                     {isUnlocked ? (
@@ -609,6 +685,60 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '600',
   },
+  // Featured Pokemon styles
+  featuredSection: {
+    marginBottom: 12,
+  },
+  featuredTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 8,
+  },
+  featuredList: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  featuredPokemon: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 6,
+    borderRadius: 10,
+    minWidth: 60,
+  },
+  pokemonImage: {
+    width: 40,
+    height: 40,
+  },
+  pokemonName: {
+    fontSize: 9,
+    color: '#fff',
+    fontWeight: '600',
+    marginTop: 2,
+    maxWidth: 55,
+    textAlign: 'center',
+  },
+  rarityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 3,
+  },
+  rareSpawnsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  rareSpawnsText: {
+    fontSize: 11,
+    color: 'rgba(255, 215, 0, 0.8)',
+    fontWeight: '600',
+    flex: 1,
+  },
   huntButton: {
     borderRadius: 12,
     overflow: 'hidden',
@@ -720,5 +850,36 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Events Banner
+  eventsBanner: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  eventsBannerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  eventsBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  eventsBannerText: {
+    gap: 2,
+  },
+  eventsBannerTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  eventsBannerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
   },
 })

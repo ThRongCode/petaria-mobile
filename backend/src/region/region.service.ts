@@ -6,16 +6,38 @@ export class RegionService {
   constructor(private prisma: PrismaService) {}
 
   async listRegions(userLevel: number) {
-    return this.prisma.region.findMany({
-      where: {
-        unlockLevel: {
-          lte: userLevel,
-        },
-      },
+    const regions = await this.prisma.region.findMany({
       orderBy: {
         unlockLevel: 'asc',
       },
+      include: {
+        spawns: {
+          orderBy: {
+            spawnRate: 'desc',
+          },
+        },
+      },
     });
+
+    return regions.map((region) => ({
+      ...region,
+      locked: region.unlockLevel > userLevel,
+      // Get top featured spawns (highest spawn rate first, take top 4)
+      featuredSpawns: region.spawns.slice(0, 4).map((spawn) => ({
+        species: spawn.species,
+        rarity: spawn.rarity,
+        spawnRate: spawn.spawnRate,
+      })),
+      // Get rare spawns (uncommon, rare, epic, legendary)
+      rareSpawns: region.spawns
+        .filter((s) => ['rare', 'epic', 'legendary'].includes(s.rarity))
+        .slice(0, 2)
+        .map((spawn) => ({
+          species: spawn.species,
+          rarity: spawn.rarity,
+          spawnRate: spawn.spawnRate,
+        })),
+    }));
   }
 
   async getRegionDetails(id: string, userLevel: number) {

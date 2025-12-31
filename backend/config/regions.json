@@ -1,0 +1,97 @@
+{
+  "$schema": "./schemas/regions.schema.json",
+  "_comment": "Hunting regions configuration with spawns. Spawn rates should total ~100 per region.",
+
+  "regions": [
+    {
+      "id": "meadow-valley",
+      "name": "Meadow Valley",
+      "description": "A peaceful valley with gentle creatures",
+      "difficulty": "easy",
+      "energyCost": 5,
+      "coinsCost": 0,
+      "unlockLevel": 1,
+      "imageUrl": "/regions/meadow-valley.png",
+      "spawns": [
+        { "species": "Rattata", "spawnRate": 30, "rarity": "common", "minLevel": 1, "maxLevel": 5 },
+        { "species": "Pidgey", "spawnRate": 25, "rarity": "common", "minLevel": 2, "maxLevel": 6 },
+        { "species": "Caterpie", "spawnRate": 20, "rarity": "common", "minLevel": 3, "maxLevel": 7 },
+        { "species": "Weedle", "spawnRate": 15, "rarity": "uncommon", "minLevel": 4, "maxLevel": 8 },
+        { "species": "Pikachu", "spawnRate": 8, "rarity": "uncommon", "minLevel": 5, "maxLevel": 10 },
+        { "species": "Scyther", "spawnRate": 2, "rarity": "rare", "minLevel": 8, "maxLevel": 10 }
+      ]
+    },
+    {
+      "id": "forest-grove",
+      "name": "Forest Grove",
+      "description": "Dense forest with grass-type pets",
+      "difficulty": "medium",
+      "energyCost": 8,
+      "coinsCost": 100,
+      "unlockLevel": 5,
+      "imageUrl": "/regions/forest-grove.png",
+      "spawns": [
+        { "species": "Oddish", "spawnRate": 30, "rarity": "common", "minLevel": 8, "maxLevel": 12 },
+        { "species": "Bellsprout", "spawnRate": 25, "rarity": "common", "minLevel": 9, "maxLevel": 13 },
+        { "species": "Treecko", "spawnRate": 20, "rarity": "uncommon", "minLevel": 10, "maxLevel": 14 },
+        { "species": "Bulbasaur", "spawnRate": 15, "rarity": "uncommon", "minLevel": 11, "maxLevel": 15 },
+        { "species": "Pinsir", "spawnRate": 8, "rarity": "rare", "minLevel": 12, "maxLevel": 15 },
+        { "species": "Celebi", "spawnRate": 2, "rarity": "legendary", "minLevel": 14, "maxLevel": 15 }
+      ]
+    },
+    {
+      "id": "volcanic-peak",
+      "name": "Volcanic Peak",
+      "description": "Hot mountain with fire-type pets",
+      "difficulty": "hard",
+      "energyCost": 10,
+      "coinsCost": 300,
+      "unlockLevel": 10,
+      "imageUrl": "/regions/volcanic-peak.png",
+      "spawns": [
+        { "species": "Vulpix", "spawnRate": 30, "rarity": "common", "minLevel": 12, "maxLevel": 15 },
+        { "species": "Growlithe", "spawnRate": 25, "rarity": "common", "minLevel": 13, "maxLevel": 16 },
+        { "species": "Charmander", "spawnRate": 20, "rarity": "uncommon", "minLevel": 14, "maxLevel": 17 },
+        { "species": "Charmeleon", "spawnRate": 15, "rarity": "uncommon", "minLevel": 15, "maxLevel": 18 },
+        { "species": "Charizard", "spawnRate": 8, "rarity": "rare", "minLevel": 17, "maxLevel": 20 },
+        { "species": "Moltres", "spawnRate": 2, "rarity": "legendary", "minLevel": 19, "maxLevel": 20 }
+      ]
+    },
+    {
+      "id": "crystal-lake",
+      "name": "Crystal Lake",
+      "description": "Serene lake with water-type pets",
+      "difficulty": "hard",
+      "energyCost": 10,
+      "coinsCost": 300,
+      "unlockLevel": 10,
+      "imageUrl": "/regions/crystal-lake.png",
+      "spawns": [
+        { "species": "Magikarp", "spawnRate": 30, "rarity": "common", "minLevel": 12, "maxLevel": 15 },
+        { "species": "Psyduck", "spawnRate": 25, "rarity": "common", "minLevel": 13, "maxLevel": 16 },
+        { "species": "Squirtle", "spawnRate": 20, "rarity": "uncommon", "minLevel": 14, "maxLevel": 17 },
+        { "species": "Wartortle", "spawnRate": 15, "rarity": "uncommon", "minLevel": 15, "maxLevel": 18 },
+        { "species": "Blastoise", "spawnRate": 8, "rarity": "rare", "minLevel": 17, "maxLevel": 20 },
+        { "species": "Lugia", "spawnRate": 2, "rarity": "legendary", "minLevel": 19, "maxLevel": 20 }
+      ]
+    },
+    {
+      "id": "thunder-plains",
+      "name": "Thunder Plains",
+      "description": "Stormy plains with electric-type pets",
+      "difficulty": "expert",
+      "energyCost": 12,
+      "coinsCost": 500,
+      "unlockLevel": 15,
+      "imageUrl": "/regions/thunder-plains.png",
+      "spawns": [
+        { "species": "Pikachu", "spawnRate": 30, "rarity": "common", "minLevel": 15, "maxLevel": 18 },
+        { "species": "Pichu", "spawnRate": 25, "rarity": "common", "minLevel": 16, "maxLevel": 19 },
+        { "species": "Raichu", "spawnRate": 20, "rarity": "uncommon", "minLevel": 17, "maxLevel": 20 },
+        { "species": "Jolteon", "spawnRate": 15, "rarity": "uncommon", "minLevel": 19, "maxLevel": 22 },
+        { "species": "Electabuzz", "spawnRate": 8, "rarity": "rare", "minLevel": 21, "maxLevel": 24 },
+        { "species": "Zapdos", "spawnRate": 2, "rarity": "legendary", "minLevel": 23, "maxLevel": 25 }
+      ]
+    }
+  ]
+}

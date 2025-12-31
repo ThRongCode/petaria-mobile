@@ -1,6 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdatePetDto } from './dto/update-pet.dto';
+import {
+  getSpeciesEvolution,
+  getAvailableEvolutions,
+  canEvolveWith,
+  EVOLUTION_CHAINS,
+} from '../config/evolution-chains.config';
+import {
+  getSpeciesBaseStats,
+  calculateFinalStat,
+  getRarityMultiplier,
+} from '../config/species-stats.config';
 
 @Injectable()
 export class PetService {
@@ -26,12 +37,20 @@ export class PetService {
       },
     });
 
-    // Add isFavorite flag to each pet
-    return pets.map((pet) => ({
-      ...pet,
-      isFavorite: pet.favoritedBy.length > 0,
-      favoritedBy: undefined, // Remove the relation data
-    }));
+    // Add isFavorite flag and evolution info to each pet
+    return pets.map((pet) => {
+      const evolutionData = getSpeciesEvolution(pet.species);
+      const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
+      
+      return {
+        ...pet,
+        isFavorite: pet.favoritedBy.length > 0,
+        favoritedBy: undefined, // Remove the relation data
+        // Evolution info from config
+        maxEvolutionStage: evolutionData.maxStage,
+        canEvolve: evolutionData.canEvolve && availableEvolutions.length > 0,
+      };
+    });
   }
 
   async findOne(id: string, userId: string) {
@@ -53,7 +72,15 @@ export class PetService {
       throw new NotFoundException('Pet not found');
     }
 
-    return pet;
+    // Add evolution info from config
+    const evolutionData = getSpeciesEvolution(pet.species);
+    const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
+    
+    return {
+      ...pet,
+      maxEvolutionStage: evolutionData.maxStage,
+      canEvolve: evolutionData.canEvolve && availableEvolutions.length > 0,
+    };
   }
 
   async update(id: string, userId: string, updatePetDto: UpdatePetDto) {
@@ -366,5 +393,187 @@ export class PetService {
     });
 
     return favorites.map((fav) => fav.pet);
+  }
+
+  /**
+   * Get evolution options for a pet
+   * Returns available evolution paths based on level
+   */
+  async getEvolutionOptions(petId: string, userId: string) {
+    const pet = await this.findOne(petId, userId);
+    
+    const evolutionData = getSpeciesEvolution(pet.species);
+    const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
+    
+    // Get user's evolution items
+    const userItems = await this.prisma.userItem.findMany({
+      where: {
+        userId,
+        item: {
+          type: 'Evolution',
+        },
+      },
+      include: {
+        item: true,
+      },
+    });
+
+    const userItemIds = userItems.reduce((acc, ui) => {
+      acc[ui.itemId] = ui.quantity;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Map ALL possible evolutions with eligibility info
+    const allEvolutionsWithInfo = evolutionData.evolutions.map((evo) => {
+      const meetsLevelReq = pet.level >= evo.levelRequired;
+      const hasItem = evo.itemRequired ? (userItemIds[evo.itemRequired] || 0) > 0 : true;
+      
+      return {
+        ...evo,
+        meetsLevelRequirement: meetsLevelReq,
+        hasItem,
+        itemQuantity: evo.itemRequired ? userItemIds[evo.itemRequired] || 0 : null,
+        canEvolveNow: meetsLevelReq && hasItem,
+      };
+    });
+
+    // Check if any evolution is currently possible
+    const canEvolveNow = allEvolutionsWithInfo.some(evo => evo.canEvolveNow);
+
+    return {
+      petId: pet.id,
+      species: pet.species,
+      level: pet.level,
+      canEvolve: evolutionData.canEvolve,
+      canEvolveNow,
+      currentStage: evolutionData.stage,
+      maxStage: evolutionData.maxStage,
+      evolvesFrom: evolutionData.evolvesFrom,
+      availableEvolutions: allEvolutionsWithInfo,
+    };
+  }
+
+  /**
+   * Evolve a pet using a specific evolution stone
+   */
+  async evolve(petId: string, userId: string, itemId: string) {
+    const pet = await this.findOne(petId, userId);
+
+    // Check evolution eligibility
+    const evolutionPath = canEvolveWith(pet.species, pet.level, itemId);
+    
+    if (!evolutionPath) {
+      const evolutionData = getSpeciesEvolution(pet.species);
+      
+      if (!evolutionData.canEvolve) {
+        throw new BadRequestException(`${pet.species} cannot evolve`);
+      }
+      
+      const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
+      
+      if (availableEvolutions.length === 0) {
+        throw new BadRequestException(`${pet.species} cannot evolve yet. Level up more!`);
+      }
+      
+      const validItems = availableEvolutions
+        .filter(e => e.itemRequired)
+        .map(e => e.itemRequired);
+      
+      throw new BadRequestException(
+        `Cannot evolve ${pet.species} with this item. Valid items: ${validItems.join(', ')}`
+      );
+    }
+
+    // Check user has the required item
+    const userItem = await this.prisma.userItem.findUnique({
+      where: {
+        userId_itemId: {
+          userId,
+          itemId,
+        },
+      },
+      include: {
+        item: true,
+      },
+    });
+
+    if (!userItem || userItem.quantity < 1) {
+      throw new BadRequestException('You do not have the required evolution item');
+    }
+
+    // Get new species stats
+    const newSpecies = evolutionPath.evolvesTo;
+    const newBaseStats = getSpeciesBaseStats(newSpecies);
+    const rarityMult = getRarityMultiplier(pet.rarity);
+    const newEvolutionData = getSpeciesEvolution(newSpecies);
+
+    // Calculate new stats based on species base stats, IVs, level, and rarity
+    const newStats = {
+      maxHp: calculateFinalStat(newBaseStats.hp, pet.ivHp, pet.level, rarityMult),
+      attack: calculateFinalStat(newBaseStats.attack, pet.ivAttack, pet.level, rarityMult),
+      defense: calculateFinalStat(newBaseStats.defense, pet.ivDefense, pet.level, rarityMult),
+      speed: calculateFinalStat(newBaseStats.speed, pet.ivSpeed, pet.level, rarityMult),
+    };
+
+    // Perform evolution in a transaction
+    const result = await this.prisma.$transaction(async (prisma) => {
+      // Consume the evolution item
+      if (userItem.quantity === 1) {
+        await prisma.userItem.delete({
+          where: {
+            userId_itemId: {
+              userId,
+              itemId,
+            },
+          },
+        });
+      } else {
+        await prisma.userItem.update({
+          where: {
+            userId_itemId: {
+              userId,
+              itemId,
+            },
+          },
+          data: {
+            quantity: userItem.quantity - 1,
+          },
+        });
+      }
+
+      // Update the pet with new species and stats
+      const evolvedPet = await prisma.pet.update({
+        where: { id: petId },
+        data: {
+          species: newSpecies,
+          evolutionStage: newEvolutionData.stage,
+          ...newStats,
+          hp: newStats.maxHp, // Full heal on evolution
+        },
+        include: {
+          moves: {
+            include: {
+              move: true,
+            },
+          },
+        },
+      });
+
+      return evolvedPet;
+    });
+
+    return {
+      message: `${pet.species} evolved into ${newSpecies}!`,
+      previousSpecies: pet.species,
+      newSpecies: newSpecies,
+      pet: result,
+      itemUsed: userItem.item.name,
+      statsChanged: {
+        maxHp: { from: pet.maxHp, to: newStats.maxHp },
+        attack: { from: pet.attack, to: newStats.attack },
+        defense: { from: pet.defense, to: newStats.defense },
+        speed: { from: pet.speed, to: newStats.speed },
+      },
+    };
   }
 }

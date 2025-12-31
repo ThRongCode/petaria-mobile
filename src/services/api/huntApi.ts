@@ -21,6 +21,17 @@ export const huntApi = {
       coinsCost: number
       imageUrl: string
       unlockLevel: number
+      locked: boolean
+      featuredSpawns: Array<{
+        species: string
+        rarity: string
+        spawnRate: number
+      }>
+      rareSpawns: Array<{
+        species: string
+        rarity: string
+        spawnRate: number
+      }>
     }>>('/region')
 
     console.log('🔵 [huntApi] Response received:', response)

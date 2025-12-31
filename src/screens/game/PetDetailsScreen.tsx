@@ -4,23 +4,50 @@
  * Full-screen detailed view of a pet with tabs for different information
  */
 
-import React, { useState, useMemo } from 'react'
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, ImageBackground } from 'react-native'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, ImageBackground, Modal, ActivityIndicator, Alert } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
 import { Panel, TopBar } from '@/components/ui'
 import { getPokemonImage } from '@/assets/images'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { getAllPets, getUserProfile } from '@/stores/selectors'
 import { Pet } from '@/stores/types/game'
+import { petApi } from '@/services/api/petApi'
+import { gameActions } from '@/stores/reducers/game'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 type TabType = 'about' | 'stats' | 'moves' | 'evolutions'
 
+// Evolution types for API response
+interface EvolutionPath {
+  evolvesTo: string
+  levelRequired: number
+  itemRequired: string | null
+  description?: string
+  meetsLevelRequirement: boolean
+  hasItem: boolean
+  itemQuantity: number | null
+  canEvolveNow: boolean
+}
+
+interface EvolutionOptions {
+  petId: string
+  species: string
+  level: number
+  canEvolve: boolean
+  canEvolveNow: boolean
+  currentStage: number
+  maxStage: number
+  evolvesFrom: string | null
+  availableEvolutions: EvolutionPath[]
+}
+
 export default function PetDetailsScreen() {
   const router = useRouter()
   const params = useLocalSearchParams()
+  const dispatch = useDispatch()
   const userProfile = useSelector(getUserProfile)
   const allPets = useSelector(getAllPets) as Pet[]
   
@@ -35,6 +62,73 @@ export default function PetDetailsScreen() {
   
   const [activeTab, setActiveTab] = useState<TabType>('stats')
   const [isFavorite, setIsFavorite] = useState(false)
+  
+  // Evolution state
+  const [evolutionOptions, setEvolutionOptions] = useState<EvolutionOptions | null>(null)
+  const [loadingEvolution, setLoadingEvolution] = useState(false)
+  const [showEvolutionModal, setShowEvolutionModal] = useState(false)
+  const [selectedEvolution, setSelectedEvolution] = useState<EvolutionPath | null>(null)
+  const [evolving, setEvolving] = useState(false)
+  
+  // Fetch evolution options when tab changes to evolutions
+  const fetchEvolutionOptions = useCallback(async () => {
+    if (!pet) return
+    
+    setLoadingEvolution(true)
+    try {
+      const response = await petApi.getEvolutionOptions(pet.id)
+      if (response.success && response.data) {
+        setEvolutionOptions(response.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch evolution options:', error)
+    } finally {
+      setLoadingEvolution(false)
+    }
+  }, [pet])
+  
+  useEffect(() => {
+    if (activeTab === 'evolutions' && pet) {
+      fetchEvolutionOptions()
+    }
+  }, [activeTab, pet, fetchEvolutionOptions])
+  
+  // Handle evolution
+  const handleEvolve = async (evolution: EvolutionPath, itemId: string) => {
+    if (!pet) return
+    
+    setEvolving(true)
+    try {
+      const response = await petApi.evolvePet(pet.id, itemId)
+      if (response.success && response.data) {
+        // Show success alert with stat changes
+        const { previousSpecies, newSpecies, statsChanged } = response.data
+        
+        Alert.alert(
+          '🎉 Evolution Complete!',
+          `${previousSpecies} evolved into ${newSpecies}!\n\n` +
+          `📊 Stat Changes:\n` +
+          `HP: ${statsChanged.maxHp.from} → ${statsChanged.maxHp.to}\n` +
+          `Attack: ${statsChanged.attack.from} → ${statsChanged.attack.to}\n` +
+          `Defense: ${statsChanged.defense.from} → ${statsChanged.defense.to}\n` +
+          `Speed: ${statsChanged.speed.from} → ${statsChanged.speed.to}`,
+          [{ text: 'Awesome!', onPress: () => {
+            // Reload pets data
+            dispatch(gameActions.loadUserData())
+          }}]
+        )
+        
+        setShowEvolutionModal(false)
+        setSelectedEvolution(null)
+        // Refresh evolution options
+        fetchEvolutionOptions()
+      }
+    } catch (error: any) {
+      Alert.alert('Evolution Failed', error?.message || 'Something went wrong')
+    } finally {
+      setEvolving(false)
+    }
+  }
 
   // If no pet found, show error
   if (!pet) {
@@ -229,8 +323,96 @@ export default function PetDetailsScreen() {
           {activeTab === 'about' && <AboutTab pet={pet} />}
           {activeTab === 'stats' && <StatsTab pet={pet} />}
           {activeTab === 'moves' && <MovesTab pet={pet} />}
-          {activeTab === 'evolutions' && <EvolutionsTab pet={pet} />}
+          {activeTab === 'evolutions' && (
+            <EvolutionsTab 
+              pet={pet} 
+              evolutionOptions={evolutionOptions}
+              loading={loadingEvolution}
+              onEvolve={(evolution) => {
+                setSelectedEvolution(evolution)
+                setShowEvolutionModal(true)
+              }}
+            />
+          )}
         </View>
+        
+        {/* Evolution Confirmation Modal */}
+        <Modal
+          visible={showEvolutionModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowEvolutionModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <Panel variant="dark" style={styles.modalPanel}>
+              <ThemedText style={styles.modalTitle}>🌟 Evolve Pet?</ThemedText>
+              
+              {selectedEvolution && (
+                <>
+                  <View style={styles.evolutionPreview}>
+                    <View style={styles.evolutionPetPreview}>
+                      <Image
+                        source={getPokemonImage(pet.species) as any}
+                        style={styles.evolutionImage}
+                        resizeMode="contain"
+                      />
+                      <ThemedText style={styles.evolutionPetName}>{pet.species}</ThemedText>
+                    </View>
+                    
+                    <Ionicons name="arrow-forward" size={32} color="#FFD700" />
+                    
+                    <View style={styles.evolutionPetPreview}>
+                      <Image
+                        source={getPokemonImage(selectedEvolution.evolvesTo) as any}
+                        style={styles.evolutionImage}
+                        resizeMode="contain"
+                      />
+                      <ThemedText style={styles.evolutionPetName}>{selectedEvolution.evolvesTo}</ThemedText>
+                    </View>
+                  </View>
+                  
+                  {selectedEvolution.itemRequired && (
+                    <View style={styles.itemCostRow}>
+                      <Ionicons name="diamond" size={20} color="#9C27B0" />
+                      <ThemedText style={styles.itemCostText}>
+                        Will use 1x {selectedEvolution.itemRequired.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </ThemedText>
+                    </View>
+                  )}
+                  
+                  <ThemedText style={styles.modalDescription}>
+                    This action cannot be undone. Your pet will transform into {selectedEvolution.evolvesTo} and gain new stats!
+                  </ThemedText>
+                  
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={() => {
+                        setShowEvolutionModal(false)
+                        setSelectedEvolution(null)
+                      }}
+                      disabled={evolving}
+                    >
+                      <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.evolveButtonModal]}
+                      onPress={() => handleEvolve(selectedEvolution, selectedEvolution.itemRequired || '')}
+                      disabled={evolving}
+                    >
+                      {evolving ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <ThemedText style={styles.evolveButtonText}>✨ Evolve!</ThemedText>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </Panel>
+          </View>
+        </Modal>
       </ScrollView>
     </ImageBackground>
   )
@@ -368,35 +550,165 @@ const MovesTab: React.FC<{ pet: Pet }> = ({ pet }) => (
 )
 
 // Evolutions Tab Component
-const EvolutionsTab: React.FC<{ pet: Pet }> = ({ pet }) => (
-  <Panel variant="dark" style={styles.tabPanel}>
-    <ThemedText style={styles.sectionTitle}>Evolution Chain</ThemedText>
-    
-    <View style={styles.infoGrid}>
-      <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>Current Stage</ThemedText>
-        <ThemedText style={styles.infoValue}>{pet.evolutionStage}</ThemedText>
-      </View>
-      <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>Max Stage</ThemedText>
-        <ThemedText style={styles.infoValue}>{pet.maxEvolutionStage}</ThemedText>
-      </View>
-    </View>
+interface EvolutionsTabProps {
+  pet: Pet
+  evolutionOptions: EvolutionOptions | null
+  loading: boolean
+  onEvolve: (evolution: EvolutionPath) => void
+}
 
-    {pet.evolutionRequirements && (
-      <View style={styles.evolutionRequirements}>
-        <ThemedText style={styles.sectionTitle}>Evolution Requirements</ThemedText>
-        <ThemedText style={styles.description}>
-          Level {pet.evolutionRequirements.level} required
+const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOptions, loading, onEvolve }) => {
+  if (loading) {
+    return (
+      <Panel variant="dark" style={styles.tabPanel}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <ThemedText style={styles.loadingText}>Loading evolution data...</ThemedText>
+        </View>
+      </Panel>
+    )
+  }
+
+  const isFullyEvolved = pet.evolutionStage >= pet.maxEvolutionStage
+
+  return (
+    <Panel variant="dark" style={styles.tabPanel}>
+      <ThemedText style={styles.sectionTitle}>Evolution Chain</ThemedText>
+      
+      {/* Current Evolution Status */}
+      <View style={styles.evolutionStatusCard}>
+        <View style={styles.evolutionStageIndicator}>
+          {Array.from({ length: pet.maxEvolutionStage }).map((_, idx) => (
+            <View 
+              key={idx} 
+              style={[
+                styles.stageDot,
+                idx < pet.evolutionStage && styles.stageDotFilled,
+                idx === pet.evolutionStage - 1 && styles.stageDotCurrent
+              ]} 
+            />
+          ))}
+        </View>
+        <ThemedText style={styles.evolutionStageText}>
+          Stage {pet.evolutionStage} of {pet.maxEvolutionStage}
         </ThemedText>
+        {isFullyEvolved && (
+          <View style={styles.fullyEvolvedBadge}>
+            <ThemedText style={styles.fullyEvolvedText}>✨ Fully Evolved!</ThemedText>
+          </View>
+        )}
       </View>
-    )}
 
-    {pet.evolutionStage >= pet.maxEvolutionStage && (
-      <ThemedText style={styles.emptyText}>✨ Fully Evolved!</ThemedText>
-    )}
-  </Panel>
-)
+      {/* Previous Evolution */}
+      {evolutionOptions?.evolvesFrom && (
+        <View style={styles.evolutionSection}>
+          <ThemedText style={styles.evolutionSectionTitle}>Evolved From</ThemedText>
+          <View style={styles.evolutionFromCard}>
+            <Image
+              source={getPokemonImage(evolutionOptions.evolvesFrom) as any}
+              style={styles.evolutionThumb}
+              resizeMode="contain"
+            />
+            <ThemedText style={styles.evolutionFromName}>{evolutionOptions.evolvesFrom}</ThemedText>
+          </View>
+        </View>
+      )}
+
+      {/* Available Evolutions */}
+      {!isFullyEvolved && evolutionOptions?.availableEvolutions && evolutionOptions.availableEvolutions.length > 0 && (
+        <View style={styles.evolutionSection}>
+          <ThemedText style={styles.evolutionSectionTitle}>Available Evolutions</ThemedText>
+          
+          {evolutionOptions.availableEvolutions.map((evolution, idx) => {
+            const canEvolve = evolution.canEvolveNow
+            const levelMet = evolution.meetsLevelRequirement
+            
+            return (
+              <View key={idx} style={styles.evolutionCard}>
+                <View style={styles.evolutionCardHeader}>
+                  <Image
+                    source={getPokemonImage(evolution.evolvesTo) as any}
+                    style={styles.evolutionThumb}
+                    resizeMode="contain"
+                  />
+                  <View style={styles.evolutionCardInfo}>
+                    <ThemedText style={styles.evolutionName}>{evolution.evolvesTo}</ThemedText>
+                    {evolution.description && (
+                      <ThemedText style={styles.evolutionDescription}>{evolution.description}</ThemedText>
+                    )}
+                  </View>
+                </View>
+                
+                {/* Requirements */}
+                <View style={styles.requirementsList}>
+                  <View style={[styles.requirementRow, levelMet && styles.requirementMet]}>
+                    <Ionicons 
+                      name={levelMet ? "checkmark-circle" : "close-circle"} 
+                      size={18} 
+                      color={levelMet ? "#4CAF50" : "#FF5722"} 
+                    />
+                    <ThemedText style={[styles.requirementText, levelMet && styles.requirementTextMet]}>
+                      Level {evolution.levelRequired} {levelMet ? '✓' : `(Current: ${pet.level})`}
+                    </ThemedText>
+                  </View>
+                  
+                  {evolution.itemRequired && (
+                    <View style={[styles.requirementRow, evolution.hasItem && styles.requirementMet]}>
+                      <Ionicons 
+                        name={evolution.hasItem ? "checkmark-circle" : "close-circle"} 
+                        size={18} 
+                        color={evolution.hasItem ? "#4CAF50" : "#FF5722"} 
+                      />
+                      <ThemedText style={[styles.requirementText, evolution.hasItem && styles.requirementTextMet]}>
+                        {evolution.itemRequired.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {evolution.hasItem 
+                          ? ` ✓ (${evolution.itemQuantity} owned)` 
+                          : ' (Not owned - buy in shop!)'}
+                      </ThemedText>
+                    </View>
+                  )}
+                </View>
+                
+                {/* Evolve Button */}
+                <TouchableOpacity
+                  style={[styles.evolveButton, !canEvolve && styles.evolveButtonDisabled]}
+                  onPress={() => canEvolve && onEvolve(evolution)}
+                  disabled={!canEvolve}
+                >
+                  <LinearGradient
+                    colors={canEvolve ? ['#FFD700', '#FFA000'] : ['#555', '#333']}
+                    style={styles.evolveButtonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Ionicons 
+                      name="sparkles" 
+                      size={18} 
+                      color={canEvolve ? '#000' : '#888'} 
+                    />
+                    <ThemedText style={[styles.evolveButtonText, !canEvolve && styles.evolveButtonTextDisabled]}>
+                      {canEvolve ? 'Evolve Now!' : 'Requirements Not Met'}
+                    </ThemedText>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            )
+          })}
+        </View>
+      )}
+
+      {/* No Evolutions Available */}
+      {!isFullyEvolved && (!evolutionOptions?.availableEvolutions || evolutionOptions.availableEvolutions.length === 0) && (
+        <View style={styles.noEvolutionContainer}>
+          <Ionicons name="help-circle-outline" size={48} color="rgba(255,255,255,0.3)" />
+          <ThemedText style={styles.noEvolutionText}>
+            No evolution data available for this species.
+          </ThemedText>
+        </View>
+      )}
+    </Panel>
+  )
+}
 
 const styles = StyleSheet.create({
   background: {
@@ -757,8 +1069,287 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   
-  // Evolution Requirements
+  // Evolution Requirements (legacy)
   evolutionRequirements: {
     marginTop: 20,
+  },
+  
+  // Loading
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+  },
+  
+  // Evolution Status Card
+  evolutionStatusCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  evolutionStageIndicator: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  stageDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  stageDotFilled: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  stageDotCurrent: {
+    borderColor: '#FFD700',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+  },
+  evolutionStageText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  fullyEvolvedBadge: {
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  fullyEvolvedText: {
+    color: '#FFD700',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  
+  // Evolution Section
+  evolutionSection: {
+    marginBottom: 20,
+  },
+  evolutionSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  
+  // Evolution From Card
+  evolutionFromCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 12,
+    borderRadius: 12,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  evolutionFromName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  
+  // Evolution Card
+  evolutionCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  evolutionCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  evolutionThumb: {
+    width: 60,
+    height: 60,
+  },
+  evolutionCardInfo: {
+    flex: 1,
+  },
+  evolutionName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  evolutionDescription: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 4,
+  },
+  
+  // Requirements
+  requirementsList: {
+    marginBottom: 12,
+    gap: 8,
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,82,34,0.1)',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,82,34,0.3)',
+  },
+  requirementMet: {
+    backgroundColor: 'rgba(76,175,80,0.1)',
+    borderColor: 'rgba(76,175,80,0.3)',
+  },
+  requirementText: {
+    fontSize: 13,
+    color: '#FF5722',
+    flex: 1,
+  },
+  requirementTextMet: {
+    color: '#4CAF50',
+  },
+  
+  // Evolve Button
+  evolveButton: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  evolveButtonDisabled: {
+    opacity: 0.7,
+  },
+  evolveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  evolveButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  evolveButtonTextDisabled: {
+    color: '#888',
+  },
+  
+  // No Evolution
+  noEvolutionContainer: {
+    alignItems: 'center',
+    padding: 24,
+  },
+  noEvolutionText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalPanel: {
+    width: '100%',
+    maxWidth: 360,
+    padding: 24,
+    borderRadius: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  evolutionPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 20,
+  },
+  evolutionPetPreview: {
+    alignItems: 'center',
+  },
+  evolutionImage: {
+    width: 80,
+    height: 80,
+  },
+  evolutionPetName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginTop: 8,
+  },
+  itemCostRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(156,39,176,0.2)',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  itemCostText: {
+    color: '#CE93D8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  evolveButtonModal: {
+    backgroundColor: '#FFD700',
   },
 })

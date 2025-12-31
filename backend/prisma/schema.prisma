@@ -25,6 +25,7 @@ model User {
   huntTickets     Int       @default(5) @map("hunt_tickets")
   battleTickets   Int       @default(20) @map("battle_tickets")
   lastTicketReset DateTime  @default(now()) @map("last_ticket_reset")
+  lastQuestReset  DateTime  @default(now()) @map("last_quest_reset")
   petCount        Int       @default(0) @map("pet_count")
   itemCount       Int       @default(0) @map("item_count")
   battlesWon      Int       @default(0) @map("battles_won")
@@ -40,6 +41,7 @@ model User {
   huntSessions    HuntSession[]
   battleSessions  BattleSession[]
   favoritePets    FavoritePet[]
+  userQuests      UserQuest[]
 
   @@map("users")
 }
@@ -59,6 +61,11 @@ model Pet {
   attack          Int
   defense         Int
   speed           Int
+  // Individual Values (IVs) - random stats generated on capture (0-15)
+  ivHp            Int       @default(0) @map("iv_hp")
+  ivAttack        Int       @default(0) @map("iv_attack")
+  ivDefense       Int       @default(0) @map("iv_defense")
+  ivSpeed         Int       @default(0) @map("iv_speed")
   evolutionStage  Int       @default(1) @map("evolution_stage")
   mood            Int       @default(100)
   lastFed         DateTime? @map("last_fed")
@@ -308,4 +315,97 @@ model OpponentMove {
 
   @@id([opponentId, moveId])
   @@map("opponent_moves")
+}
+
+// ==================== QUEST TEMPLATES (Static) ====================
+
+model QuestTemplate {
+  id              String    @id
+  name            String
+  description     String
+  type            String    // daily, weekly, special
+  category        String    // hunt, battle, evolution, collection, social
+  targetType      String    @map("target_type")  // catch_pokemon, win_battles, evolve_pet, etc.
+  targetCount     Int       @map("target_count") // How many to complete
+  targetSpecies   String?   @map("target_species") // Optional: specific species required
+  targetRarity    String?   @map("target_rarity")  // Optional: specific rarity required
+  rewardCoins     Int       @default(0) @map("reward_coins")
+  rewardGems      Int       @default(0) @map("reward_gems")
+  rewardXp        Int       @default(0) @map("reward_xp")
+  rewardItemId    String?   @map("reward_item_id") // Optional item reward
+  rewardItemQty   Int?      @map("reward_item_qty")
+  difficulty      String    @default("normal") // easy, normal, hard
+  isActive        Boolean   @default(true) @map("is_active")
+  sortOrder       Int       @default(0) @map("sort_order")
+
+  userQuests      UserQuest[]
+
+  @@map("quest_templates")
+}
+
+// ==================== USER QUESTS (Active) ====================
+
+model UserQuest {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  questId         String    @map("quest_id")
+  progress        Int       @default(0)
+  status          String    @default("active") // active, completed, claimed, expired
+  assignedAt      DateTime  @default(now()) @map("assigned_at")
+  expiresAt       DateTime? @map("expires_at")
+  completedAt     DateTime? @map("completed_at")
+  claimedAt       DateTime? @map("claimed_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quest           QuestTemplate @relation(fields: [questId], references: [id])
+
+  @@unique([userId, questId, assignedAt])
+  @@index([userId, status])
+  @@map("user_quests")
+}
+
+// ==================== EVENTS (Time-limited) ====================
+
+model Event {
+  id              String    @id @default(uuid())
+  name            String
+  description     String
+  type            String    // hunt_boost, rare_spawn, double_xp, special_hunt
+  startTime       DateTime  @map("start_time")
+  endTime         DateTime  @map("end_time")
+  isActive        Boolean   @default(true) @map("is_active")
+  
+  // Event configuration (JSON for flexibility)
+  config          Json?     // { spawnBonus: 0.5, xpMultiplier: 2, featuredSpecies: ["Pikachu"] }
+  
+  // Optional region-specific events
+  regionId        String?   @map("region_id")
+  
+  // Banner/display
+  bannerUrl       String?   @map("banner_url")
+  priority        Int       @default(0) // Higher = show first
+
+  eventSpawns     EventSpawn[]
+
+  @@index([startTime, endTime])
+  @@index([isActive])
+  @@map("events")
+}
+
+// ==================== EVENT SPAWNS (Special spawn rates during events) ====================
+
+model EventSpawn {
+  id              String    @id @default(uuid())
+  eventId         String    @map("event_id")
+  species         String
+  rarity          String
+  spawnRate       Float     @map("spawn_rate") // Override spawn rate during event
+  minLevel        Int       @map("min_level")
+  maxLevel        Int       @map("max_level")
+  isGuaranteed    Boolean   @default(false) @map("is_guaranteed") // First encounter guaranteed?
+
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@map("event_spawns")
 }

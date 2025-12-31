@@ -1,0 +1,187 @@
+{
+  "$schema": "./schemas/evolutions.schema.json",
+  "_comment": "Evolution chains configuration. Types: level (reach level), item (use evolution item), trade (trade with another player)",
+
+  "evolutionItems": {
+    "fire-stone": { "name": "Fire Stone", "description": "Evolves certain Fire-type Pokemon" },
+    "water-stone": { "name": "Water Stone", "description": "Evolves certain Water-type Pokemon" },
+    "thunder-stone": { "name": "Thunder Stone", "description": "Evolves certain Electric-type Pokemon" },
+    "leaf-stone": { "name": "Leaf Stone", "description": "Evolves certain Grass-type Pokemon" },
+    "moon-stone": { "name": "Moon Stone", "description": "Evolves certain Pokemon that are connected to the moon" }
+  },
+
+  "evolutionChains": [
+    {
+      "_comment": "Starter: Bulbasaur line",
+      "chain": [
+        { "species": "Bulbasaur" },
+        { "species": "Ivysaur", "from": "Bulbasaur", "type": "level", "level": 16 },
+        { "species": "Venusaur", "from": "Ivysaur", "type": "level", "level": 32 }
+      ]
+    },
+    {
+      "_comment": "Starter: Charmander line",
+      "chain": [
+        { "species": "Charmander" },
+        { "species": "Charmeleon", "from": "Charmander", "type": "level", "level": 16 },
+        { "species": "Charizard", "from": "Charmeleon", "type": "level", "level": 36 }
+      ]
+    },
+    {
+      "_comment": "Starter: Squirtle line",
+      "chain": [
+        { "species": "Squirtle" },
+        { "species": "Wartortle", "from": "Squirtle", "type": "level", "level": 16 },
+        { "species": "Blastoise", "from": "Wartortle", "type": "level", "level": 36 }
+      ]
+    },
+    {
+      "_comment": "Pikachu line",
+      "chain": [
+        { "species": "Pichu" },
+        { "species": "Pikachu", "from": "Pichu", "type": "level", "level": 15 },
+        { "species": "Raichu", "from": "Pikachu", "type": "item", "item": "thunder-stone" }
+      ]
+    },
+    {
+      "_comment": "Eevee evolutions",
+      "chain": [
+        { "species": "Eevee" },
+        { "species": "Vaporeon", "from": "Eevee", "type": "item", "item": "water-stone" },
+        { "species": "Jolteon", "from": "Eevee", "type": "item", "item": "thunder-stone" },
+        { "species": "Flareon", "from": "Eevee", "type": "item", "item": "fire-stone" }
+      ]
+    },
+    {
+      "_comment": "Vulpix line",
+      "chain": [
+        { "species": "Vulpix" },
+        { "species": "Ninetales", "from": "Vulpix", "type": "item", "item": "fire-stone" }
+      ]
+    },
+    {
+      "_comment": "Growlithe line",
+      "chain": [
+        { "species": "Growlithe" },
+        { "species": "Arcanine", "from": "Growlithe", "type": "item", "item": "fire-stone" }
+      ]
+    },
+    {
+      "_comment": "Magikarp line",
+      "chain": [
+        { "species": "Magikarp" },
+        { "species": "Gyarados", "from": "Magikarp", "type": "level", "level": 20 }
+      ]
+    },
+    {
+      "_comment": "Rattata line",
+      "chain": [
+        { "species": "Rattata" },
+        { "species": "Raticate", "from": "Rattata", "type": "level", "level": 20 }
+      ]
+    },
+    {
+      "_comment": "Pidgey line",
+      "chain": [
+        { "species": "Pidgey" },
+        { "species": "Pidgeotto", "from": "Pidgey", "type": "level", "level": 18 },
+        { "species": "Pidgeot", "from": "Pidgeotto", "type": "level", "level": 36 }
+      ]
+    },
+    {
+      "_comment": "Caterpie line",
+      "chain": [
+        { "species": "Caterpie" },
+        { "species": "Metapod", "from": "Caterpie", "type": "level", "level": 7 },
+        { "species": "Butterfree", "from": "Metapod", "type": "level", "level": 10 }
+      ]
+    },
+    {
+      "_comment": "Weedle line",
+      "chain": [
+        { "species": "Weedle" },
+        { "species": "Kakuna", "from": "Weedle", "type": "level", "level": 7 },
+        { "species": "Beedrill", "from": "Kakuna", "type": "level", "level": 10 }
+      ]
+    },
+    {
+      "_comment": "Oddish line",
+      "chain": [
+        { "species": "Oddish" },
+        { "species": "Gloom", "from": "Oddish", "type": "level", "level": 21 },
+        { "species": "Vileplume", "from": "Gloom", "type": "item", "item": "leaf-stone" }
+      ]
+    },
+    {
+      "_comment": "Bellsprout line",
+      "chain": [
+        { "species": "Bellsprout" },
+        { "species": "Weepinbell", "from": "Bellsprout", "type": "level", "level": 21 },
+        { "species": "Victreebel", "from": "Weepinbell", "type": "item", "item": "leaf-stone" }
+      ]
+    },
+    {
+      "_comment": "Psyduck line",
+      "chain": [
+        { "species": "Psyduck" },
+        { "species": "Golduck", "from": "Psyduck", "type": "level", "level": 33 }
+      ]
+    },
+    {
+      "_comment": "Treecko line",
+      "chain": [
+        { "species": "Treecko" },
+        { "species": "Grovyle", "from": "Treecko", "type": "level", "level": 16 },
+        { "species": "Sceptile", "from": "Grovyle", "type": "level", "level": 36 }
+      ]
+    },
+    {
+      "_comment": "Torchic line",
+      "chain": [
+        { "species": "Torchic" },
+        { "species": "Combusken", "from": "Torchic", "type": "level", "level": 16 },
+        { "species": "Blaziken", "from": "Combusken", "type": "level", "level": 36 }
+      ]
+    },
+    {
+      "_comment": "Mudkip line",
+      "chain": [
+        { "species": "Mudkip" },
+        { "species": "Marshtomp", "from": "Mudkip", "type": "level", "level": 16 },
+        { "species": "Swampert", "from": "Marshtomp", "type": "level", "level": 36 }
+      ]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Mew" }]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Mewtwo" }]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Articuno" }]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Zapdos" }]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Moltres" }]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Lugia" }]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Ho-Oh" }]
+    },
+    {
+      "_comment": "Legendaries (no evolution)",
+      "chain": [{ "species": "Celebi" }]
+    }
+  ]
+}

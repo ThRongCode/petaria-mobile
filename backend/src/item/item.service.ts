@@ -1,9 +1,14 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestService } from '../quest/quest.service';
 
 @Injectable()
 export class ItemService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => QuestService))
+    private questService: QuestService,
+  ) {}
 
   async getCatalog() {
     return this.prisma.item.findMany({
@@ -77,6 +82,16 @@ export class ItemService {
         data: updateData,
       });
 
+      // Update quest progress for buying items (pokeballs)
+      try {
+        await this.questService.updateProgress(userId, {
+          targetType: 'buy_item',
+          amount: quantity,
+        });
+      } catch (error) {
+        console.error('Failed to update quest progress:', error);
+      }
+
       return {
         message: 'Pokeballs purchased successfully',
         item: item.name,
@@ -138,6 +153,16 @@ export class ItemService {
         itemCount: { increment: quantity },
       },
     });
+
+    // Update quest progress for buying items
+    try {
+      await this.questService.updateProgress(userId, {
+        targetType: 'buy_item',
+        amount: quantity,
+      });
+    } catch (error) {
+      console.error('Failed to update quest progress:', error);
+    }
 
     return {
       message: 'Item purchased successfully',
@@ -261,6 +286,16 @@ export class ItemService {
           itemCount: { decrement: 1 },
         },
       });
+    }
+
+    // Update quest progress for using items
+    try {
+      await this.questService.updateProgress(userId, {
+        targetType: 'use_item',
+        amount: 1,
+      });
+    } catch (error) {
+      console.error('Failed to update quest progress:', error);
     }
 
     return result;

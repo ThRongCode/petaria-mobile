@@ -133,3 +133,47 @@ export interface PlaceBidRequest {
   auctionId: string
   amount: number
 }
+
+// Evolution types
+export interface EvolutionPath {
+  evolvesTo: string
+  levelRequired: number
+  itemRequired: string | null
+  description?: string
+  hasItem: boolean
+  itemQuantity: number | null
+}
+
+export interface EvolutionOptions {
+  petId: string
+  species: string
+  level: number
+  canEvolve: boolean
+  currentStage: number
+  maxStage: number
+  evolvesFrom: string | null
+  availableEvolutions: EvolutionPath[]
+}
+
+export interface EvolutionResult {
+  message: string
+  previousSpecies: string
+  newSpecies: string
+  pet: {
+    id: string
+    species: string
+    evolutionStage: number
+    maxHp: number
+    hp: number
+    attack: number
+    defense: number
+    speed: number
+  }
+  itemUsed: string
+  statsChanged: {
+    maxHp: { from: number; to: number }
+    attack: { from: number; to: number }
+    defense: { from: number; to: number }
+    speed: { from: number; to: number }
+  }
+}
