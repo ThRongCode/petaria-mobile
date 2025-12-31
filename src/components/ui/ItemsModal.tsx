@@ -13,6 +13,7 @@ import { Panel } from './Panel'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { apiClient } from '@/services/api'
+import { getItemImage } from '@/assets/images'
 import type { Item, Pet } from '@/stores/types/game'
 
 interface ItemsModalProps {
@@ -195,7 +196,7 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
                       {/* Item Image */}
                       <View style={styles.itemImageContainer}>
                         <Image
-                          source={{ uri: item.image }}
+                          source={getItemImage(item.id || item.name)}
                           style={styles.itemImage}
                           resizeMode="contain"
                         />

@@ -10,6 +10,7 @@ import { StyleSheet, View, TouchableOpacity, Image } from 'react-native'
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { Ionicons } from '@expo/vector-icons'
+import { getItemImage } from '@/assets/images'
 import type { Item } from '@/stores/types/game'
 
 interface ItemGridCardProps {
@@ -44,13 +45,7 @@ export const ItemGridCard: React.FC<ItemGridCardProps> = ({ item, onPress }) => 
 
         {/* Item Image */}
         <View style={styles.imageContainer}>
-          {item.image ? (
-            <Image source={{ uri: item.image }} style={styles.image} resizeMode="contain" />
-          ) : (
-            <View style={styles.imagePlaceholder}>
-              <Ionicons name="cube" size={40} color="rgba(255,255,255,0.3)" />
-            </View>
-          )}
+          <Image source={getItemImage(item.id || item.name)} style={styles.image} resizeMode="contain" />
           {/* Quantity Badge */}
           {item.quantity && item.quantity > 1 && (
             <View style={styles.quantityBadge}>

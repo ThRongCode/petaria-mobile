@@ -1,69 +1,84 @@
 /**
- * Pokemon Species to Image Mapping
+ * Pokemon Image Management - SINGLE SOURCE OF TRUTH
  * 
- * Maps Pokemon species names to their corresponding image files
- * for consistent usage throughout the app
+ * ============================================================
+ * HOW TO UPDATE A POKEMON IMAGE
+ * ============================================================
+ * 
+ * 1. Find the PNG file in: src/assets/images/pet_image/
+ *    Example: charizard.png
+ * 
+ * 2. Replace the PNG file with your new image
+ *    - Keep the same filename!
+ *    - Recommended size: 256x256 or 512x512 pixels
+ *    - Format: PNG with transparency
+ * 
+ * 3. Done! The app will use the new image automatically.
+ * 
+ * ============================================================
+ * HOW TO ADD A NEW POKEMON
+ * ============================================================
+ * 
+ * 1. Add the PNG to: src/assets/images/pet_image/newpokemon.png
+ * 
+ * 2. Add entry in pet-images.ts:
+ *    newpokemon: require('./pet_image/newpokemon.png'),
+ * 
+ * 3. Add to backend species list (prisma seed or admin)
+ * 
+ * ============================================================
+ * NAMING CONVENTION
+ * ============================================================
+ * 
+ * - All lowercase: charizard.png (not Charizard.png)
+ * - No spaces: mr-mime.png or mrmime.png
+ * - Forms: charizard-mega.png, pikachu-cosplay.png
+ * 
+ * The getPokemonImage() function handles case-insensitivity
+ * and special characters automatically.
+ * 
  */
 
-import { PetImages } from './pet-images'
-
-export const POKEMON_IMAGE_MAP: Record<string, any> = {
-  // Starter Pokemon
-  pikachu: PetImages.pikachu,
-  pichu: PetImages.pichu,
-  raichu: PetImages.raichu,
-  bulbasaur: PetImages.bulbasaur,
-  ivysaur: PetImages.ivysaur,
-  venusaur: PetImages.venusaur,
-  charmander: PetImages.charmander,
-  charmeleon: PetImages.charmeleon,
-  charizard: PetImages.charizard,
-  squirtle: PetImages.squirtle,
-  wartortle: PetImages.wartortle,
-  blastoise: PetImages.blastoise,
-  
-  // Common Pokemon
-  rattata: PetImages.rattata,
-  pidgey: PetImages.pidgey,
-  caterpie: PetImages.caterpie,
-  weedle: PetImages.weedle,
-  
-  // Grass Types
-  oddish: PetImages.oddish,
-  bellsprout: PetImages.bellsprout,
-  treecko: PetImages.treecko,
-  
-  // Bug Types
-  scyther: PetImages.scyther,
-  pinsir: PetImages.pinsir,
-  
-  // Fire Types
-  vulpix: PetImages.vulpix,
-  growlithe: PetImages.growlithe,
-  
-  // Water Types
-  psyduck: PetImages.psyduck,
-  magikarp: PetImages.magikarp,
-  
-  // Electric Types
-  jolteon: PetImages.jolteon,
-  electabuzz: PetImages.electabuzz,
-  
-  // Legendary
-  darkrai: PetImages.darkrai,
-  celebi: PetImages.celebi,
-  articuno: PetImages.articuno,
-  zapdos: PetImages.zapdos,
-  moltres: PetImages.moltres,
-  mewtwo: PetImages.mewtwo,
-  lugia: PetImages.lugia,
-  hooh: PetImages.hoOh,
-}
+import { PetImages, PetImageKey } from './pet-images'
 
 /**
- * Get Pokemon image by species name (case-insensitive)
+ * Get Pokemon image by species name
+ * 
+ * @param species - Pokemon name (case-insensitive, handles special chars)
+ * @returns Image require() object
+ * 
+ * @example
+ * getPokemonImage('Charizard')     // ✓ works
+ * getPokemonImage('charizard')     // ✓ works  
+ * getPokemonImage('CHARIZARD')     // ✓ works
+ * getPokemonImage('Mr. Mime')      // ✓ works -> mrmime
+ * getPokemonImage('Aegislash-Shield') // ✓ works -> aegislashShield
  */
 export const getPokemonImage = (species: string): any => {
-  const normalized = species.toLowerCase().replace(/[^a-z0-9]/g, '')
-  return POKEMON_IMAGE_MAP[normalized] || PetImages.bulbasaur
+  if (!species) return PetImages.bulbasaur
+  
+  // Normalize: lowercase, remove special chars
+  const normalized = species
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '')
+  
+  // Try direct match (e.g., 'charizard')
+  if (normalized in PetImages) {
+    return PetImages[normalized as PetImageKey]
+  }
+  
+  // Try camelCase for hyphenated names (e.g., 'aegislash-shield' -> 'aegislashShield')
+  const camelCased = species
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+  
+  if (camelCased in PetImages) {
+    return PetImages[camelCased as PetImageKey]
+  }
+  
+  // Fallback to Bulbasaur
+  console.warn(`[getPokemonImage] No image found for: ${species}, using fallback`)
+  return PetImages.bulbasaur
 }

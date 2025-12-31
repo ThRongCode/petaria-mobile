@@ -96,7 +96,7 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                   transform: [{ scale: pokemonScale }]
                 }
               ]}>
-                <Image source={getPetImageByName(encounter.species)} style={styles.monsterImage} />
+                <Image source={getPetImageByName(encounter.species)} style={styles.monsterImage} resizeMode="contain" />
               </Animated.View>
               
               {/* Pokeball animation overlay */}

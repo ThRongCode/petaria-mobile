@@ -21,6 +21,7 @@ import { Auction, Pet, Item } from '@/stores/types/game'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import { ButtonPrimary, ButtonSecondary } from 'rn-base-component'
+import { getPokemonImage, getItemImage } from '@/assets/images'
 
 type AuctionTab = 'browse' | 'my_listings' | 'my_bids' | 'create'
 type BrowseFilter = 'all' | 'pets' | 'items' | 'ending_soon'
@@ -96,6 +97,28 @@ export const AuctionScreen: React.FC = () => {
       return allPets.find(pet => pet.id === auction.itemId)
     } else {
       return allItems.find(item => item.id === auction.itemId)
+    }
+  }
+
+
+  // Helper to get the right image source for auction items (Pet or Item)
+  const getAuctionItemImage = (auction: Auction) => {
+    const details = getItemDetails(auction)
+    if (!details) return getItemImage('pokeball') // fallback
+    
+    if (auction.itemType === 'pet') {
+      return getPokemonImage((details as Pet).species)
+    } else {
+      return getItemImage((details as Item).id || (details as Item).name)
+    }
+  }
+
+  // Helper to get image for createable items (Pet or Item)
+  const getCreateableItemImage = (item: Pet | (Item & { quantity: number })) => {
+    if ('species' in item) {
+      return getPokemonImage(item.species)
+    } else {
+      return getItemImage(item.id || item.name)
     }
   }
 
@@ -223,7 +246,7 @@ export const AuctionScreen: React.FC = () => {
         }}
       >
         <Image 
-          source={{ uri: itemDetails?.image || 'https://via.placeholder.com/80' }} 
+          source={getAuctionItemImage(auction)} 
           style={styles.auctionImage} 
         />
         <View style={styles.auctionInfo}>
@@ -287,7 +310,7 @@ export const AuctionScreen: React.FC = () => {
       ]}
       onPress={() => setSelectedItemId(item.id)}
     >
-      <Image source={{ uri: item.image }} style={styles.selectableItemImage} />
+      <Image source={getCreateableItemImage(item)} style={styles.selectableItemImage} />
       <View style={styles.selectableItemInfo}>
         <ThemedText style={styles.selectableItemName}>{item.name}</ThemedText>
         {'species' in item ? (
@@ -314,7 +337,7 @@ export const AuctionScreen: React.FC = () => {
                 return (
                   <>
                     <Image 
-                      source={{ uri: itemDetails?.image }} 
+                      source={getAuctionItemImage(selectedAuction)} 
                       style={styles.modalItemImage} 
                     />
                     <ThemedText type="title" style={styles.modalItemName}>

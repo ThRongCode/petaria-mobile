@@ -113,6 +113,7 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                 <Image
                   source={getPetImageByName(encounter.species)}
                   style={styles.monsterImage}
+                  resizeMode="contain"
                 />
               </Animated.View>
 

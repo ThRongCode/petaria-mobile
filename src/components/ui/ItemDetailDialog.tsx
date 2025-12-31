@@ -11,6 +11,7 @@ import { ThemedText } from '@/components'
 import { Panel } from './Panel'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
+import { getItemImage } from '@/assets/images'
 import type { Item } from '@/stores/types/game'
 
 interface ItemDetailDialogProps {
@@ -110,7 +111,7 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
                   ]}
                 >
                   <Image
-                    source={{ uri: item.image }}
+                    source={getItemImage(item.id || item.name)}
                     style={styles.image}
                     resizeMode="contain"
                   />

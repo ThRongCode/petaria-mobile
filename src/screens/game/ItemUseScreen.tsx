@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
 import { getUserProfile, getAllPets } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
-import { getPokemonImage } from '@/assets/images'
+import { getPokemonImage, getItemImage } from '@/assets/images'
 import { apiClient } from '@/services/api'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
@@ -212,7 +212,7 @@ export const ItemUseScreen: React.FC = () => {
           <Panel variant="transparent" style={styles.headerPanel}>
             <View style={styles.headerRow}>
               <Image
-                source={{ uri: item.image }}
+                source={getItemImage(item.id || item.name)}
                 style={styles.itemImage}
                 resizeMode="contain"
               />

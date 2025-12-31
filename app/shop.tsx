@@ -19,6 +19,7 @@ import { getUserProfile, getUserInventory } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers'
 import { Ionicons } from '@expo/vector-icons'
 import { itemApi } from '@/services/api'
+import { getItemImage } from '@/assets/images'
 import type { Item } from '@/stores/types/game'
 
 /**
@@ -151,13 +152,7 @@ export default function ShopScreen() {
             {/* Item Image */}
             <View style={styles.itemImageContainer}>
               <View style={[styles.itemImageBorder, { borderColor: getRarityColor(item.rarity) }]}>
-                {item.image ? (
-                  <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="contain" />
-                ) : (
-                  <View style={styles.itemImagePlaceholder}>
-                    <Ionicons name="cube" size={40} color={getRarityColor(item.rarity)} />
-                  </View>
-                )}
+                <Image source={getItemImage(item.id || item.name)} style={styles.itemImage} resizeMode="contain" />
               </View>
               
               {/* Owned Badge */}
