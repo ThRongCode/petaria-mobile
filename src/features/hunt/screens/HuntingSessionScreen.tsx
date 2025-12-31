@@ -173,8 +173,8 @@ export const HuntingSessionScreen: React.FC = () => {
         coins={currency?.coins || 0}
         gems={currency?.gems || 0}
         pokeballs={currency?.pokeballs || 0}
-        energy={80}
-        maxEnergy={100}
+        
+        
         battleTickets={profile?.battleTickets}
         huntTickets={profile?.huntTickets}
         onSettingsPress={() => router.push('/profile')}

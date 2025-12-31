@@ -5,11 +5,10 @@ import {
   ScrollView, 
   ImageBackground,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   Image,
 } from 'react-native'
-import { TopBar, Panel } from '@/components/ui'
+import { TopBar, Panel, LoadingContainer } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter, useFocusEffect } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -257,8 +256,8 @@ export const HuntScreen: React.FC = () => {
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
+          
+          
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}
@@ -340,12 +339,7 @@ export const HuntScreen: React.FC = () => {
 
         {/* Loading State */}
         {(isLoading || checkingSession) && regions.length === 0 && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4CAF50" />
-            <ThemedText style={styles.loadingText}>
-              Loading regions...
-            </ThemedText>
-          </View>
+          <LoadingContainer message="Loading regions..." color="#4CAF50" />
         )}
 
         {/* Error State */}

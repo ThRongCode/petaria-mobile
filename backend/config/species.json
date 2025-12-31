@@ -1,5 +1,4 @@
 {
-  "$schema": "./schemas/species.schema.json",
   "_comment": "Pokemon species base stats configuration. Stats range: Low (30-45), Medium (50-65), High (70-85), Very High (90-100)",
   
   "species": {

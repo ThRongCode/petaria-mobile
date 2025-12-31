@@ -1,32 +1,35 @@
-import React, { useState, useEffect } from 'react'
+/**
+ * PetsScreen - Pokemon & Items Collection View
+ * 
+ * Refactored to use extracted components for better maintainability
+ * Grid layout with filtering and sorting options
+ */
+
+import React, { useState, useEffect, useCallback } from 'react'
 import { 
   StyleSheet, 
   View, 
-  ScrollView, 
   ImageBackground,
   TouchableOpacity,
-  Image,
   FlatList,
   Alert,
-  ActivityIndicator,
 } from 'react-native'
-import { TopBar, Panel, ItemDetailDialog } from '@/components/ui'
+import { TopBar, Panel, ItemDetailDialog, LoadingContainer } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector, useDispatch } from 'react-redux'
-import { getUserProfile, getAllPets, getIsLoadingPets, getIsLoadingItems, getUserInventory } from '@/stores/selectors'
+import { getUserProfile, getAllPets, getIsLoadingPets, getUserInventory } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers'
 import { Ionicons } from '@expo/vector-icons'
-import { getPokemonImage } from '@/assets/images'
 import { apiClient, itemApi } from '@/services/api'
 import type { Pet, Item } from '@/stores/types/game'
-import { SvgUri } from 'react-native-svg'
 
-/**
- * PetsScreen - Modern collection view for Pokemon
- * Grid layout with filtering and sorting options
- */
+// Extracted components
+import { PetGridCard, ItemGridCard, EmptyState } from './components'
+
+type TabType = 'pokemon' | 'items'
+
 export const PetsScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useDispatch()
@@ -34,28 +37,30 @@ export const PetsScreen: React.FC = () => {
   const pets = useSelector(getAllPets) as Pet[]
   const inventory = useSelector(getUserInventory)
   const isLoadingPets = useSelector(getIsLoadingPets)
-  const isLoadingItems = useSelector(getIsLoadingItems)
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'favorites'>('all')
-  const [selectedSort, setSelectedSort] = useState<'level' | 'name' | 'rarity'>('level')
-  const [activeTab, setActiveTab] = useState<'pokemon' | 'items'>('pokemon')
+  
+  // Tab and filter state
+  const [activeTab, setActiveTab] = useState<TabType>('pokemon')
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  
+  // Items state
   const [items, setItems] = useState<Item[]>([])
   const [loadingItems, setLoadingItems] = useState(false)
+  
+  // Dialog state
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [showItemDialog, setShowItemDialog] = useState(false)
+  
+  // Favorite toggle state
   const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null)
 
-  const filters = [
-    { id: 'all' as const, label: 'All', icon: 'apps' },
-    { id: 'favorites' as const, label: 'Favorites', icon: 'heart' },
-  ]
-
+  // Load items when tab changes
   useEffect(() => {
     if (activeTab === 'items') {
       loadItems()
     }
   }, [activeTab, inventory.items])
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     setLoadingItems(true)
     try {
       const response = await itemApi.getCatalog()
@@ -74,72 +79,27 @@ export const PetsScreen: React.FC = () => {
     } finally {
       setLoadingItems(false)
     }
-  }
+  }, [inventory.items])
 
-  const handleItemPress = (item: Item) => {
-    setSelectedItem(item)
-    setShowItemDialog(true)
-  }
-
-  const handleUseItem = () => {
-    setShowItemDialog(false)
-    if (selectedItem) {
-      // Navigate to item use screen with item data
-      router.push({
-        pathname: '/item-use',
-        params: { item: JSON.stringify(selectedItem) }
-      })
+  // Filter pets based on favorites toggle
+  const filteredPets = pets.filter((pet) => {
+    if (showFavoritesOnly) {
+      return pet.isFavorite === true
     }
-  }
+    return true
+  })
 
-  const handleBuyItem = async (item: Item) => {
-    if (!item) return
+  // Handlers
+  const handlePetPress = useCallback((pet: Pet) => {
+    router.push({
+      pathname: '/pet-details',
+      params: { petId: pet.id }
+    })
+  }, [router])
 
-    // Check if user has enough currency
-    const cost = item.price.coins || item.price.gems || 0
-    const currency = item.price.coins ? 'coins' : 'gems'
-    const userBalance = item.price.coins ? profile.currency.coins : profile.currency.gems
-
-    if (userBalance < cost) {
-      Alert.alert(
-        'Insufficient Funds',
-        `You need ${cost} ${currency} to purchase ${item.name}. You have ${userBalance} ${currency}.`
-      )
-      return
-    }
-
-    Alert.alert(
-      'Purchase Item',
-      `Buy ${item.name} for ${cost} ${currency}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Buy',
-          onPress: async () => {
-            try {
-              const response = await itemApi.buyItem(item.id, 1)
-              if (response.success) {
-                Alert.alert('Success', `You purchased ${item.name}!`)
-                // Reload user data to update inventory and currency
-                dispatch(gameActions.loadUserData())
-                setShowItemDialog(false)
-              } else {
-                Alert.alert('Error', 'Failed to purchase item')
-              }
-            } catch (error) {
-              console.error('Error buying item:', error)
-              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to purchase item')
-            }
-          }
-        }
-      ]
-    )
-  }
-
-  const handleToggleFavorite = async (pet: Pet, e: any) => {
+  const handleToggleFavorite = useCallback(async (pet: Pet, e: any) => {
     e.stopPropagation()
     
-    // Prevent multiple clicks
     if (togglingFavorite === pet.id) return
     
     setTogglingFavorite(pet.id)
@@ -148,13 +108,11 @@ export const PetsScreen: React.FC = () => {
       if (pet.isFavorite) {
         const response = await apiClient.removePetFromFavorites(pet.id)
         if (response.success) {
-          // Update local state
           dispatch(gameActions.loadUserData())
         }
       } else {
         const response = await apiClient.addPetToFavorites(pet.id)
         if (response.success) {
-          // Update local state
           dispatch(gameActions.loadUserData())
         }
       }
@@ -164,234 +122,76 @@ export const PetsScreen: React.FC = () => {
     } finally {
       setTogglingFavorite(null)
     }
-  }
+  }, [togglingFavorite, dispatch])
 
-  // Filter pets based on selected filter
-  const filteredPets = pets.filter((pet) => {
-    if (selectedFilter === 'favorites') {
-      return pet.isFavorite === true
+  const handleItemPress = useCallback((item: Item) => {
+    setSelectedItem(item)
+    setShowItemDialog(true)
+  }, [])
+
+  const handleUseItem = useCallback(() => {
+    setShowItemDialog(false)
+    if (selectedItem) {
+      router.push({
+        pathname: '/item-use',
+        params: { item: JSON.stringify(selectedItem) }
+      })
     }
-    return true
-  })
+  }, [selectedItem, router])
 
-  const getTypeColor = (type?: string) => {
-    if (!type) return '#9E9E9E' // Default gray color for normal/unknown type
-    
-    const colors: Record<string, string> = {
-      grass: '#4CAF50',
-      fire: '#F44336',
-      water: '#2196F3',
-      electric: '#FFC107',
-      psychic: '#9C27B0',
-      normal: '#9E9E9E',
-      flying: '#03A9F4',
-      poison: '#7B1FA2',
-      ground: '#795548',
-      rock: '#5D4037',
-      bug: '#8BC34A',
-      ghost: '#673AB7',
-      steel: '#607D8B',
-      dragon: '#3F51B5',
-      dark: '#424242',
-      fairy: '#E91E63',
-    }
-    return colors[type.toLowerCase()] || '#999'
-  }
+  const handleGoHunt = useCallback(() => {
+    router.push('/(app)/hunt')
+  }, [router])
 
-  const renderPetCard = ({ item: pet }: { item: Pet }) => {
-    // Derive type from species name or use default
-    const petType = 'normal' // You can enhance this to map species to types
-    
-    return (
-      <TouchableOpacity
-        style={styles.petCard}
-        onPress={() => {
-          // Navigate to pet detail
-          router.push({
-            pathname: '/pet-details',
-            params: { petId: pet.id }
-          })
-        }}
-      >
-      <Panel variant="dark" style={styles.petPanel}>
-        {/* Pet Image */}
-        <View style={styles.petImageContainer}>
-          <Image 
-            source={getPokemonImage(pet.species) as any}
-            style={styles.petImage}
-            resizeMode="contain"
-          />
-          {/* Level Badge */}
-          <View style={styles.levelBadge}>
-            <ThemedText style={styles.levelText}>Lv.{pet.level}</ThemedText>
-          </View>
-          {/* Favorite Button */}
-          <TouchableOpacity
-            style={styles.favoriteButton}
-            onPress={(e) => handleToggleFavorite(pet, e)}
-            disabled={togglingFavorite === pet.id}
+  const handleGoShop = useCallback(() => {
+    router.push('/shop')
+  }, [router])
+
+  // Render functions
+  const renderPetCard = useCallback(({ item: pet }: { item: Pet }) => (
+    <PetGridCard
+      pet={pet}
+      onPress={handlePetPress}
+      onToggleFavorite={handleToggleFavorite}
+      isTogglingFavorite={togglingFavorite === pet.id}
+    />
+  ), [handlePetPress, handleToggleFavorite, togglingFavorite])
+
+  const renderItemCard = useCallback(({ item }: { item: Item }) => (
+    <ItemGridCard item={item} onPress={handleItemPress} />
+  ), [handleItemPress])
+
+  const renderPetEmptyState = useCallback(() => (
+    <EmptyState
+      icon="🎒"
+      title="No Pokemon Yet"
+      message="Start hunting to catch your first Pokemon!"
+      buttonText="Go Hunt"
+      onButtonPress={handleGoHunt}
+      buttonColors={['#4CAF50', '#2E7D32']}
+    />
+  ), [handleGoHunt])
+
+  const renderItemEmptyState = useCallback(() => (
+    <View style={styles.emptyContainer}>
+      <Panel variant="dark" style={styles.emptyPanel}>
+        <Ionicons name="cube-outline" size={64} color="rgba(255, 255, 255, 0.3)" />
+        <ThemedText style={styles.emptyTitle}>No Items Yet</ThemedText>
+        <ThemedText style={styles.emptyText}>
+          Visit the shop to purchase items for your Pokémon
+        </ThemedText>
+        <TouchableOpacity style={styles.shopButton} onPress={handleGoShop}>
+          <LinearGradient
+            colors={['rgba(255, 215, 0, 0.3)', 'rgba(255, 152, 0, 0.5)']}
+            style={styles.shopButtonGradient}
           >
-            {togglingFavorite === pet.id ? (
-              <ActivityIndicator size="small" color="#FFD700" />
-            ) : (
-              <Ionicons 
-                name={pet.isFavorite ? "bookmark" : "bookmark-outline"} 
-                size={24} 
-                color={pet.isFavorite ? "#FFD700" : "#FFFFFF"}
-              />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Pet Info */}
-        <View style={styles.petInfo}>
-          <ThemedText style={styles.petName} numberOfLines={1}>
-            {pet.name}
-          </ThemedText>
-          <ThemedText style={styles.petSpecies} numberOfLines={1}>
-            {pet.species}
-          </ThemedText>
-
-          {/* Type Badge */}
-          <View 
-            style={[
-              styles.typeBadge,
-              { backgroundColor: getTypeColor(petType) }
-            ]}
-          >
-            <ThemedText style={styles.typeText}>{petType}</ThemedText>
-          </View>
-
-          {/* HP Bar */}
-          <View style={styles.hpBarContainer}>
-            <ThemedText style={styles.hpLabel}>HP</ThemedText>
-            <View style={styles.hpBarOuter}>
-              <View 
-                style={[
-                  styles.hpBarInner,
-                  { 
-                    width: `${(pet.stats.hp / pet.stats.maxHp) * 100}%`,
-                    backgroundColor: pet.stats.hp > pet.stats.maxHp * 0.5 ? '#4CAF50' : pet.stats.hp > pet.stats.maxHp * 0.2 ? '#FFA726' : '#F44336'
-                  }
-                ]} 
-              />
-            </View>
-            <ThemedText style={styles.hpValue}>{pet.stats.hp}/{pet.stats.maxHp}</ThemedText>
-          </View>
-
-          {/* Stats Preview */}
-          <View style={styles.statsPreview}>
-            <View style={styles.statMini}>
-              <Ionicons name="flash" size={12} color="#FFA726" />
-              <ThemedText style={styles.statMiniText}>{pet.stats.attack}</ThemedText>
-            </View>
-            <View style={styles.statMini}>
-              <Ionicons name="shield" size={12} color="#2196F3" />
-              <ThemedText style={styles.statMiniText}>{pet.stats.defense}</ThemedText>
-            </View>
-            <View style={styles.statMini}>
-              <Ionicons name="speedometer" size={12} color="#9C27B0" />
-              <ThemedText style={styles.statMiniText}>{pet.stats.speed}</ThemedText>
-            </View>
-          </View>
-
-          {/* Use Item Button */}
-          <TouchableOpacity
-            style={styles.useItemButton}
-            onPress={(e) => {
-              e.stopPropagation()
-              router.push('/item-use')
-            }}
-          >
-            <Ionicons name="cube-outline" size={16} color="#9C27B0" />
-            <ThemedText style={styles.useItemText}>Use Item</ThemedText>
-          </TouchableOpacity>
-        </View>
+            <Ionicons name="cart" size={20} color="#FFD700" />
+            <ThemedText style={styles.shopButtonText}>Visit Shop</ThemedText>
+          </LinearGradient>
+        </TouchableOpacity>
       </Panel>
-    </TouchableOpacity>
-    )
-  }
-
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'Common': return '#9E9E9E'
-      case 'Rare': return '#2196F3'
-      case 'Epic': return '#9C27B0'
-      case 'Legendary': return '#FFD700'
-      default: return '#9E9E9E'
-    }
-  }
-
-  const renderItemCard = ({ item }: { item: Item }) => {
-    return (
-      <TouchableOpacity
-        style={styles.itemCard}
-        onPress={() => handleItemPress(item)}
-      >
-        <Panel variant="dark" style={styles.itemPanel}>
-          {/* Rarity Indicator */}
-          <View
-            style={[
-              styles.rarityIndicator,
-              { backgroundColor: getRarityColor(item.rarity) },
-            ]}
-          />
-
-          {/* Item Image */}
-          <View style={styles.itemImageContainer}>
-            <Image
-              source={{ uri: item.image }}
-              style={styles.itemImage}
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* Item Info */}
-          <View style={styles.itemInfo}>
-            <ThemedText style={styles.itemName} numberOfLines={1}>
-              {item.name}
-            </ThemedText>
-            <ThemedText style={styles.itemType} numberOfLines={1}>
-              {item.type}
-            </ThemedText>
-
-            {/* Rarity Badge */}
-            <View
-              style={[
-                styles.itemRarityBadge,
-                { backgroundColor: getRarityColor(item.rarity) + '30' },
-              ]}
-            >
-              <ThemedText
-                style={[
-                  styles.itemRarityText,
-                  { color: getRarityColor(item.rarity) },
-                ]}
-              >
-                {item.rarity}
-              </ThemedText>
-            </View>
-
-            {/* Price */}
-            <View style={styles.itemPrice}>
-              {item.price?.coins && (
-                <View style={styles.priceTag}>
-                  <ThemedText style={styles.priceValue}>{item.price.coins}</ThemedText>
-                  <ThemedText style={styles.priceIcon}>💰</ThemedText>
-                </View>
-              )}
-              {item.price?.gems && (
-                <View style={styles.priceTag}>
-                  <ThemedText style={styles.priceValue}>{item.price.gems}</ThemedText>
-                  <ThemedText style={styles.priceIcon}>💎</ThemedText>
-                </View>
-              )}
-            </View>
-          </View>
-        </Panel>
-      </TouchableOpacity>
-    )
-  }
+    </View>
+  ), [handleGoShop])
 
   return (
     <View style={styles.container}>
@@ -413,134 +213,78 @@ export const PetsScreen: React.FC = () => {
         <TopBar
           username={profile.username}
           coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 150}
+          gems={profile.currency?.gems || 0}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}
         />
 
-        {/* Header with Collection Stats */}
+        {/* Tab Header */}
         <View style={styles.header}>
-          <Panel variant="transparent" style={styles.headerPanel}>
-            <View style={styles.headerRow}>
-              <View>
-                <ThemedText style={styles.headerTitle}>📚 Collection</ThemedText>
-                <ThemedText style={styles.headerSubtitle}>
-                  {activeTab === 'pokemon' 
-                    ? `${pets.length} Pokemon collected`
-                    : `${items.length} items available`
-                  }
-                </ThemedText>
-              </View>
-            </View>
-
-            {/* Tabs */}
-            <View style={styles.tabsContainer}>
-              <TouchableOpacity
-                style={styles.tab}
-                onPress={() => setActiveTab('pokemon')}
-              >
-                <LinearGradient
-                  colors={
-                    activeTab === 'pokemon'
-                      ? ['rgba(255, 215, 0, 0.3)', 'rgba(255, 215, 0, 0.1)']
-                      : ['transparent', 'transparent']
-                  }
-                  style={styles.tabGradient}
-                >
-                  <Ionicons
-                    name="paw"
-                    size={20}
-                    color={activeTab === 'pokemon' ? '#FFD700' : 'rgba(255, 255, 255, 0.5)'}
-                  />
-                  <ThemedText
-                    style={[
-                      styles.tabText,
-                      activeTab === 'pokemon' && styles.tabTextActive,
-                    ]}
-                  >
-                    Pokemon
+          <View style={styles.tabsRow}>
+            {/* Pokemon Tab */}
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'pokemon' && styles.tabActive]}
+              onPress={() => setActiveTab('pokemon')}
+            >
+              <Ionicons
+                name="paw"
+                size={18}
+                color={activeTab === 'pokemon' ? '#FFD700' : 'rgba(255, 255, 255, 0.5)'}
+              />
+              <ThemedText style={[styles.tabText, activeTab === 'pokemon' && styles.tabTextActive]}>
+                Pokemon
+              </ThemedText>
+              {activeTab === 'pokemon' && (
+                <View style={styles.countBadge}>
+                  <ThemedText style={styles.countText}>
+                    {showFavoritesOnly ? filteredPets.length : pets.length}
                   </ThemedText>
-                </LinearGradient>
-              </TouchableOpacity>
+                </View>
+              )}
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.tab}
-                onPress={() => setActiveTab('items')}
-              >
-                <LinearGradient
-                  colors={
-                    activeTab === 'items'
-                      ? ['rgba(255, 215, 0, 0.3)', 'rgba(255, 215, 0, 0.1)']
-                      : ['transparent', 'transparent']
-                  }
-                  style={styles.tabGradient}
-                >
-                  <Ionicons
-                    name="cube"
-                    size={20}
-                    color={activeTab === 'items' ? '#FFD700' : 'rgba(255, 255, 255, 0.5)'}
-                  />
-                  <ThemedText
-                    style={[
-                      styles.tabText,
-                      activeTab === 'items' && styles.tabTextActive,
-                    ]}
-                  >
-                    Inventory
-                  </ThemedText>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </Panel>
-        </View>
+            {/* Items Tab */}
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'items' && styles.tabActive]}
+              onPress={() => setActiveTab('items')}
+            >
+              <Ionicons
+                name="cube"
+                size={18}
+                color={activeTab === 'items' ? '#FFD700' : 'rgba(255, 255, 255, 0.5)'}
+              />
+              <ThemedText style={[styles.tabText, activeTab === 'items' && styles.tabTextActive]}>
+                Inventory
+              </ThemedText>
+              {activeTab === 'items' && (
+                <View style={styles.countBadge}>
+                  <ThemedText style={styles.countText}>{items.length}</ThemedText>
+                </View>
+              )}
+            </TouchableOpacity>
 
-        {/* Filters */}
-        <View style={styles.filtersContainer}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filtersContent}
-          >
-            {filters.map((filter) => (
+            {/* Favorite Toggle - Only for Pokemon tab */}
+            {activeTab === 'pokemon' && (
               <TouchableOpacity
-                key={filter.id}
-                onPress={() => setSelectedFilter(filter.id)}
-                style={styles.filterButton}
+                style={[styles.favoriteToggle, showFavoritesOnly && styles.favoriteToggleActive]}
+                onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
               >
-                <Panel 
-                  variant={selectedFilter === filter.id ? 'light' : 'dark'}
-                  style={styles.filterPanel}
-                >
-                  <Ionicons 
-                    name={filter.icon as any} 
-                    size={20} 
-                    color={selectedFilter === filter.id ? '#000' : '#fff'} 
-                  />
-                  <ThemedText 
-                    style={[
-                      styles.filterText,
-                      selectedFilter === filter.id && styles.filterTextActive
-                    ]}
-                  >
-                    {filter.label}
-                  </ThemedText>
-                </Panel>
+                <Ionicons
+                  name={showFavoritesOnly ? 'heart' : 'heart-outline'}
+                  size={18}
+                  color={showFavoritesOnly ? '#FF4081' : 'rgba(255, 255, 255, 0.5)'}
+                />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            )}
+          </View>
         </View>
 
         {/* Pokemon Grid */}
         {activeTab === 'pokemon' && (
           isLoadingPets ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#FFD700" />
-              <ThemedText style={styles.loadingText}>Loading your Pokemon...</ThemedText>
-            </View>
+            <LoadingContainer message="Loading your Pokemon..." />
           ) : (
             <FlatList
               data={filteredPets}
@@ -550,76 +294,28 @@ export const PetsScreen: React.FC = () => {
               columnWrapperStyle={styles.gridRow}
               contentContainerStyle={styles.gridContent}
               showsVerticalScrollIndicator={false}
-              ListEmptyComponent={() => (
-                <View style={styles.emptyContainer}>
-                  <Panel variant="dark" style={styles.emptyPanel}>
-                    <ThemedText style={styles.emptyIcon}>🎒</ThemedText>
-                    <ThemedText style={styles.emptyTitle}>No Pokemon Yet</ThemedText>
-                    <ThemedText style={styles.emptyText}>
-                    Start hunting to catch your first Pokemon!
-                  </ThemedText>
-                  <TouchableOpacity
-                    onPress={() => router.push('/(app)/hunt')}
-                    style={styles.emptyButton}
-                  >
-                    <LinearGradient
-                      colors={['#4CAF50', '#2E7D32']}
-                      style={styles.emptyGradient}
-                    >
-                      <ThemedText style={styles.emptyButtonText}>
-                        Go Hunt
-                      </ThemedText>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </Panel>
-              </View>
-            )}
+              ListEmptyComponent={renderPetEmptyState}
             />
           )
         )}
 
-        {/* Items View */}
+        {/* Items Grid */}
         {activeTab === 'items' && (
-          <>
-            {loadingItems ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FFD700" />
-                <ThemedText style={styles.loadingText}>Loading items...</ThemedText>
-              </View>
-            ) : items.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Panel variant="dark" style={styles.emptyPanel}>
-                  <Ionicons name="cube-outline" size={64} color="rgba(255, 255, 255, 0.3)" />
-                  <ThemedText style={styles.emptyTitle}>No Items Yet</ThemedText>
-                  <ThemedText style={styles.emptyText}>
-                    Visit the shop to purchase items for your Pokémon
-                  </ThemedText>
-                  <TouchableOpacity
-                    style={styles.shopButton}
-                    onPress={() => router.push('/shop')}
-                  >
-                    <LinearGradient
-                      colors={['rgba(255, 215, 0, 0.3)', 'rgba(255, 152, 0, 0.5)']}
-                      style={styles.shopButtonGradient}
-                    >
-                      <Ionicons name="cart" size={20} color="#FFD700" />
-                      <ThemedText style={styles.shopButtonText}>Visit Shop</ThemedText>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </Panel>
-              </View>
-            ) : (
-              <FlatList
-                data={items}
-                renderItem={renderItemCard}
-                keyExtractor={(item) => item.id}
-                numColumns={2}
-                columnWrapperStyle={styles.gridRow}
-                contentContainerStyle={styles.gridContent}
-                showsVerticalScrollIndicator={false}
-              />
-            )}
-          </>
+          loadingItems ? (
+            <LoadingContainer message="Loading items..." />
+          ) : items.length === 0 ? (
+            renderItemEmptyState()
+          ) : (
+            <FlatList
+              data={items}
+              renderItem={renderItemCard}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={styles.gridRow}
+              contentContainerStyle={styles.gridContent}
+              showsVerticalScrollIndicator={false}
+            />
+          )
         )}
       </View>
 
@@ -656,242 +352,29 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  // Header & Tabs
   header: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    marginBottom: 8,
+    paddingBottom: 8,
   },
-  headerPanel: {
-    padding: 16,
-  },
-  headerRow: {
+  tabsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  addButton: {
-    borderRadius: 25,
-    overflow: 'hidden',
-  },
-  addGradient: {
-    width: 50,
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filtersContainer: {
-    paddingLeft: 16,
-    marginBottom: 12,
-  },
-  filtersContent: {
-    gap: 8,
-    paddingRight: 16,
-  },
-  filterButton: {
-    marginBottom: 4,
-  },
-  filterPanel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  filterText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  filterTextActive: {
-    color: '#000',
-  },
-  gridRow: {
     gap: 12,
-    paddingHorizontal: 16,
   },
-  gridContent: {
-    paddingBottom: 20,
-  },
-  petCard: {
-    flex: 1,
-    maxWidth: '48%',
-    marginBottom: 12,
-  },
-  petPanel: {
-    padding: 12,
-  },
-  petImageContainer: {
-    alignItems: 'center',
-    marginBottom: 8,
-    position: 'relative',
-  },
-  petImage: {
-    width: 100,
-    height: 100,
-  },
-  levelBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-  },
-  levelText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFD700',
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 20,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  petInfo: {
-    gap: 4,
-  },
-  petName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  petSpecies: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  typeBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginTop: 4,
-  },
-  typeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#fff',
-    textTransform: 'capitalize',
-  },
-  hpBarContainer: {
+  tab: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  hpLabel: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: 'bold',
-  },
-  hpBarOuter: {
-    flex: 1,
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  hpBarInner: {
-    height: '100%',
-  },
-  hpValue: {
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
-    minWidth: 30,
-    textAlign: 'right',
-  },
-  statsPreview: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
-  },
-  statMini: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statMiniText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    flex: 1,
-    padding: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyPanel: {
-    padding: 32,
-    alignItems: 'center',
-    width: '100%',
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  emptyButton: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  emptyGradient: {
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-  },
-  emptyButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
-  },
-  tab: {
-    flex: 1,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  tabGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 10,
+  tabActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 215, 0, 0.5)',
   },
   tabText: {
     fontSize: 14,
@@ -901,167 +384,38 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: '#FFD700',
   },
-  useItemButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    marginTop: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: 'rgba(156, 39, 176, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(156, 39, 176, 0.3)',
-  },
-  useItemText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#9C27B0',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  // Item Card Styles
-  itemCard: {
-    flex: 1,
-    marginBottom: 12,
-  },
-  itemPanel: {
-    padding: 12,
-    position: 'relative',
-  },
-  rarityIndicator: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
-  itemImageContainer: {
-    width: '100%',
-    height: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
-  },
-  itemImage: {
-    width: 70,
-    height: 70,
-  },
-  itemInfo: {
-    gap: 4,
-  },
-  itemName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  itemType: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  itemRarityBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  itemRarityText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  itemPrice: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
-  },
-  priceTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  priceValue: {
-    fontSize: 12,
-    color: '#FFD700',
-    fontWeight: '600',
-  },
-  priceIcon: {
-    fontSize: 12,
-  },
-  itemsContainer: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemsPanel: {
-    padding: 40,
-    alignItems: 'center',
-    width: '100%',
-  },
-  itemsTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  itemsText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  browseButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  browseGradient: {
-    padding: 2,
-  },
-  browseButtonBorder: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  countBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
     borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 4,
   },
-  browseButtonText: {
-    fontSize: 16,
+  countText: {
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#B39DDB',
+    color: '#FFD700',
   },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 100,
+  favoriteToggle: {
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginLeft: 'auto',
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+  favoriteToggleActive: {
+    backgroundColor: 'rgba(255, 64, 129, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 64, 129, 0.5)',
   },
+  // Grid
+  gridRow: {
+    gap: 12,
+    paddingHorizontal: 16,
+  },
+  gridContent: {
+    paddingBottom: 20,
+  },
+  // Empty States
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',

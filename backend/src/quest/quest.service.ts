@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateQuestProgressDto } from './dto/quest.dto';
+import { UserStatsUtil } from '../utils/userStats';
 
 // Quest target types
 export const QUEST_TARGET_TYPES = {
@@ -21,6 +22,19 @@ export class QuestService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Get start of current day in UTC
+   */
+  private getStartOfDayUTC(): Date {
+    const now = new Date();
+    return new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0, 0, 0
+    ));
+  }
+
+  /**
    * Get all daily quests for a user
    * Also checks if quests need to be reset (daily)
    */
@@ -28,16 +42,22 @@ export class QuestService {
     // Check if daily reset is needed
     await this.checkAndResetDailyQuests(userId);
 
-    // Get user's active quests
+    // Get user's quests for today (including claimed ones to show completion)
     const userQuests = await this.prisma.userQuest.findMany({
       where: {
         userId,
-        status: { in: ['active', 'completed'] },
+        status: { in: ['active', 'completed', 'claimed'] },
+        // Only show quests that haven't expired yet (or were claimed today)
+        OR: [
+          { expiresAt: { gte: new Date() } },
+          { status: 'claimed', claimedAt: { gte: this.getStartOfDayUTC() } },
+        ],
       },
       include: {
         quest: true,
       },
       orderBy: [
+        { status: 'asc' }, // active first, then completed, then claimed
         { quest: { sortOrder: 'asc' } },
         { assignedAt: 'desc' },
       ],
@@ -66,6 +86,7 @@ export class QuestService {
       },
       expiresAt: uq.expiresAt,
       completedAt: uq.completedAt,
+      claimedAt: uq.claimedAt,
     }));
   }
 
@@ -89,7 +110,17 @@ export class QuestService {
       now.getUTCMonth() !== lastReset.getUTCMonth() ||
       now.getUTCFullYear() !== lastReset.getUTCFullYear();
 
-    if (isNewDay) {
+    // Also check if user has any active quests for today
+    const activeQuestsCount = await this.prisma.userQuest.count({
+      where: {
+        userId,
+        status: { in: ['active', 'completed'] },
+        quest: { type: 'daily' },
+      },
+    });
+
+    // Assign new quests if it's a new day OR if user has no active daily quests
+    if (isNewDay || activeQuestsCount === 0) {
       await this.assignDailyQuests(userId);
     }
   }
@@ -259,13 +290,27 @@ export class QuestService {
         },
       });
 
-      // Give currency rewards
+      // Get current user for level up check
+      const currentUser = await tx.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!currentUser) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Calculate new XP and check for level up
+      const newXp = currentUser.xp + rewardXp;
+      const levelUpResult = UserStatsUtil.checkLevelUp(newXp, currentUser.level);
+
+      // Give currency rewards and handle level up
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
           coins: { increment: rewardCoins },
           gems: { increment: rewardGems },
-          xp: { increment: rewardXp },
+          xp: levelUpResult.remainingXp,
+          level: levelUpResult.newLevel,
         },
       });
 
@@ -303,11 +348,13 @@ export class QuestService {
         itemReward = { item, quantity: rewardItemQty };
       }
 
-      return { updatedUser, itemReward };
+      return { updatedUser, itemReward, leveledUp: levelUpResult.leveledUp, newLevel: levelUpResult.newLevel };
     });
 
     return {
-      message: 'Quest rewards claimed!',
+      message: result.leveledUp 
+        ? `Quest rewards claimed! You leveled up to ${result.newLevel}!` 
+        : 'Quest rewards claimed!',
       rewards: {
         coins: rewardCoins,
         gems: rewardGems,
@@ -318,6 +365,9 @@ export class QuestService {
         coins: result.updatedUser.coins,
         gems: result.updatedUser.gems,
         xp: result.updatedUser.xp,
+        level: result.updatedUser.level,
+        leveledUp: result.leveledUp,
+        newLevel: result.newLevel,
       },
     };
   }

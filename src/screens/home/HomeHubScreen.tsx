@@ -137,8 +137,8 @@ export const HomeHubScreen: React.FC = () => {
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
+          
+          
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/(app)/profile')}

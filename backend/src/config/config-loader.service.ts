@@ -3,10 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export interface SpeciesStats {
+  type: string;
   hp: number;
   attack: number;
   defense: number;
   speed: number;
+  description?: string;
 }
 
 export interface SpeciesConfig {
@@ -159,6 +161,11 @@ export class ConfigLoaderService implements OnModuleInit {
   // Species methods
   getSpeciesStats(species: string): SpeciesStats | null {
     return this.speciesConfig[species] || null;
+  }
+
+  getSpeciesType(species: string): string {
+    const stats = this.speciesConfig[species];
+    return stats?.type || 'Normal';
   }
 
   getAllSpecies(): string[] {

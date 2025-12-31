@@ -10,8 +10,6 @@ interface TopBarProps {
   coins: number
   gems: number
   pokeballs?: number
-  energy: number
-  maxEnergy: number
   battleTickets?: number
   huntTickets?: number
   avatar?: any
@@ -20,15 +18,13 @@ interface TopBarProps {
 
 /**
  * TopBar - Main app header with user info and currencies
- * Displays avatar, username, coins, gems, energy and settings
+ * Displays avatar, username, coins, gems, tickets and settings
  */
 export const TopBar: React.FC<TopBarProps> = ({
   username,
   coins,
   gems,
   pokeballs,
-  energy,
-  maxEnergy,
   battleTickets,
   huntTickets,
   avatar,
@@ -113,24 +109,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           )}
         </View>
       )}
-
-      {/* Bottom Row: Energy Bar - Full Width */}
-      <View style={styles.energyRow}>
-        <View style={styles.energyContainer}>
-          <Ionicons name="flash" size={16} color="#FF6B6B" />
-          <View style={styles.energyBar}>
-            <View 
-              style={[
-                styles.energyFill, 
-                { width: `${(energy / maxEnergy) * 100}%` }
-              ]} 
-            />
-          </View>
-          <ThemedText style={styles.energyText}>
-            {energy}/{maxEnergy}
-          </ThemedText>
-        </View>
-      </View>
     </View>
   )
 }
@@ -226,36 +204,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
     color: '#fff',
-  },
-  energyRow: {
-    marginTop: 6,
-  },
-  energyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  energyBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  energyFill: {
-    height: '100%',
-    backgroundColor: '#FF6B6B',
-    borderRadius: 4,
-  },
-  energyText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-    minWidth: 45,
   },
   pokeballIcon: {
     fontSize: 14,

@@ -7,10 +7,9 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
-  ActivityIndicator,
   Alert,
 } from 'react-native'
-import { TopBar, Panel } from '@/components/ui'
+import { TopBar, Panel, LoadingContainer } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -283,8 +282,8 @@ export const BattleSelectionScreen: React.FC = () => {
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
+          
+          
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}
@@ -305,10 +304,7 @@ export const BattleSelectionScreen: React.FC = () => {
 
         {/* Loading/Error States */}
         {isLoading ? (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#FFD700" />
-            <ThemedText style={styles.loadingText}>Loading opponents...</ThemedText>
-          </View>
+          <LoadingContainer message="Loading opponents..." />
         ) : error ? (
           <View style={styles.centerContainer}>
             <ThemedText style={styles.errorText}>❌ {error}</ThemedText>

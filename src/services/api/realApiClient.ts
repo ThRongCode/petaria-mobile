@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { API_CONFIG, STORAGE_KEYS } from './config'
 import { ApiError } from './types'
+import { authEventEmitter } from './authEventEmitter'
 
 /**
  * Real API Client using Axios
@@ -82,9 +83,12 @@ class RealApiClient {
 
         // Handle 401 Unauthorized - token expired
         if (error.response?.status === 401 && originalRequest) {
-          // Clear auth token and redirect to login
+          // Clear auth token
           await this.clearAuth()
-          // You can dispatch a Redux action here to redirect to login screen
+          
+          // Emit session expired event for global handling
+          authEventEmitter.emit('sessionExpired')
+          
           throw new ApiError(
             'UNAUTHORIZED',
             'Session expired. Please login again.',

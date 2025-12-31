@@ -19,6 +19,7 @@ import { configureLocalization } from '@/locale/I18nConfig'
 import { useSelector } from 'react-redux'
 import { getLoadingIndicator } from '@/stores/selectors'
 import { IndicatorDialog } from '@/components'
+import { useSessionExpiration } from '@/hooks'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -34,6 +35,9 @@ function RootLayoutContent() {
     RobotoMedium: require('../src/assets/fonts/Roboto-Medium.ttf'),
     RobotoBold: require('../src/assets/fonts/Roboto-Bold.ttf'),
   })
+
+  // Handle session expiration globally
+  useSessionExpiration()
 
   useEffect(() => {
     if (loaded) {

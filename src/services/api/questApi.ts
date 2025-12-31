@@ -31,6 +31,7 @@ export interface Quest {
   rewards: QuestRewards
   expiresAt: string | null
   completedAt: string | null
+  claimedAt: string | null
 }
 
 export interface ClaimRewardResponse {
@@ -48,6 +49,8 @@ export interface ClaimRewardResponse {
     coins: number
     gems: number
     xp: number
+    leveledUp?: boolean
+    newLevel?: number
   }
 }
 

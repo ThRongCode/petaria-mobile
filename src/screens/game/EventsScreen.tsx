@@ -5,11 +5,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, ImageBackground, RefreshControl, Image } from 'react-native'
+import { View, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, RefreshControl, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
-import { Panel, TopBar } from '@/components/ui'
+import { Panel, TopBar, LoadingContainer } from '@/components/ui'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { eventApi, GameEvent, UpcomingEvent } from '@/services/api/eventApi'
@@ -180,8 +180,8 @@ export default function EventsScreen() {
         coins={userProfile?.currency?.coins || 0}
         gems={userProfile?.currency?.gems || 0}
         pokeballs={userProfile?.currency?.pokeballs || 0}
-        energy={80}
-        maxEnergy={100}
+        
+        
         battleTickets={userProfile?.battleTickets}
         huntTickets={userProfile?.huntTickets}
         onSettingsPress={() => router.push('/profile')}
@@ -207,10 +207,7 @@ export default function EventsScreen() {
         </View>
         
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FFD700" />
-            <ThemedText style={styles.loadingText}>Loading events...</ThemedText>
-          </View>
+          <LoadingContainer message="Loading events..." />
         ) : (
           <>
             {/* Active Events */}

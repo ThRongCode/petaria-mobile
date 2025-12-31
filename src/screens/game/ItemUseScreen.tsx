@@ -18,6 +18,8 @@ import { getUserProfile, getAllPets } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import { apiClient } from '@/services/api'
+import { useAppDispatch } from '@/stores/store'
+import { gameActions } from '@/stores/reducers'
 import type { Pet, Item } from '@/stores/types/game'
 
 /**
@@ -26,6 +28,7 @@ import type { Pet, Item } from '@/stores/types/game'
 export const ItemUseScreen: React.FC = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
+  const dispatch = useAppDispatch()
   const profile = useSelector(getUserProfile)
   const pets = useSelector(getAllPets) as Pet[]
   const [using, setUsing] = useState(false)
@@ -67,6 +70,9 @@ export const ItemUseScreen: React.FC = () => {
             try {
               const response = await apiClient.useItemOnPet(item.id, pet.id)
               if (response.success && response.data) {
+                // Reload user data to get updated inventory and pet stats
+                dispatch(gameActions.loadUserData())
+                
                 showCustomAlert(
                   'Success!',
                   response.data.message,
@@ -191,8 +197,8 @@ export const ItemUseScreen: React.FC = () => {
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
+          
+          
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}

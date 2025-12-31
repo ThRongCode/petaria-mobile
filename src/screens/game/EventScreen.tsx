@@ -5,7 +5,6 @@ import {
   ScrollView,
   ImageBackground,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native'
 import { TopBar, Panel } from '@/components/ui'
 import { ThemedText } from '@/components'
@@ -205,8 +204,8 @@ export const EventScreen: React.FC = () => {
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
+          
+          
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}
@@ -226,26 +225,6 @@ export const EventScreen: React.FC = () => {
         <View style={styles.battleTypesContainer}>
           {battleTypes.map(renderBattleCard)}
         </View>
-
-        {/* Info Panel */}
-        <Panel variant="dark" style={styles.infoPanel}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="information-circle" size={24} color="#2196F3" />
-            <ThemedText style={styles.infoTitle}>Battle Tips</ThemedText>
-          </View>
-          <ThemedText style={styles.infoText}>
-            • Event Battles refresh weekly with unique challenges
-          </ThemedText>
-          <ThemedText style={styles.infoText}>
-            • EXP Battles are perfect for leveling up your Pokemon
-          </ThemedText>
-          <ThemedText style={styles.infoText}>
-            • Material Battles help you gather resources for evolution
-          </ThemedText>
-          <ThemedText style={styles.infoText}>
-            • Higher difficulty opponents give better rewards!
-          </ThemedText>
-        </Panel>
       </ScrollView>
     </View>
   )
@@ -415,26 +394,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: '#999',
-  },
-  infoPanel: {
-    margin: 16,
-    padding: 16,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  infoText: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 6,
-    lineHeight: 18,
   },
 })

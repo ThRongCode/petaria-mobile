@@ -9,7 +9,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Aler
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
-import { Panel, TopBar } from '@/components/ui'
+import { Panel, TopBar, LoadingContainer } from '@/components/ui'
 import { useSelector, useDispatch } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers/game'
@@ -74,15 +74,27 @@ export default function QuestScreen() {
     try {
       const response = await questApi.claimReward(quest.id)
       if (response.success && response.data) {
-        Alert.alert(
-          '🎉 Rewards Claimed!',
-          `You received:\n` +
-          (response.data.rewards.coins > 0 ? `💰 ${response.data.rewards.coins} Coins\n` : '') +
-          (response.data.rewards.gems > 0 ? `💎 ${response.data.rewards.gems} Gems\n` : '') +
-          (response.data.rewards.xp > 0 ? `⭐ ${response.data.rewards.xp} XP\n` : '') +
-          (response.data.rewards.item ? `🎁 ${response.data.rewards.item.quantity}x ${response.data.rewards.item.item.name}` : ''),
-          [{ text: 'Awesome!' }]
-        )
+        // Build rewards message
+        let rewardsMessage = 'You received:\n'
+        if (response.data.rewards.coins > 0) {
+          rewardsMessage += `💰 ${response.data.rewards.coins} Coins\n`
+        }
+        if (response.data.rewards.gems > 0) {
+          rewardsMessage += `💎 ${response.data.rewards.gems} Gems\n`
+        }
+        if (response.data.rewards.xp > 0) {
+          rewardsMessage += `⭐ ${response.data.rewards.xp} XP\n`
+        }
+        if (response.data.rewards.item) {
+          rewardsMessage += `🎁 ${response.data.rewards.item.quantity}x ${response.data.rewards.item.item.name}\n`
+        }
+        
+        // Add level up notification if applicable
+        if (response.data.user?.leveledUp) {
+          rewardsMessage += `\n🎉 LEVEL UP! You are now Lv.${response.data.user.newLevel}!`
+        }
+        
+        Alert.alert('🎉 Rewards Claimed!', rewardsMessage, [{ text: 'Awesome!' }])
         
         // Refresh quests and user data
         fetchQuests()
@@ -208,8 +220,8 @@ export default function QuestScreen() {
         coins={userProfile?.currency?.coins || 0}
         gems={userProfile?.currency?.gems || 0}
         pokeballs={userProfile?.currency?.pokeballs || 0}
-        energy={80}
-        maxEnergy={100}
+        
+        
         battleTickets={userProfile?.battleTickets}
         huntTickets={userProfile?.huntTickets}
         onSettingsPress={() => router.push('/profile')}
@@ -235,10 +247,7 @@ export default function QuestScreen() {
         </View>
         
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FFD700" />
-            <ThemedText style={styles.loadingText}>Loading quests...</ThemedText>
-          </View>
+          <LoadingContainer message="Loading quests..." />
         ) : quests.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="clipboard-outline" size={64} color="rgba(255,255,255,0.3)" />

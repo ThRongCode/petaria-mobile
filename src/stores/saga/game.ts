@@ -21,7 +21,7 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         avatar: `https://ui-avatars.com/api/?name=${profileResponse.data.username}&background=random`,
         level: profileResponse.data.level,
         xp: profileResponse.data.xp,
-        xpToNext: profileResponse.data.level * 100, // Calculate based on level
+        xpToNext: profileResponse.data.level * 200, // Formula: level * 200 (matches backend)
         currency: {
           coins: profileResponse.data.coins,
           gems: profileResponse.data.gems,
@@ -61,6 +61,7 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         id: backendPet.id,
         name: backendPet.nickname || backendPet.species,
         species: backendPet.species,
+        type: backendPet.type || 'Normal', // Type from backend (Fire, Water, etc.)
         rarity: backendPet.rarity as 'Common' | 'Rare' | 'Epic' | 'Legendary',
         level: backendPet.level,
         xp: backendPet.xp,

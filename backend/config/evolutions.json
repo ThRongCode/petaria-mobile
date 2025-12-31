@@ -1,5 +1,4 @@
 {
-  "$schema": "./schemas/evolutions.schema.json",
   "_comment": "Evolution chains configuration. Types: level (reach level), item (use evolution item), trade (trade with another player)",
 
   "evolutionItems": {

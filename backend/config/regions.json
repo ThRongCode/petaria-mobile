@@ -1,5 +1,4 @@
 {
-  "$schema": "./schemas/regions.schema.json",
   "_comment": "Hunting regions configuration with spawns. Spawn rates should total ~100 per region.",
 
   "regions": [

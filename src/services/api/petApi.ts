@@ -13,6 +13,7 @@ export const petApi = {
       id: string
       ownerId: string
       species: string
+      type?: string // Pokemon type (Fire, Water, etc.)
       nickname: string | null
       rarity: string
       level: number

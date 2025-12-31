@@ -111,8 +111,8 @@ export const ProfileScreen: React.FC = () => {
           coins={profile.currency?.coins || 0}
           gems={profile.currency?.gems || 150}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
+          
+          
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => {}}
@@ -139,10 +139,10 @@ export const ProfileScreen: React.FC = () => {
                 <View style={styles.xpBarOuter}>
                   <LinearGradient
                     colors={['#9C27B0', '#673AB7']}
-                    style={[styles.xpBarInner, { width: '65%' }]}
+                    style={[styles.xpBarInner, { width: `${Math.min((profile.xp / profile.xpToNext) * 100, 100)}%` }]}
                   />
                 </View>
-                <ThemedText style={styles.xpText}>6,500 / 10,000 XP</ThemedText>
+                <ThemedText style={styles.xpText}>{profile.xp.toLocaleString()} / {profile.xpToNext.toLocaleString()} XP</ThemedText>
               </View>
             </View>
           </Panel>

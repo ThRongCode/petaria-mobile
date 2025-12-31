@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketResetUtil } from '../utils/ticketReset';
+import { UserStatsUtil } from '../utils/userStats';
 import {
   getSpeciesBaseStats,
   generateRandomIVs,
@@ -571,6 +572,26 @@ export class HuntService {
     const encounters = sessionData.encounters || [];
     const petsCaught = encounters.filter((e: any) => e.caught).length;
 
+    // Calculate XP reward based on region difficulty and catches
+    // Base: 20 XP per hunt + 10 XP per encounter + 25 XP per catch
+    const baseXp = 20;
+    const encounterXp = encounters.length * 10;
+    const catchXp = petsCaught * 25;
+    const totalXpReward = baseXp + encounterXp + catchXp;
+
+    // Get current user for level up check
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Calculate new XP and check for level up
+    const newXp = currentUser.xp + totalXpReward;
+    const levelUpResult = UserStatsUtil.checkLevelUp(newXp, currentUser.level);
+
     // Save to hunt history
     await this.prisma.hunt.create({
       data: {
@@ -580,11 +601,13 @@ export class HuntService {
       },
     });
 
-    // Update user stats
-    await this.prisma.user.update({
+    // Update user stats with XP and potential level up
+    const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: {
         huntsCompleted: { increment: 1 },
+        xp: levelUpResult.remainingXp,
+        level: levelUpResult.newLevel,
       },
     });
 
@@ -593,11 +616,29 @@ export class HuntService {
       where: { id: sessionId },
     });
 
+    // Update quest progress for completing hunts
+    try {
+      await this.questService.updateProgress(userId, {
+        targetType: 'complete_hunts',
+        amount: 1,
+      });
+    } catch (error) {
+      console.error('Failed to update quest progress:', error);
+    }
+
     return {
-      message: 'Hunt completed!',
+      message: levelUpResult.leveledUp 
+        ? `Hunt completed! You leveled up to ${levelUpResult.newLevel}!`
+        : 'Hunt completed!',
       region: session.region.name,
       petsCaught,
       totalEncounters: encounters.length,
+      xpEarned: totalXpReward,
+      user: {
+        level: updatedUser.level,
+        xp: updatedUser.xp,
+        leveledUp: levelUpResult.leveledUp,
+      },
     };
   }
 }

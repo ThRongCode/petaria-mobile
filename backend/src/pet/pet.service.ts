@@ -11,6 +11,7 @@ import {
   getSpeciesBaseStats,
   calculateFinalStat,
   getRarityMultiplier,
+  getSpeciesType,
 } from '../config/species-stats.config';
 
 @Injectable()
@@ -37,13 +38,14 @@ export class PetService {
       },
     });
 
-    // Add isFavorite flag and evolution info to each pet
+    // Add isFavorite flag, type, and evolution info to each pet
     return pets.map((pet) => {
       const evolutionData = getSpeciesEvolution(pet.species);
       const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
       
       return {
         ...pet,
+        type: getSpeciesType(pet.species),
         isFavorite: pet.favoritedBy.length > 0,
         favoritedBy: undefined, // Remove the relation data
         // Evolution info from config
@@ -72,12 +74,13 @@ export class PetService {
       throw new NotFoundException('Pet not found');
     }
 
-    // Add evolution info from config
+    // Add type and evolution info from config
     const evolutionData = getSpeciesEvolution(pet.species);
     const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
     
     return {
       ...pet,
+      type: getSpeciesType(pet.species),
       maxEvolutionStage: evolutionData.maxStage,
       canEvolve: evolutionData.canEvolve && availableEvolutions.length > 0,
     };

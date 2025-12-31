@@ -232,6 +232,12 @@ export const huntApi = {
       region: string
       petsCaught: number
       totalEncounters: number
+      xpEarned: number
+      user: {
+        level: number
+        xp: number
+        leveledUp: boolean
+      }
     }>(`/hunt/complete/${sessionId}`)
 
     return {

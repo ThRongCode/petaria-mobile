@@ -1,0 +1,5 @@
+export { AboutTab } from './AboutTab'
+export { StatsTab } from './StatsTab'
+export { MovesTab } from './MovesTab'
+export { EvolutionsTab, type EvolutionPath, type EvolutionOptions } from './EvolutionsTab'
+export { EvolutionModal } from './EvolutionModal'
