@@ -5,6 +5,7 @@
  * - GUI Icons: 142 SVG files that can be tinted/colored
  * - Pet Images: 902 PNG files for Pokemon sprites
  * - General Images: Other UI assets
+ * - Item Images: Item image placeholders using Pokemon sprites
  * 
  * Usage Examples:
  * 
@@ -18,9 +19,10 @@
  * import { SvgIcon } from '@/components'
  * <SvgIcon source={GuiIcons.attackGauge} size={24} color="#FF0000" />
  * 
- * // Use helper functions
- * import { getPetImageByName, getRandomPetImage } from '@/assets/images'
- * const image = getPetImageByName('Pikachu')
+ * // Use helper functions (getPokemonImage is the canonical function)
+ * import { getPokemonImage, getItemImage, getRandomPetImage } from '@/assets/images'
+ * const pokemonImg = getPokemonImage('Pikachu')
+ * const itemImg = getItemImage('potion')
  * const random = getRandomPetImage()
  */
 

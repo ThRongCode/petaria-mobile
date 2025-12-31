@@ -22,7 +22,7 @@ import {
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
-import { getPetImageByName } from '@/assets/images'
+import { getPokemonImage } from '@/assets/images'
 import { Encounter, CaptureState } from '../types'
 import { getRarityColor, getCaptureStatusText, getCaptureButtonText } from '../utils'
 
@@ -111,7 +111,7 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                 ]}
               >
                 <Image
-                  source={getPetImageByName(encounter.species)}
+                  source={getPokemonImage(encounter.species)}
                   style={styles.monsterImage}
                   resizeMode="contain"
                 />

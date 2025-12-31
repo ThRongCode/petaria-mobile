@@ -130,6 +130,24 @@ export const PetGridCard: React.FC<PetGridCardProps> = ({
             </ThemedText>
           </View>
 
+          {/* XP Bar */}
+          <View style={styles.xpBarContainer}>
+            <ThemedText style={styles.xpLabel}>XP</ThemedText>
+            <View style={styles.xpBarOuter}>
+              <View
+                style={[
+                  styles.xpBarInner,
+                  {
+                    width: `${(pet.xpToNext ?? pet.level * 100) > 0 ? ((pet.xp ?? 0) / (pet.xpToNext ?? pet.level * 100)) * 100 : 0}%`,
+                  },
+                ]}
+              />
+            </View>
+            <ThemedText style={styles.xpValue}>
+              {pet.xp ?? 0}/{pet.xpToNext ?? pet.level * 100}
+            </ThemedText>
+          </View>
+
           {/* Stats Preview */}
           <View style={styles.statsPreview}>
             <View style={styles.statMini}>
@@ -246,6 +264,35 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   hpValue: {
+    fontSize: 10,
+    color: '#fff',
+    fontWeight: 'bold',
+    minWidth: 30,
+    textAlign: 'right',
+  },
+  xpBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  xpLabel: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontWeight: 'bold',
+  },
+  xpBarOuter: {
+    flex: 1,
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  xpBarInner: {
+    height: '100%',
+    backgroundColor: '#64B5F6',
+  },
+  xpValue: {
     fontSize: 10,
     color: '#fff',
     fontWeight: 'bold',

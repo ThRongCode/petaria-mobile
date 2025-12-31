@@ -3,7 +3,7 @@ import { StyleSheet, View, TouchableOpacity, Image, Modal, Animated, ActivityInd
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
-import { getPetImageByName } from '@/assets/images'
+import { getPokemonImage } from '@/assets/images'
 import { CaptureState } from './useCaptureAnimation'
 
 interface BackendEncounter {
@@ -96,7 +96,7 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                   transform: [{ scale: pokemonScale }]
                 }
               ]}>
-                <Image source={getPetImageByName(encounter.species)} style={styles.monsterImage} resizeMode="contain" />
+                <Image source={getPokemonImage(encounter.species)} style={styles.monsterImage} resizeMode="contain" />
               </Animated.View>
               
               {/* Pokeball animation overlay */}
