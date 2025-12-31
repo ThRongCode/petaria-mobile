@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native'
-import { TopBar, Panel, IconButton, QuestPopup } from '@/components/ui'
+import { TopBar, Panel, QuestPopup } from '@/components/ui'
 import { ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -146,16 +146,6 @@ export const HomeHubScreen: React.FC = () => {
 
         {/* Main Content Area */}
         <View style={styles.mainContent}>
-          {/* Welcome Section */}
-          <Panel variant="transparent" style={styles.welcomePanel}>
-            <ThemedText style={styles.welcomeTitle}>
-              Welcome, Trainer {profile.username}!
-            </ThemedText>
-            <ThemedText style={styles.welcomeSubtitle}>
-              Level {profile.level} • Ready for adventure
-            </ThemedText>
-          </Panel>
-
           {/* Healing Center Section */}
           <Panel variant="dark" style={styles.healingCenterPanel}>
             <View style={styles.healingHeader}>
@@ -300,71 +290,6 @@ export const HomeHubScreen: React.FC = () => {
               </View>
             </LinearGradient>
           </TouchableOpacity>
-
-          {/* Navigation Grid */}
-          <View style={styles.navigationGrid}>
-            <IconButton
-              icon="albums"
-              label="Collection"
-              onPress={() => router.push('/(app)/pets')}
-            />
-            <IconButton
-              icon="trophy"
-              label="Achievements"
-              onPress={() => {}}
-              locked={true}
-            />
-            <IconButton
-              icon="people"
-              label="Friends"
-              onPress={() => {}}
-              locked={true}
-            />
-            <IconButton
-              icon="mail"
-              label="Mail"
-              onPress={() => {}}
-              badge={3}
-              locked={true}
-            />
-            <IconButton
-              icon="gift"
-              label="Shop"
-              onPress={() => router.push('/shop')}
-              locked={false}
-            />
-            <IconButton
-              icon="newspaper"
-              label="News"
-              onPress={() => {}}
-              locked={true}
-            />
-          </View>
-
-          {/* Stats Overview */}
-          <Panel variant="dark" style={styles.statsPanel}>
-            <ThemedText style={styles.statsTitle}>Your Stats</ThemedText>
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <ThemedText style={styles.statValue}>
-                  {profile.stats?.petsOwned || 0}
-                </ThemedText>
-                <ThemedText style={styles.statLabel}>Pokemon</ThemedText>
-              </View>
-              <View style={styles.statItem}>
-                <ThemedText style={styles.statValue}>
-                  {profile.stats?.battlesWon || 0}
-                </ThemedText>
-                <ThemedText style={styles.statLabel}>Battles Won</ThemedText>
-              </View>
-              <View style={styles.statItem}>
-                <ThemedText style={styles.statValue}>
-                  {profile.level}
-                </ThemedText>
-                <ThemedText style={styles.statLabel}>Trainer Level</ThemedText>
-              </View>
-            </View>
-          </Panel>
         </View>
       </ScrollView>
 
@@ -415,19 +340,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     gap: 16,
-  },
-  welcomePanel: {
-    padding: 20,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  welcomeSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
   },
   // Healing Center Styles
   healingCenterPanel: {
@@ -566,38 +478,5 @@ const styles = StyleSheet.create({
   eventsBannerGradient: {
     padding: 16,
     borderRadius: 12,
-  },
-  navigationGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    gap: 12,
-    paddingVertical: 8,
-  },
-  statsPanel: {
-    padding: 20,
-  },
-  statsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
   },
 })

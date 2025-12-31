@@ -85,24 +85,6 @@ export const ProfileScreen: React.FC = () => {
     { label: 'Hunts Completed', value: profile.stats?.huntsCompleted || 0, icon: 'map', color: '#2196F3' },
   ]
 
-  const achievements = [
-    { id: 1, title: 'First Catch', desc: 'Caught your first Pokemon', icon: '🎯', unlocked: true },
-    { id: 2, title: 'Battle Master', desc: 'Won 10 battles', icon: '⚔️', unlocked: true },
-    { id: 3, title: 'Collector', desc: 'Caught 25 Pokemon', icon: '📚', unlocked: false },
-    { id: 4, title: 'Legendary Hunter', desc: 'Caught a legendary', icon: '👑', unlocked: false },
-  ]
-
-  const badges = [
-    { name: 'Boulder', acquired: true, icon: '🪨' },
-    { name: 'Cascade', acquired: true, icon: '💧' },
-    { name: 'Thunder', acquired: false, icon: '⚡' },
-    { name: 'Rainbow', acquired: false, icon: '🌈' },
-    { name: 'Soul', acquired: false, icon: '👻' },
-    { name: 'Marsh', acquired: false, icon: '☠️' },
-    { name: 'Volcano', acquired: false, icon: '🌋' },
-    { name: 'Earth', acquired: false, icon: '🌍' },
-  ]
-
   return (
     <View style={styles.container}>
       {/* Background */}
@@ -184,91 +166,6 @@ export const ProfileScreen: React.FC = () => {
               </View>
             ))}
           </View>
-        </View>
-
-        {/* Badges */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>🏆 Gym Badges</ThemedText>
-          <Panel variant="dark" style={styles.badgesPanel}>
-            <View style={styles.badgesGrid}>
-              {badges.map((badge, index) => (
-                <View 
-                  key={index} 
-                  style={[
-                    styles.badgeItem,
-                    !badge.acquired && styles.badgeItemLocked
-                  ]}
-                >
-                  <View 
-                    style={[
-                      styles.badgeCircle,
-                      badge.acquired && styles.badgeCircleAcquired
-                    ]}
-                  >
-                    <ThemedText style={styles.badgeIcon}>{badge.icon}</ThemedText>
-                  </View>
-                  <ThemedText 
-                    style={[
-                      styles.badgeName,
-                      !badge.acquired && styles.badgeNameLocked
-                    ]}
-                  >
-                    {badge.name}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          </Panel>
-        </View>
-
-        {/* Achievements */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>🎖️ Achievements</ThemedText>
-          {achievements.map((achievement) => (
-            <View 
-              key={achievement.id}
-              style={!achievement.unlocked && styles.achievementLocked}
-            >
-              <Panel variant="dark" style={styles.achievementPanel}>
-                <View style={styles.achievementContent}>
-                  <View 
-                    style={[
-                      styles.achievementIcon,
-                      achievement.unlocked && styles.achievementIconUnlocked
-                    ]}
-                  >
-                    <ThemedText style={styles.achievementEmoji}>
-                      {achievement.icon}
-                    </ThemedText>
-                  </View>
-                  <View style={styles.achievementText}>
-                    <ThemedText 
-                      style={[
-                        styles.achievementTitle,
-                        !achievement.unlocked && styles.textLocked
-                      ]}
-                    >
-                      {achievement.title}
-                    </ThemedText>
-                    <ThemedText 
-                      style={[
-                        styles.achievementDesc,
-                        !achievement.unlocked && styles.textLocked
-                      ]}
-                    >
-                      {achievement.desc}
-                    </ThemedText>
-                  </View>
-                  {achievement.unlocked && (
-                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                  )}
-                  {!achievement.unlocked && (
-                    <Ionicons name="lock-closed" size={24} color="rgba(255, 255, 255, 0.3)" />
-                  )}
-                </View>
-              </Panel>
-            </View>
-          ))}
         </View>
 
         {/* DEV Tools */}
@@ -481,90 +378,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
-  },
-  badgesPanel: {
-    padding: 16,
-  },
-  badgesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  badgeItem: {
-    alignItems: 'center',
-    width: '22%',
-  },
-  badgeItemLocked: {
-    opacity: 0.4,
-  },
-  badgeCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  badgeCircleAcquired: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    borderColor: '#FFD700',
-  },
-  badgeIcon: {
-    fontSize: 28,
-  },
-  badgeName: {
-    fontSize: 10,
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  badgeNameLocked: {
-    color: 'rgba(255, 255, 255, 0.5)',
-  },
-  achievementPanel: {
-    padding: 16,
-    marginBottom: 12,
-  },
-  achievementLocked: {
-    opacity: 0.6,
-  },
-  achievementContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  achievementIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  achievementIconUnlocked: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-  },
-  achievementEmoji: {
-    fontSize: 24,
-  },
-  achievementText: {
-    flex: 1,
-  },
-  achievementTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  achievementDesc: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  textLocked: {
-    color: 'rgba(255, 255, 255, 0.5)',
   },
   actionButton: {
     marginBottom: 12,
