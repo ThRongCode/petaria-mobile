@@ -1,42 +1,36 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+const RARE_RARITIES = ['rare', 'epic', 'legendary'];
+
 @Injectable()
 export class RegionService {
   constructor(private prisma: PrismaService) {}
 
+  private formatSpawn(spawn: { species: string; rarity: string; spawnRate: number }) {
+    return {
+      species: spawn.species,
+      rarity: spawn.rarity,
+      spawnRate: spawn.spawnRate,
+    };
+  }
+
   async listRegions(userLevel: number) {
     const regions = await this.prisma.region.findMany({
-      orderBy: {
-        unlockLevel: 'asc',
-      },
+      orderBy: { unlockLevel: 'asc' },
       include: {
-        spawns: {
-          orderBy: {
-            spawnRate: 'desc',
-          },
-        },
+        spawns: { orderBy: { spawnRate: 'desc' } },
       },
     });
 
     return regions.map((region) => ({
       ...region,
       locked: region.unlockLevel > userLevel,
-      // Get top featured spawns (highest spawn rate first, take top 4)
-      featuredSpawns: region.spawns.slice(0, 4).map((spawn) => ({
-        species: spawn.species,
-        rarity: spawn.rarity,
-        spawnRate: spawn.spawnRate,
-      })),
-      // Get rare spawns (uncommon, rare, epic, legendary)
+      featuredSpawns: region.spawns.slice(0, 4).map(this.formatSpawn),
       rareSpawns: region.spawns
-        .filter((s) => ['rare', 'epic', 'legendary'].includes(s.rarity))
+        .filter((s) => RARE_RARITIES.includes(s.rarity))
         .slice(0, 2)
-        .map((spawn) => ({
-          species: spawn.species,
-          rarity: spawn.rarity,
-          spawnRate: spawn.spawnRate,
-        })),
+        .map(this.formatSpawn),
     }));
   }
 
@@ -67,13 +61,9 @@ export class RegionService {
   }
 
   async getSpawns(regionId: string) {
-    const spawns = await this.prisma.regionSpawn.findMany({
+    return this.prisma.regionSpawn.findMany({
       where: { regionId },
-      orderBy: {
-        spawnRate: 'desc',
-      },
+      orderBy: { spawnRate: 'desc' },
     });
-
-    return spawns;
   }
 }

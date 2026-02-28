@@ -31,6 +31,19 @@ model User {
   battlesWon      Int       @default(0) @map("battles_won")
   battlesLost     Int       @default(0) @map("battles_lost")
   huntsCompleted  Int       @default(0) @map("hunts_completed")
+  avatarUrl       String?   @map("avatar_url")
+  title           String?   @default("Pokemon Trainer")
+  lastHealTime    DateTime? @map("last_heal_time")
+  // Settings
+  settingsNotifications Boolean @default(true) @map("settings_notifications")
+  settingsAutoFeed      Boolean @default(false) @map("settings_auto_feed")
+  settingsBattleAnimations Boolean @default(true) @map("settings_battle_animations")
+  settingsSoundEnabled  Boolean @default(true) @map("settings_sound_enabled")
+  settingsMusicEnabled  Boolean @default(true) @map("settings_music_enabled")
+  settingsLanguage      String  @default("en") @map("settings_language")
+  // Password Reset
+  passwordResetHash     String?  @map("password_reset_hash")
+  passwordResetExpires  DateTime? @map("password_reset_expires")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 

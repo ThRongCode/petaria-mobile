@@ -1,7 +1,8 @@
-import { Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)
@@ -9,34 +10,47 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('profile')
-  getProfile(@CurrentUser() user: any) {
-    return this.userService.getProfile(user.id);
+  getProfile(@CurrentUser('id') userId: string) {
+    return this.userService.getProfile(userId);
   }
 
   @Get('inventory')
-  getInventory(@CurrentUser() user: any) {
-    return this.userService.getInventory(user.id);
+  getInventory(@CurrentUser('id') userId: string) {
+    return this.userService.getInventory(userId);
   }
 
   @Post('check-tickets')
-  checkTickets(@CurrentUser() user: any) {
-    return this.userService.checkTicketReset(user.id);
+  checkTickets(@CurrentUser('id') userId: string) {
+    return this.userService.checkTicketReset(userId);
   }
 
   @Get('stats')
-  getStats(@CurrentUser() user: any) {
-    return this.userService.getStats(user.id);
+  getStats(@CurrentUser('id') userId: string) {
+    return this.userService.getStats(userId);
+  }
+
+  @Get('settings')
+  getSettings(@CurrentUser('id') userId: string) {
+    return this.userService.getSettings(userId);
+  }
+
+  @Patch('settings')
+  updateSettings(
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateSettingsDto,
+  ) {
+    return this.userService.updateSettings(userId, dto);
   }
 
   // DEV ONLY: Add battle tickets for testing
   @Post('dev/add-battle-tickets')
-  addBattleTickets(@CurrentUser() user: any) {
-    return this.userService.addBattleTickets(user.id);
+  addBattleTickets(@CurrentUser('id') userId: string) {
+    return this.userService.addBattleTickets(userId);
   }
 
   // DEV ONLY: Add hunt tickets for testing
   @Post('dev/add-hunt-tickets')
-  addHuntTickets(@CurrentUser() user: any) {
-    return this.userService.addHuntTickets(user.id);
+  addHuntTickets(@CurrentUser('id') userId: string) {
+    return this.userService.addHuntTickets(userId);
   }
 }

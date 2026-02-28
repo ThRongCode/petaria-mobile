@@ -9,8 +9,7 @@ export const huntApi = {
    * Get available regions
    */
   async getRegions() {
-    console.log('🔵 [huntApi] getRegions() called')
-    console.log('🔵 [huntApi] Calling realApiClient.get("/region")')
+    if (__DEV__) console.log('🔵 [huntApi] getRegions() called')
     
     const response = await realApiClient.get<Array<{
       id: string
@@ -34,8 +33,7 @@ export const huntApi = {
       }>
     }>>('/region')
 
-    console.log('🔵 [huntApi] Response received:', response)
-    console.log('🔵 [huntApi] Number of regions:', response?.length || 0)
+    if (__DEV__) console.log('🔵 [huntApi] Regions loaded:', response?.length || 0)
 
     return {
       success: true,
@@ -191,10 +189,7 @@ export const huntApi = {
    * Make a move in the hunt session
    */
   async move(sessionId: string, direction: 'up' | 'down' | 'left' | 'right') {
-    console.log('🔵 [huntApi] move() called')
-    console.log('🔵 [huntApi] sessionId:', sessionId)
-    console.log('🔵 [huntApi] direction:', direction)
-    console.log('🔵 [huntApi] Calling realApiClient.post("/hunt/move", { sessionId, direction })')
+    if (__DEV__) console.log('🔵 [huntApi] move()', { sessionId, direction })
     
     const response = await realApiClient.post<{
       direction: string
@@ -214,7 +209,7 @@ export const huntApi = {
       message: string
     }>('/hunt/move', { sessionId, direction })
 
-    console.log('🔵 [huntApi] Response received:', response)
+    if (__DEV__) console.log('🔵 [huntApi] Move response received')
 
     return {
       success: true,

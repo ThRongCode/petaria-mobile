@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketResetUtil } from '../utils/ticketReset';
 import { PetStatsUtil } from '../utils/petStats';
+import { UserStatsUtil } from '../utils/userStats';
 import { QuestService } from '../quest/quest.service';
 
 @Injectable()
@@ -17,6 +18,52 @@ export class BattleService {
     @Inject(forwardRef(() => QuestService))
     private questService: QuestService,
   ) {}
+
+  /**
+   * Get available battle types
+   */
+  getBattleTypes() {
+    return [
+      {
+        id: 'event',
+        name: '⚡ Event Battle',
+        description: 'Limited time event with exclusive rewards! Weekly rotating challenges.',
+        icon: 'trophy',
+        gradient: ['#FFD700', '#FFA500'],
+        rewards: ['Rare Pokemon', 'Premium Items', 'Event Coins'],
+        available: true,
+      },
+      {
+        id: 'exp',
+        name: '📚 EXP Battle',
+        description: 'Train your Pokemon and gain massive experience points!',
+        icon: 'trending-up',
+        gradient: ['#9C27B0', '#5E35B1'],
+        rewards: ['High EXP', 'Rare Candy', 'Training Items'],
+        available: true,
+      },
+      {
+        id: 'material',
+        name: '💎 Material Battle',
+        description: 'Farm materials, gold, and evolution stones!',
+        icon: 'diamond',
+        gradient: ['#2196F3', '#1976D2'],
+        rewards: ['Gold', 'Evolution Stones', 'Stat Boosters'],
+        available: true,
+      },
+    ];
+  }
+
+  /**
+   * Update quest progress with error handling
+   */
+  private async updateQuestProgress(userId: string, targetType: string, amount: number = 1): Promise<void> {
+    try {
+      await this.questService.updateProgress(userId, { targetType, amount });
+    } catch (error) {
+      console.error('Failed to update quest progress:', error);
+    }
+  }
 
   async listOpponents(userLevel: number) {
     return this.prisma.opponent.findMany({
@@ -258,32 +305,17 @@ export class BattleService {
 
     // Update user coins and level
     const userNewXp = user.xp + xpReward;
-    const userXpForNextLevel = user.level * 200;
-    let userLeveledUp = false;
-    let userNewLevel = user.level;
+    const userLevelUpResult = UserStatsUtil.checkLevelUp(userNewXp, user.level);
 
-    if (userNewXp >= userXpForNextLevel) {
-      userNewLevel = user.level + 1;
-      userLeveledUp = true;
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          level: userNewLevel,
-          xp: userNewXp - userXpForNextLevel,
-          coins: { increment: coinReward },
-          battlesWon: won ? { increment: 1 } : undefined,
-        },
-      });
-    } else {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          xp: userNewXp,
-          coins: { increment: coinReward },
-          battlesWon: won ? { increment: 1 } : undefined,
-        },
-      });
-    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        level: userLevelUpResult.newLevel,
+        xp: userLevelUpResult.remainingXp,
+        coins: { increment: coinReward },
+        battlesWon: won ? { increment: 1 } : undefined,
+      },
+    });
 
     // Save battle history
     await this.prisma.battle.create({
@@ -305,14 +337,7 @@ export class BattleService {
 
     // Update quest progress for winning battles
     if (won) {
-      try {
-        await this.questService.updateProgress(userId, {
-          targetType: 'win_battles',
-          amount: 1,
-        });
-      } catch (error) {
-        console.error('Failed to update quest progress:', error);
-      }
+      await this.updateQuestProgress(userId, 'win_battles', 1);
     }
 
     return {
@@ -326,8 +351,8 @@ export class BattleService {
         statChanges: leveledUp ? statChanges : undefined,
       },
       user: {
-        leveledUp: userLeveledUp,
-        newLevel: userNewLevel,
+        leveledUp: userLevelUpResult.leveledUp,
+        newLevel: userLevelUpResult.newLevel,
       },
       message: won
         ? `Victory! You earned ${xpReward} XP and ${coinReward} coins!`

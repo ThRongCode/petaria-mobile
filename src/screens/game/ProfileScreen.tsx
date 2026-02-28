@@ -109,7 +109,7 @@ export const ProfileScreen: React.FC = () => {
         <TopBar
           username={profile.username}
           coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 150}
+          gems={profile.currency?.gems || 0}
           pokeballs={profile.currency?.pokeballs || 0}
           
           
@@ -169,42 +169,44 @@ export const ProfileScreen: React.FC = () => {
         </View>
 
         {/* DEV Tools */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>🛠️ Dev Tools</ThemedText>
-          <View style={styles.devButtonsRow}>
-            <TouchableOpacity style={styles.devButton} onPress={handleAddBattleTickets}>
-              <LinearGradient
-                colors={['rgba(255, 107, 107, 0.3)', 'rgba(198, 40, 40, 0.5)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.devGradient}
-              >
-                <View style={styles.devButtonContent}>
-                  <Ionicons name="shield" size={18} color="#FF6B6B" />
-                  <ThemedText style={styles.devButtonText}>+5 Battle</ThemedText>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+        {__DEV__ && (
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>🛠️ Dev Tools</ThemedText>
+            <View style={styles.devButtonsRow}>
+              <TouchableOpacity style={styles.devButton} onPress={handleAddBattleTickets}>
+                <LinearGradient
+                  colors={['rgba(255, 107, 107, 0.3)', 'rgba(198, 40, 40, 0.5)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.devGradient}
+                >
+                  <View style={styles.devButtonContent}>
+                    <Ionicons name="shield" size={18} color="#FF6B6B" />
+                    <ThemedText style={styles.devButtonText}>+5 Battle</ThemedText>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
 
-            <TouchableOpacity style={styles.devButton} onPress={handleAddHuntTickets}>
-              <LinearGradient
-                colors={['rgba(76, 175, 80, 0.3)', 'rgba(56, 142, 60, 0.5)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.devGradient}
-              >
-                <View style={styles.devButtonContent}>
-                  <Ionicons name="leaf" size={18} color="#4CAF50" />
-                  <ThemedText style={styles.devButtonText}>+5 Hunt</ThemedText>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.devButton} onPress={handleAddHuntTickets}>
+                <LinearGradient
+                  colors={['rgba(76, 175, 80, 0.3)', 'rgba(56, 142, 60, 0.5)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.devGradient}
+                >
+                  <View style={styles.devButtonContent}>
+                    <Ionicons name="leaf" size={18} color="#4CAF50" />
+                    <ThemedText style={styles.devButtonText}>+5 Hunt</ThemedText>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Action Buttons */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/settings' as any)}>
             <LinearGradient
               colors={['rgba(33, 150, 243, 0.3)', 'rgba(25, 118, 210, 0.5)']}
               start={{ x: 0, y: 0 }}

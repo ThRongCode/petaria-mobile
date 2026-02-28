@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { BattleService } from './battle.service';
 import { StartBattleDto } from './dto/start-battle.dto';
 import { CompleteBattleDto } from './dto/complete-battle.dto';
@@ -18,9 +10,14 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 export class BattleController {
   constructor(private readonly battleService: BattleService) {}
 
+  @Get('types')
+  getBattleTypes() {
+    return this.battleService.getBattleTypes();
+  }
+
   @Get('opponents')
-  listOpponents(@CurrentUser() user: any) {
-    return this.battleService.listOpponents(user.level);
+  listOpponents(@CurrentUser('level') userLevel: number) {
+    return this.battleService.listOpponents(userLevel);
   }
 
   @Get('opponents/:id')
@@ -29,40 +26,24 @@ export class BattleController {
   }
 
   @Post('start')
-  startBattle(
-    @CurrentUser('id') userId: string,
-    @Body() startBattleDto: StartBattleDto,
-  ) {
-    return this.battleService.startBattle(
-      userId,
-      startBattleDto.petId,
-      startBattleDto.opponentId,
-    );
+  startBattle(@CurrentUser('id') userId: string, @Body() dto: StartBattleDto) {
+    return this.battleService.startBattle(userId, dto.petId, dto.opponentId);
   }
 
   @Post('complete')
-  completeBattle(
-    @CurrentUser('id') userId: string,
-    @Body() completeBattleDto: CompleteBattleDto,
-  ) {
+  completeBattle(@CurrentUser('id') userId: string, @Body() dto: CompleteBattleDto) {
     return this.battleService.completeBattle(
       userId,
-      completeBattleDto.sessionId,
-      completeBattleDto.won,
-      completeBattleDto.damageDealt,
-      completeBattleDto.damageTaken,
-      completeBattleDto.finalHp,
+      dto.sessionId,
+      dto.won,
+      dto.damageDealt,
+      dto.damageTaken,
+      dto.finalHp,
     );
   }
 
   @Get('history')
-  getBattleHistory(
-    @CurrentUser('id') userId: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.battleService.getBattleHistory(
-      userId,
-      limit ? parseInt(limit) : 10,
-    );
+  getBattleHistory(@CurrentUser('id') userId: string, @Query('limit') limit?: string) {
+    return this.battleService.getBattleHistory(userId, limit ? parseInt(limit, 10) : 10);
   }
 }

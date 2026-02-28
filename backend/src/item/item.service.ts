@@ -10,6 +10,61 @@ export class ItemService {
     private questService: QuestService,
   ) {}
 
+  /**
+   * Decrease item quantity in user inventory, deleting if quantity reaches 0
+   */
+  private async decrementUserItem(userId: string, itemId: string, amount: number = 1): Promise<void> {
+    const userItem = await this.prisma.userItem.findUnique({
+      where: { userId_itemId: { userId, itemId } },
+    });
+
+    if (!userItem || userItem.quantity < amount) {
+      throw new BadRequestException('Item not found in inventory');
+    }
+
+    if (userItem.quantity <= amount) {
+      await this.prisma.userItem.delete({
+        where: { userId_itemId: { userId, itemId } },
+      });
+    } else {
+      await this.prisma.userItem.update({
+        where: { userId_itemId: { userId, itemId } },
+        data: { quantity: userItem.quantity - amount },
+      });
+    }
+  }
+
+  /**
+   * Add or increment item quantity in user inventory
+   */
+  private async incrementUserItem(userId: string, itemId: string, quantity: number): Promise<void> {
+    const existingItem = await this.prisma.userItem.findUnique({
+      where: { userId_itemId: { userId, itemId } },
+    });
+
+    if (existingItem) {
+      await this.prisma.userItem.update({
+        where: { userId_itemId: { userId, itemId } },
+        data: { quantity: existingItem.quantity + quantity },
+      });
+    } else {
+      await this.prisma.userItem.create({
+        data: { userId, itemId, quantity },
+      });
+    }
+  }
+
+  /**
+   * Update quest progress with error handling
+   */
+  private async updateQuestProgress(userId: string, targetType: string, amount: number = 1): Promise<void> {
+    try {
+      await this.questService.updateProgress(userId, { targetType, amount });
+    } catch (error) {
+      console.error('Failed to update quest progress:', error);
+    }
+  }
+
   async getCatalog() {
     return this.prisma.item.findMany({
       orderBy: {
@@ -83,14 +138,7 @@ export class ItemService {
       });
 
       // Update quest progress for buying items (pokeballs)
-      try {
-        await this.questService.updateProgress(userId, {
-          targetType: 'buy_item',
-          amount: quantity,
-        });
-      } catch (error) {
-        console.error('Failed to update quest progress:', error);
-      }
+      await this.updateQuestProgress(userId, 'buy_item', quantity);
 
       return {
         message: 'Pokeballs purchased successfully',
@@ -115,54 +163,16 @@ export class ItemService {
     });
 
     // Add or update item in inventory
-    const existingItem = await this.prisma.userItem.findUnique({
-      where: {
-        userId_itemId: {
-          userId,
-          itemId,
-        },
-      },
-    });
-
-    if (existingItem) {
-      await this.prisma.userItem.update({
-        where: {
-          userId_itemId: {
-            userId,
-            itemId,
-          },
-        },
-        data: {
-          quantity: existingItem.quantity + quantity,
-        },
-      });
-    } else {
-      await this.prisma.userItem.create({
-        data: {
-          userId,
-          itemId,
-          quantity,
-        },
-      });
-    }
+    await this.incrementUserItem(userId, itemId, quantity);
 
     // Increment itemCount
     await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        itemCount: { increment: quantity },
-      },
+      data: { itemCount: { increment: quantity } },
     });
 
     // Update quest progress for buying items
-    try {
-      await this.questService.updateProgress(userId, {
-        targetType: 'buy_item',
-        amount: quantity,
-      });
-    } catch (error) {
-      console.error('Failed to update quest progress:', error);
-    }
+    await this.updateQuestProgress(userId, 'buy_item', quantity);
 
     return {
       message: 'Item purchased successfully',
@@ -256,47 +266,15 @@ export class ItemService {
 
     // Decrease item quantity if not permanent
     if (!item.isPermanent) {
-      if (userItem.quantity === 1) {
-        await this.prisma.userItem.delete({
-          where: {
-            userId_itemId: {
-              userId,
-              itemId,
-            },
-          },
-        });
-      } else {
-        await this.prisma.userItem.update({
-          where: {
-            userId_itemId: {
-              userId,
-              itemId,
-            },
-          },
-          data: {
-            quantity: userItem.quantity - 1,
-          },
-        });
-      }
-
-      // Decrement itemCount
+      await this.decrementUserItem(userId, itemId, 1);
       await this.prisma.user.update({
         where: { id: userId },
-        data: {
-          itemCount: { decrement: 1 },
-        },
+        data: { itemCount: { decrement: 1 } },
       });
     }
 
     // Update quest progress for using items
-    try {
-      await this.questService.updateProgress(userId, {
-        targetType: 'use_item',
-        amount: 1,
-      });
-    } catch (error) {
-      console.error('Failed to update quest progress:', error);
-    }
+    await this.updateQuestProgress(userId, 'use_item', 1);
 
     return result;
   }

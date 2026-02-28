@@ -9,46 +9,49 @@ import { petApi, userApi, itemApi, huntApi, battleApi } from '@/services/api'
  */
 function* loadUserDataSaga(): IterableIterator<AnyAction> {
   try {
-    console.log('📊 Loading user data from API...')
+    if (__DEV__) console.log('📊 Loading user data from API...')
 
     // Load user profile
     const profileResponse: Awaited<ReturnType<typeof userApi.getProfile>> = yield call([userApi, userApi.getProfile])
     if (profileResponse.success && profileResponse.data) {
+      const p = profileResponse.data
       yield put(gameActions.setProfile({
-        id: profileResponse.data.id,
-        username: profileResponse.data.username,
-        email: profileResponse.data.email,
-        avatar: `https://ui-avatars.com/api/?name=${profileResponse.data.username}&background=random`,
-        level: profileResponse.data.level,
-        xp: profileResponse.data.xp,
-        xpToNext: profileResponse.data.level * 200, // Formula: level * 200 (matches backend)
+        id: p.id,
+        username: p.username,
+        email: p.email,
+        avatar: p.avatarUrl || `https://ui-avatars.com/api/?name=${p.username}&background=random`,
+        level: p.level,
+        xp: p.xp,
+        xpToNext: p.xpToNext ?? p.level * 200,
         currency: {
-          coins: profileResponse.data.coins,
-          gems: profileResponse.data.gems,
-          pokeballs: profileResponse.data.pokeballs,
+          coins: p.coins,
+          gems: p.gems,
+          pokeballs: p.pokeballs,
         },
-        huntTickets: profileResponse.data.huntTickets,
-        battleTickets: profileResponse.data.battleTickets,
-        lastTicketReset: profileResponse.data.lastTicketReset,
-        petCount: profileResponse.data.petCount,
-        itemCount: profileResponse.data.itemCount,
+        huntTickets: p.huntTickets,
+        battleTickets: p.battleTickets,
+        lastTicketReset: p.lastTicketReset,
+        petCount: p.petCount,
+        itemCount: p.itemCount,
         stats: {
-          battlesWon: profileResponse.data.battlesWon,
-          battlesLost: profileResponse.data.battlesLost,
-          petsOwned: profileResponse.data.petCount,
-          legendPetsOwned: 0, // TODO: Calculate from pets
-          huntsCompleted: profileResponse.data.huntsCompleted,
-          auctionsSold: 0,
+          battlesWon: p.battlesWon,
+          battlesLost: p.battlesLost,
+          petsOwned: p.petCount,
+          legendPetsOwned: 0,
+          huntsCompleted: p.huntsCompleted,
           totalEarnings: 0,
         },
         achievements: [],
-        settings: {
+        settings: p.settings ?? {
           notifications: true,
           autoFeed: false,
           battleAnimations: true,
+          soundEnabled: true,
+          musicEnabled: true,
+          language: 'en',
         },
         lastLogin: Date.now(),
-        createdAt: new Date(profileResponse.data.createdAt).getTime(),
+        createdAt: new Date(p.createdAt).getTime(),
       }))
       console.log('✅ Profile loaded')
     }
@@ -185,7 +188,7 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
       console.log(`✅ Loaded ${opponents.length} opponents`)
     }
 
-    console.log('🎉 User data loading complete!')
+    if (__DEV__) console.log('🎉 User data loading complete!')
     yield put(gameActions.setLoadingComplete())
   } catch (error) {
     console.error('❌ Error loading user data:', error)

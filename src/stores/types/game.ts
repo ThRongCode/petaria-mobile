@@ -172,32 +172,7 @@ export interface HuntResult {
   coins: number
 }
 
-// Auction Types
-export interface Auction {
-  id: string
-  sellerId: string
-  sellerUsername: string
-  itemType: 'pet' | 'item'
-  itemId: string
-  startingBid: number
-  buyoutPrice?: number
-  currentBid: number
-  currentBidderId?: string
-  currentBidderUsername?: string
-  endTime: number
-  status: 'active' | 'completed' | 'cancelled'
-  bids: AuctionBid[]
-  commission: number
-  createdAt: number
-}
 
-export interface AuctionBid {
-  id: string
-  bidderId: string
-  bidderUsername: string
-  amount: number
-  timestamp: number
-}
 
 // Economy Types
 export interface Currency {
@@ -209,7 +184,7 @@ export interface Currency {
 export interface Transaction {
   id: string
   userId: string
-  type: 'battle_reward' | 'hunt_cost' | 'auction_sale' | 'auction_purchase' | 'legend_fee' | 'iap'
+  type: 'battle_reward' | 'hunt_cost' | 'legend_fee' | 'iap'
   amount: number
   currency: 'coins' | 'gems'
   description: string
@@ -240,7 +215,6 @@ export interface UserProfile {
     petsOwned: number
     legendPetsOwned: number
     huntsCompleted: number
-    auctionsSold: number
     totalEarnings: number
   }
   achievements: string[]
@@ -248,6 +222,9 @@ export interface UserProfile {
     notifications: boolean
     autoFeed: boolean
     battleAnimations: boolean
+    soundEnabled: boolean
+    musicEnabled: boolean
+    language: string
   }
   lastLogin: number
   createdAt: number
@@ -271,7 +248,6 @@ export interface GameState {
   items: Item[]
   regions: Region[]
   opponents: Opponent[]
-  auctions: Auction[]
   battles: Battle[]
   activeBattle?: Battle
   huntingCooldowns: {
@@ -286,7 +262,7 @@ export interface GameState {
 
 export interface GameNotification {
   id: string
-  type: 'auction_won' | 'auction_outbid' | 'legend_challenged' | 'hunt_result' | 'level_up'
+  type: 'legend_challenged' | 'hunt_result' | 'level_up'
   title: string
   message: string
   data?: any

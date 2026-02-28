@@ -26,6 +26,22 @@ export const userApi = {
       battlesWon: number
       battlesLost: number
       huntsCompleted: number
+      avatarUrl: string | null
+      title: string | null
+      lastHealTime: string | null
+      maxBattleTickets: number
+      maxHuntTickets: number
+      maxPetSlots: number
+      maxItemSlots: number
+      xpToNext: number
+      settings: {
+        notifications: boolean
+        autoFeed: boolean
+        battleAnimations: boolean
+        soundEnabled: boolean
+        musicEnabled: boolean
+        language: string
+      }
       createdAt: string
       updatedAt: string
     }>('/user/profile')
@@ -133,6 +149,51 @@ export const userApi = {
       message: string
       huntTickets: number
     }>('/user/dev/add-hunt-tickets')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
+   * Get user settings
+   */
+  async getSettings() {
+    const response = await realApiClient.get<{
+      notifications: boolean
+      autoFeed: boolean
+      battleAnimations: boolean
+      soundEnabled: boolean
+      musicEnabled: boolean
+      language: string
+    }>('/user/settings')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
+   * Update user settings
+   */
+  async updateSettings(settings: {
+    notifications?: boolean
+    autoFeed?: boolean
+    battleAnimations?: boolean
+    soundEnabled?: boolean
+    musicEnabled?: boolean
+    language?: string
+  }) {
+    const response = await realApiClient.patch<{
+      notifications: boolean
+      autoFeed: boolean
+      battleAnimations: boolean
+      soundEnabled: boolean
+      musicEnabled: boolean
+      language: string
+    }>('/user/settings', settings)
 
     return {
       success: true,

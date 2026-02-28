@@ -7,8 +7,6 @@
 export { apiClient } from './client'
 export { API_CONFIG } from './config'
 export * from './types'
-export { mockApi } from './mockApi'
-export { mockDB } from './mockDatabase'
 
 // Real API services
 export { authApi } from './authApi'
@@ -19,4 +17,5 @@ export { battleApi } from './battleApi'
 export { itemApi } from './itemApi'
 export { questApi } from './questApi'
 export { eventApi } from './eventApi'
+export { configApi } from './configApi'
 export { realApiClient } from './realApiClient'

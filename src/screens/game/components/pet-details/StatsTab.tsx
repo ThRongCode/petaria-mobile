@@ -4,6 +4,28 @@ import { ThemedText } from '@/components/ThemedText'
 import { Panel } from '@/components/ui'
 import { Pet } from '@/stores/types/game'
 
+const MAX_STAT_VALUE = 200
+
+interface StatRowProps {
+  name: string
+  value: number
+  color: string
+}
+
+function StatRow({ name, value, color }: StatRowProps): React.ReactElement {
+  const percentage = (value / MAX_STAT_VALUE) * 100
+
+  return (
+    <View style={styles.statRow}>
+      <ThemedText style={styles.statName}>{name}</ThemedText>
+      <View style={styles.statBarBackground}>
+        <View style={[styles.statBarFill, { width: `${percentage}%`, backgroundColor: color }]} />
+      </View>
+      <ThemedText style={styles.statValue}>{value}</ThemedText>
+    </View>
+  )
+}
+
 interface StatsTabProps {
   pet: Pet
 }
@@ -11,46 +33,11 @@ interface StatsTabProps {
 export const StatsTab: React.FC<StatsTabProps> = ({ pet }) => (
   <Panel variant="dark" style={styles.tabPanel}>
     <ThemedText style={styles.sectionTitle}>Base Stats</ThemedText>
-    
-    <View style={styles.statRow}>
-      <ThemedText style={styles.statName}>HP</ThemedText>
-      <View style={styles.statBarBackground}>
-        <View 
-          style={[styles.statBarFill, { width: `${(pet.stats.hp / 200) * 100}%`, backgroundColor: '#4CAF50' }]} 
-        />
-      </View>
-      <ThemedText style={styles.statValue}>{pet.stats.hp}</ThemedText>
-    </View>
 
-    <View style={styles.statRow}>
-      <ThemedText style={styles.statName}>Attack</ThemedText>
-      <View style={styles.statBarBackground}>
-        <View 
-          style={[styles.statBarFill, { width: `${(pet.stats.attack / 200) * 100}%`, backgroundColor: '#FF5722' }]} 
-        />
-      </View>
-      <ThemedText style={styles.statValue}>{pet.stats.attack}</ThemedText>
-    </View>
-
-    <View style={styles.statRow}>
-      <ThemedText style={styles.statName}>Defense</ThemedText>
-      <View style={styles.statBarBackground}>
-        <View 
-          style={[styles.statBarFill, { width: `${(pet.stats.defense / 200) * 100}%`, backgroundColor: '#2196F3' }]} 
-        />
-      </View>
-      <ThemedText style={styles.statValue}>{pet.stats.defense}</ThemedText>
-    </View>
-
-    <View style={styles.statRow}>
-      <ThemedText style={styles.statName}>Speed</ThemedText>
-      <View style={styles.statBarBackground}>
-        <View 
-          style={[styles.statBarFill, { width: `${(pet.stats.speed / 200) * 100}%`, backgroundColor: '#FFC107' }]} 
-        />
-      </View>
-      <ThemedText style={styles.statValue}>{pet.stats.speed}</ThemedText>
-    </View>
+    <StatRow name="HP" value={pet.stats.hp} color="#4CAF50" />
+    <StatRow name="Attack" value={pet.stats.attack} color="#FF5722" />
+    <StatRow name="Defense" value={pet.stats.defense} color="#2196F3" />
+    <StatRow name="Speed" value={pet.stats.speed} color="#FFC107" />
   </Panel>
 )
 

@@ -12,6 +12,8 @@ interface TopBarProps {
   pokeballs?: number
   battleTickets?: number
   huntTickets?: number
+  maxBattleTickets?: number
+  maxHuntTickets?: number
   avatar?: any
   onSettingsPress?: () => void
 }
@@ -27,6 +29,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   pokeballs,
   battleTickets,
   huntTickets,
+  maxBattleTickets = 20,
+  maxHuntTickets = 5,
   avatar,
   onSettingsPress,
 }) => {
@@ -95,7 +99,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Panel variant="dark" style={styles.ticketPanel}>
               <Ionicons name="shield" size={16} color="#FF6B6B" />
               <ThemedText style={styles.ticketLabel}>Battle</ThemedText>
-              <ThemedText style={styles.ticketText}>{battleTickets}/20</ThemedText>
+              <ThemedText style={styles.ticketText}>{battleTickets}/{maxBattleTickets}</ThemedText>
             </Panel>
           )}
 
@@ -104,7 +108,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Panel variant="dark" style={styles.ticketPanel}>
               <Ionicons name="leaf" size={16} color="#4CAF50" />
               <ThemedText style={styles.ticketLabel}>Hunt</ThemedText>
-              <ThemedText style={styles.ticketText}>{huntTickets}/5</ThemedText>
+              <ThemedText style={styles.ticketText}>{huntTickets}/{maxHuntTickets}</ThemedText>
             </Panel>
           )}
         </View>

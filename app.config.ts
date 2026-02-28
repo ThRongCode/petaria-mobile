@@ -4,7 +4,7 @@ const { version: APP_VERSION } = require('./package.json')
 
 export default ({ config }: { config: ExpoConfig }) => ({
   ...config,
-  name: process.env.APP_NAME || '',
+  name: process.env.APP_NAME || 'VnPet',
   scheme: process.env.APP_SCHEME,
   version: APP_VERSION,
   newArchEnabled: true,

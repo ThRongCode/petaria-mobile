@@ -27,18 +27,17 @@ export const SignInScreen: React.FC = () => {
     formState: { errors },
   } = useForm<SignInFormData>({
     resolver: zodResolver(SignInSchema),
-    defaultValues: {
-      email: 'test@vnpet.com',
-      password: 'password123',
-    },
+    defaultValues: __DEV__
+      ? { email: 'test@vnpet.com', password: 'password123' }
+      : { email: '', password: '' },
   })
 
   const onSubmit = async (data: SignInFormData) => {
-    console.log('🔐 Sign in attempt:', { email: data.email })
+    if (__DEV__) console.log('🔐 Sign in attempt:', { email: data.email })
     setIsLoading(true)
     try {
       dispatch(userActions.userLogin(data))
-      console.log('✅ Dispatched userLogin action')
+      if (__DEV__) console.log('✅ Dispatched userLogin action')
       // Navigation will be handled by Redux saga after successful login
       // Don't set loading to false here - let saga handle it
     } catch (error) {
@@ -99,7 +98,7 @@ export const SignInScreen: React.FC = () => {
                             placeholder="trainer@vnpet.com"
                             placeholderTextColor="rgba(255, 255, 255, 0.4)"
                             style={styles.input}
-                            inputContainerStyle={styles.inputContainer}
+                            inputContainerStyle={styles.inputInner}
                             inputStyle={styles.inputText}
                           />
                         </View>
@@ -125,7 +124,7 @@ export const SignInScreen: React.FC = () => {
                             placeholder="Enter your password"
                             placeholderTextColor="rgba(255, 255, 255, 0.4)"
                             style={styles.input}
-                            inputContainerStyle={styles.inputContainer}
+                            inputContainerStyle={styles.inputInner}
                             inputStyle={styles.inputText}
                           />
                         </View>
@@ -159,11 +158,21 @@ export const SignInScreen: React.FC = () => {
                   </TouchableOpacity>
 
                   {/* Dev Info */}
-                  <View style={styles.devInfo}>
-                    <ThemedText style={styles.devInfoText}>
-                      🧪 Dev Mode: Credentials pre-filled
-                    </ThemedText>
-                  </View>
+                  {__DEV__ && (
+                    <View style={styles.devInfo}>
+                      <ThemedText style={styles.devInfoText}>
+                        🧪 Dev Mode: Credentials pre-filled
+                      </ThemedText>
+                    </View>
+                  )}
+
+                  {/* Forgot Password */}
+                  <TouchableOpacity
+                    style={styles.forgotPasswordButton}
+                    onPress={() => router.push('/forgot-password')}
+                  >
+                    <ThemedText style={styles.forgotPasswordText}>Forgot password?</ThemedText>
+                  </TouchableOpacity>
                 </View>
               </View>
             </BlurView>
@@ -266,7 +275,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
   },
-  inputContainer: {
+  inputInner: {
     backgroundColor: 'transparent',
     borderWidth: 0,
   },
@@ -332,5 +341,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#a8e063',
     fontWeight: 'bold',
+  },
+  forgotPasswordButton: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  forgotPasswordText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 })

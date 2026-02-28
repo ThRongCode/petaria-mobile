@@ -6,6 +6,27 @@ import { realApiClient } from './realApiClient'
  */
 export const battleApi = {
   /**
+   * Get available battle types from server
+   */
+  async getBattleTypes() {
+    const response = await realApiClient.get<Array<{
+      id: string
+      name: string
+      description: string
+      icon: string
+      gradient: string[]
+      rewards: string[]
+      available: boolean
+      endDate?: string
+    }>>('/battle/types')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
    * Get list of available opponents
    */
   async listOpponents() {
@@ -59,7 +80,7 @@ export const battleApi = {
         defense: number
         speed: number
       }>
-    }>(`/battle/opponent/${opponentId}`)
+    }>(`/battle/opponents/${opponentId}`)
 
     return {
       success: true,

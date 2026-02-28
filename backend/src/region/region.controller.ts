@@ -9,17 +9,17 @@ export class RegionController {
   constructor(private readonly regionService: RegionService) {}
 
   @Get()
-  async listRegions(@CurrentUser() user: any) {
-    return this.regionService.listRegions(user.level);
+  listRegions(@CurrentUser('level') userLevel: number) {
+    return this.regionService.listRegions(userLevel);
   }
 
   @Get(':id')
-  async getRegionDetails(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.regionService.getRegionDetails(id, user.level);
+  getRegionDetails(@Param('id') id: string, @CurrentUser('level') userLevel: number) {
+    return this.regionService.getRegionDetails(id, userLevel);
   }
 
   @Get(':id/spawns')
-  async getSpawns(@Param('id') id: string) {
+  getSpawns(@Param('id') id: string) {
     return this.regionService.getSpawns(id);
   }
 }

@@ -114,21 +114,28 @@ export class EventService {
   }
 
   /**
-   * Calculate time remaining string
+   * Format time difference as human-readable string
    */
-  private getTimeRemaining(endTime: Date): string {
+  private formatTimeDiff(targetTime: Date, prefix: string, suffix: string, endedText: string): string {
     const now = new Date();
-    const diff = endTime.getTime() - now.getTime();
+    const diff = targetTime.getTime() - now.getTime();
 
-    if (diff <= 0) return 'Ended';
+    if (diff <= 0) return endedText;
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (days > 0) return `${days}d ${hours}h remaining`;
-    if (hours > 0) return `${hours}h ${minutes}m remaining`;
-    return `${minutes}m remaining`;
+    if (days > 0) return `${prefix}${days}d ${hours}h${suffix}`;
+    if (hours > 0) return `${prefix}${hours}h ${minutes}m${suffix}`;
+    return `${prefix}${minutes}m${suffix}`;
+  }
+
+  /**
+   * Calculate time remaining string
+   */
+  private getTimeRemaining(endTime: Date): string {
+    return this.formatTimeDiff(endTime, '', ' remaining', 'Ended');
   }
 
   /**
@@ -162,18 +169,7 @@ export class EventService {
    * Calculate time until string
    */
   private getTimeUntil(startTime: Date): string {
-    const now = new Date();
-    const diff = startTime.getTime() - now.getTime();
-
-    if (diff <= 0) return 'Starting now';
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (days > 0) return `Starts in ${days}d ${hours}h`;
-    if (hours > 0) return `Starts in ${hours}h ${minutes}m`;
-    return `Starts in ${minutes}m`;
+    return this.formatTimeDiff(startTime, 'Starts in ', '', 'Starting now');
   }
 
   /**

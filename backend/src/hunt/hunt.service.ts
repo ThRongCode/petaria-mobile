@@ -37,6 +37,23 @@ export class HuntService {
     private questService: QuestService,
   ) {}
 
+  /**
+   * Update quest progress with error handling
+   */
+  private async updateQuestProgress(
+    userId: string,
+    targetType: string,
+    amount: number = 1,
+    species?: string,
+    rarity?: string,
+  ): Promise<void> {
+    try {
+      await this.questService.updateProgress(userId, { targetType, amount, species, rarity });
+    } catch (error) {
+      console.error('Failed to update quest progress:', error);
+    }
+  }
+
   async startSession(userId: string, regionId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -146,56 +163,6 @@ export class HuntService {
       encounters: [],
       message:
         'Hunt session started! Explore with 10 moves to find Pokemon.',
-    };
-  }
-
-  private generateEncounter(spawns: any[]): Encounter {
-    // Calculate total spawn rate
-    const totalRate = spawns.reduce((sum, s) => sum + s.spawnRate, 0);
-
-    // Pick a random spawn based on rates
-    let random = Math.random() * totalRate;
-    let selectedSpawn = spawns[0];
-
-    for (const spawn of spawns) {
-      random -= spawn.spawnRate;
-      if (random <= 0) {
-        selectedSpawn = spawn;
-        break;
-      }
-    }
-
-    // Generate level within min/max range
-    const level =
-      Math.floor(
-        Math.random() * (selectedSpawn.maxLevel - selectedSpawn.minLevel + 1),
-      ) + selectedSpawn.minLevel;
-
-    // Generate stats based on level and rarity
-    const rarityMultiplier = {
-      common: 1.0,
-      uncommon: 1.2,
-      rare: 1.5,
-      epic: 1.8,
-      legendary: 2.0,
-    }[selectedSpawn.rarity.toLowerCase()] || 1.0;
-
-    const baseHp = 20 + level * 5;
-    const baseAttack = 5 + level * 2;
-    const baseDefense = 5 + level * 2;
-    const baseSpeed = 5 + level * 2;
-
-    return {
-      id: `encounter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      species: selectedSpawn.species,
-      rarity: selectedSpawn.rarity,
-      level,
-      hp: Math.floor(baseHp * rarityMultiplier),
-      maxHp: Math.floor(baseHp * rarityMultiplier),
-      attack: Math.floor(baseAttack * rarityMultiplier),
-      defense: Math.floor(baseDefense * rarityMultiplier),
-      speed: Math.floor(baseSpeed * rarityMultiplier),
-      caught: false,
     };
   }
 
@@ -486,16 +453,7 @@ export class HuntService {
       });
 
       // Update quest progress for catching Pokemon
-      try {
-        await this.questService.updateProgress(userId, {
-          targetType: 'catch_pokemon',
-          amount: 1,
-          species: encounter.species,
-          rarity: encounter.rarity,
-        });
-      } catch (error) {
-        console.error('Failed to update quest progress:', error);
-      }
+      await this.updateQuestProgress(userId, 'catch_pokemon', 1, encounter.species, encounter.rarity);
 
       return {
         success: true,
@@ -617,14 +575,7 @@ export class HuntService {
     });
 
     // Update quest progress for completing hunts
-    try {
-      await this.questService.updateProgress(userId, {
-        targetType: 'complete_hunts',
-        amount: 1,
-      });
-    } catch (error) {
-      console.error('Failed to update quest progress:', error);
-    }
+    await this.updateQuestProgress(userId, 'complete_hunts', 1);
 
     return {
       message: levelUpResult.leveledUp 

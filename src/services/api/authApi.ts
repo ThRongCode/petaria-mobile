@@ -138,4 +138,33 @@ export const authApi = {
       data: null,
     }
   },
+
+  /**
+   * Request password reset
+   */
+  async forgotPassword(email: string) {
+    const response = await realApiClient.post<{
+      message: string
+      resetCode?: string
+    }>('/auth/forgot-password', { email })
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
+   * Reset password using email + 6-digit code from forgot-password
+   */
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const response = await realApiClient.post<{
+      message: string
+    }>('/auth/reset-password', { email, code, newPassword })
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
 }

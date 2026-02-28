@@ -1,7 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit'
 import { RootState } from '../store'
-import { Pet, Region, Auction, Battle } from '../types/game'
-import { OPPONENTS } from '@/constants/opponents'
+import { Pet, Item, Region, Battle, Opponent, GameNotification } from '../types/game'
 
 // Base selectors
 export const getGameState = (state: RootState) => state.game
@@ -11,7 +10,6 @@ export const getAllPets = (state: RootState) => state.game.pets
 export const getAllItems = (state: RootState) => state.game.items
 export const getAllRegions = (state: RootState) => state.game.regions
 export const getAllOpponents = (state: RootState) => state.game.opponents
-export const getAllAuctions = (state: RootState) => state.game.auctions
 export const getAllBattles = (state: RootState) => state.game.battles
 export const getActiveBattle = (state: RootState) => state.game.activeBattle
 export const getNotifications = (state: RootState) => state.game.notifications
@@ -42,19 +40,19 @@ export const getGems = createSelector(
 // Pet selectors
 export const getOwnedPets = createSelector(
   [getAllPets, getUserInventory],
-  (allPets, inventory) => 
-    allPets.filter(pet => inventory.pets.includes(pet.id))
+  (allPets: Pet[], inventory) => 
+    allPets.filter((pet: Pet) => inventory.pets.includes(pet.id))
 )
 
 export const getPetById = (petId: string) => createSelector(
   getAllPets,
-  (pets) => pets.find(pet => pet.id === petId)
+  (pets: Pet[]) => pets.find((pet: Pet) => pet.id === petId)
 )
 
 export const getOwnedPetsByRarity = createSelector(
   getOwnedPets,
-  (pets) => {
-    const grouped = pets.reduce((acc, pet) => {
+  (pets: Pet[]) => {
+    const grouped = pets.reduce((acc: Record<string, Pet[]>, pet: Pet) => {
       if (!acc[pet.rarity]) acc[pet.rarity] = []
       acc[pet.rarity].push(pet)
       return acc
@@ -66,13 +64,13 @@ export const getOwnedPetsByRarity = createSelector(
 
 export const getLegendaryPets = createSelector(
   getOwnedPets,
-  (pets) => pets.filter(pet => pet.isLegendary)
+  (pets: Pet[]) => pets.filter((pet: Pet) => pet.isLegendary)
 )
 
 export const getPetsReadyToEvolve = createSelector(
   [getOwnedPets, getUserInventory, getAllItems],
-  (pets, inventory, items) => 
-    pets.filter(pet => {
+  (pets: Pet[], inventory, items) => 
+    pets.filter((pet: Pet) => {
       if (!pet.evolutionRequirements || pet.evolutionStage >= pet.maxEvolutionStage) {
         return false
       }
@@ -87,9 +85,9 @@ export const getPetsReadyToEvolve = createSelector(
 // Item selectors
 export const getOwnedItems = createSelector(
   [getAllItems, getUserInventory],
-  (allItems, inventory) => 
-    allItems.filter(item => (inventory.items[item.id] || 0) > 0)
-      .map(item => ({
+  (allItems: Item[], inventory) => 
+    allItems.filter((item: Item) => (inventory.items[item.id] || 0) > 0)
+      .map((item: Item) => ({
         ...item,
         quantity: inventory.items[item.id] || 0
       }))
@@ -97,7 +95,7 @@ export const getOwnedItems = createSelector(
 
 export const getItemById = (itemId: string) => createSelector(
   getAllItems,
-  (items) => items.find(item => item.id === itemId)
+  (items: Item[]) => items.find((item: Item) => item.id === itemId)
 )
 
 export const getItemQuantity = (itemId: string) => createSelector(
@@ -108,24 +106,24 @@ export const getItemQuantity = (itemId: string) => createSelector(
 // Region selectors
 export const getAvailableRegions = createSelector(
   [getAllRegions, getUserProfile],
-  (regions, profile) => 
-    regions.filter(region => profile.level >= region.unlockLevel)
+  (regions: Region[], profile) => 
+    regions.filter((region: Region) => profile.level >= region.unlockLevel)
 )
 
 export const getRegionById = (regionId: string) => createSelector(
   getAllRegions,
-  (regions) => regions.find(region => region.id === regionId)
+  (regions: Region[]) => regions.find((region: Region) => region.id === regionId)
 )
 
 export const getOwnedLegendRegions = createSelector(
   [getAllRegions, getUserProfile],
-  (regions, profile) => 
-    regions.filter(region => region.legendOwnerId === profile.id)
+  (regions: Region[], profile) => 
+    regions.filter((region: Region) => region.legendOwnerId === profile.id)
 )
 
 export const getRegionHuntingCost = (regionId: string) => createSelector(
   [getRegionById(regionId), getAllRegions],
-  (region) => {
+  (region: Region | undefined) => {
     if (!region) return 0
     let totalCost = region.huntingCost
     if (region.legendPetId && region.legendOwnerId) {
@@ -148,41 +146,37 @@ export const canHuntInRegion = (regionId: string) => createSelector(
 
 // Opponent selectors
 export const getAvailableOpponents = createSelector(
-  [getUserProfile],
-  (profile) => {
-    const opponents = getAllOpponents()
+  [getAllOpponents, getUserProfile],
+  (opponents: Opponent[], profile) => {
     if (!opponents || !profile) return []
-    return opponents.filter(opponent => profile.level >= opponent.unlockLevel)
+    return opponents.filter((opponent: Opponent) => profile.level >= opponent.unlockLevel)
   }
 )
 
-export const getOpponentById = (opponentId: string) => {
-  const opponents = getAllOpponents()
-  return opponents.find(opponent => opponent.id === opponentId)
-}
+export const getOpponentById = (opponentId: string) => createSelector(
+  getAllOpponents,
+  (opponents: Opponent[]) => opponents.find((opponent: Opponent) => opponent.id === opponentId)
+)
 
 export const getOpponentsByDifficulty = createSelector(
-  [getUserProfile],
-  (profile) => {
-    const opponents = getAvailableOpponents.resultFunc(profile)
+  [getAvailableOpponents],
+  (opponents: Opponent[]) => {
     if (!opponents) return {}
-    const grouped = opponents.reduce((acc, opponent) => {
+    return opponents.reduce((acc: Record<string, Opponent[]>, opponent: Opponent) => {
       if (!acc[opponent.difficulty]) acc[opponent.difficulty] = []
       acc[opponent.difficulty].push(opponent)
       return acc
-    }, {} as Record<string, typeof opponents>)
-    
-    return grouped
+    }, {} as Record<string, Opponent[]>)
   }
 )
 
 // Battle selectors
 export const getRecentBattles = createSelector(
   getAllBattles,
-  (battles) => 
+  (battles: Battle[]) => 
     battles
-      .filter(battle => battle.status === 'completed')
-      .sort((a, b) => b.createdAt - a.createdAt)
+      .filter((battle: Battle) => battle.status === 'completed')
+      .sort((a: Battle, b: Battle) => b.createdAt - a.createdAt)
       .slice(0, 10)
 )
 
@@ -198,65 +192,25 @@ export const getBattleStats = createSelector(
   })
 )
 
-// Auction selectors
-export const getActiveAuctions = createSelector(
-  getAllAuctions,
-  (auctions) => 
-    auctions.filter(auction => 
-      auction.status === 'active' && auction.endTime > Date.now()
-    )
-)
-
-export const getMyAuctionListings = createSelector(
-  [getAllAuctions, getUserProfile],
-  (auctions, profile) => 
-    auctions.filter(auction => auction.sellerId === profile.id)
-)
-
-export const getMyActiveBids = createSelector(
-  [getAllAuctions, getUserProfile],
-  (auctions, profile) => 
-    auctions.filter(auction => 
-      auction.status === 'active' && 
-      auction.currentBidderId === profile.id
-    )
-)
-
-export const getAuctionsByCategory = createSelector(
-  getActiveAuctions,
-  (auctions) => ({
-    pets: auctions.filter(auction => auction.itemType === 'pet'),
-    items: auctions.filter(auction => auction.itemType === 'item'),
-  })
-)
-
-export const getEndingSoonAuctions = createSelector(
-  getActiveAuctions,
-  (auctions) => 
-    auctions
-      .filter(auction => auction.endTime - Date.now() < 3600000) // 1 hour
-      .sort((a, b) => a.endTime - b.endTime)
-)
-
 // Notification selectors
 export const getUnreadNotifications = createSelector(
   getNotifications,
-  (notifications) => notifications.filter(notif => !notif.read)
+  (notifications: GameNotification[]) => notifications.filter((notif: GameNotification) => !notif.read)
 )
 
 export const getNotificationCount = createSelector(
   getUnreadNotifications,
-  (notifications) => notifications.length
+  (notifications: GameNotification[]) => notifications.length
 )
 
 export const getNotificationsByType = createSelector(
   getNotifications,
-  (notifications) => 
-    notifications.reduce((acc, notif) => {
+  (notifications: GameNotification[]) => 
+    notifications.reduce((acc: Record<string, GameNotification[]>, notif: GameNotification) => {
       if (!acc[notif.type]) acc[notif.type] = []
       acc[notif.type].push(notif)
       return acc
-    }, {} as Record<string, typeof notifications>)
+    }, {} as Record<string, GameNotification[]>)
 )
 
 // Game progress selectors
@@ -276,8 +230,8 @@ export const getPlayerXP = createSelector(
 
 export const getTotalPetValue = createSelector(
   getOwnedPets,
-  (pets) => 
-    pets.reduce((total, pet) => {
+  (pets: Pet[]) => 
+    pets.reduce((total: number, pet: Pet) => {
       // Basic value calculation based on level and rarity
       const baseValue = pet.level * 100
       const rarityMultiplier = {
@@ -293,14 +247,13 @@ export const getTotalPetValue = createSelector(
 
 export const getGameStats = createSelector(
   [getUserProfile, getOwnedPets, getTotalPetValue],
-  (profile, pets, petValue) => ({
+  (profile, pets: Pet[], petValue: number) => ({
     level: profile.level,
     totalPets: pets.length,
-    legendaryPets: pets.filter(pet => pet.isLegendary).length,
+    legendaryPets: pets.filter((pet: Pet) => pet.isLegendary).length,
     totalValue: petValue,
     huntsCompleted: profile.stats.huntsCompleted,
     battlesWon: profile.stats.battlesWon,
-    auctionsSold: profile.stats.auctionsSold,
     totalEarnings: profile.stats.totalEarnings,
   })
 )

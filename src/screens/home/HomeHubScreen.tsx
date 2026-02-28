@@ -135,7 +135,7 @@ export const HomeHubScreen: React.FC = () => {
         <TopBar
           username={profile.username}
           coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 150}
+          gems={profile.currency?.gems || 0}
           pokeballs={profile.currency?.pokeballs || 0}
           
           

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponse, JwtPayload } from './interfaces/auth.interface';
 import { TicketResetUtil } from '../utils/ticketReset';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -160,5 +161,92 @@ export class AuthService {
         itemCount: true,
       },
     });
+  }
+
+  /**
+   * Forgot Password - generates a reset token.
+   * In production, this would send an email with the token/link.
+   * For now, it returns the token directly for mobile deep-link flow.
+   */
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return {
+        message: 'If an account with that email exists, a reset code has been sent.',
+      };
+    }
+
+    // Generate a 6-digit reset code
+    const resetCode = crypto.randomInt(100000, 999999).toString();
+    const resetCodeHash = await bcrypt.hash(resetCode, 10);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    // Store hash + expiry in DB
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetHash: resetCodeHash,
+        passwordResetExpires: expiresAt,
+      },
+    });
+
+    // In production: send email with the reset code
+    // For now, we log it and return success
+    console.log(`[ForgotPassword] Reset code for ${email}: ${resetCode}`);
+
+    return {
+      message: 'If an account with that email exists, a reset code has been sent.',
+      // Include reset code in dev mode for testing
+      ...(process.env.NODE_ENV !== 'production' && { resetCode }),
+    };
+  }
+
+  /**
+   * Reset Password using email + 6-digit code from forgot-password flow
+   */
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || !user.passwordResetHash || !user.passwordResetExpires) {
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    // Check expiry
+    if (new Date() > user.passwordResetExpires) {
+      // Clear expired token
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordResetHash: null, passwordResetExpires: null },
+      });
+      throw new BadRequestException('Reset code has expired. Please request a new one.');
+    }
+
+    // Verify the 6-digit code
+    const isCodeValid = await bcrypt.compare(code, user.passwordResetHash);
+    if (!isCodeValid) {
+      throw new BadRequestException('Invalid reset code');
+    }
+
+    // Hash new password and clear reset fields
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetHash: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    return {
+      message: 'Password has been reset successfully',
+    };
   }
 }

@@ -36,13 +36,29 @@ interface EncounterModalProps {
   onFlee: () => void
 }
 
-const getRarityColor = (rarity: string): string => {
-  switch (rarity) {
-    case 'Common': return '#9E9E9E'
-    case 'Rare': return '#2196F3'
-    case 'Epic': return '#9C27B0'
-    case 'Legendary': return '#FF9800'
-    default: return '#9E9E9E'
+function getRarityColor(rarity: string): string {
+  const colors: Record<string, string> = {
+    Common: '#9E9E9E',
+    Uncommon: '#4CAF50',
+    Rare: '#2196F3',
+    Epic: '#9C27B0',
+    Legendary: '#FF9800',
+  }
+  return colors[rarity] ?? '#9E9E9E'
+}
+
+function getCaptureStatusText(captureState: CaptureState, speciesName: string): string {
+  switch (captureState) {
+    case 'throwing':
+      return '🔴 Throwing Pokeball...'
+    case 'shaking':
+      return '⏳ Come on...'
+    case 'success':
+      return '✨ Gotcha!'
+    case 'failed':
+      return '💨 Oh no!'
+    default:
+      return `Wild ${speciesName} Appears!`
   }
 }
 
@@ -64,16 +80,6 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
 }) => {
   if (!encounter) return null
 
-  const getCaptureStatusText = () => {
-    switch (captureState) {
-      case 'throwing': return '🔴 Throwing Pokéball...'
-      case 'shaking': return '⏳ Come on...'
-      case 'success': return '✨ Gotcha!'
-      case 'failed': return '💨 Oh no!'
-      default: return `Wild ${encounter.species} Appears!`
-    }
-  }
-
   return (
     <Modal visible={visible} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
@@ -84,7 +90,7 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
               captureState === 'success' && { color: '#4CAF50' },
               captureState === 'failed' && { color: '#FF5722' }
             ]}>
-              {getCaptureStatusText()}
+              {getCaptureStatusText(captureState, encounter.species)}
             </ThemedText>
             
             {/* Pokemon with animations */}

@@ -87,7 +87,7 @@ export const petApi = {
    * Feed pet to increase mood
    */
   async feedPet(petId: string) {
-    const response = await realApiClient.post<{
+    const response = await realApiClient.patch<{
       id: string
       mood: number
       lastFed: string
@@ -105,7 +105,7 @@ export const petApi = {
    * Heal pet using item
    */
   async healPet(petId: string, itemId: string) {
-    const response = await realApiClient.post<{
+    const response = await realApiClient.patch<{
       id: string
       hp: number
       healAmount: number

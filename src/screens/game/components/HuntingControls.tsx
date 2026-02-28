@@ -5,12 +5,42 @@ import { Panel } from '@/components/ui'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 
+type Direction = 'up' | 'down' | 'left' | 'right'
+
 interface HuntingControlsProps {
   actionsLeft: number
   isMoving: boolean
   moveAnimation: Animated.Value
-  onMove: (direction: 'up' | 'down' | 'left' | 'right') => void
+  onMove: (direction: Direction) => void
   onExit: () => void
+}
+
+interface DirectionButtonProps {
+  direction: Direction
+  iconName: keyof typeof Ionicons.glyphMap
+  label: string
+  isMoving: boolean
+  isDisabled: boolean
+  onPress: () => void
+}
+
+function DirectionButton({ direction, iconName, label, isMoving, isDisabled, onPress }: DirectionButtonProps): React.ReactElement {
+  return (
+    <TouchableOpacity
+      style={[styles.movementButton, isDisabled && styles.disabledButton]}
+      onPress={onPress}
+      disabled={isDisabled}
+    >
+      <Panel variant="dark" style={styles.buttonPanel}>
+        {isMoving ? (
+          <ActivityIndicator size="small" color="#FFD700" />
+        ) : (
+          <Ionicons name={iconName} size={28} color="#FFD700" />
+        )}
+        <ThemedText style={styles.movementLabel}>{label}</ThemedText>
+      </Panel>
+    </TouchableOpacity>
+  )
 }
 
 export const HuntingControls: React.FC<HuntingControlsProps> = ({
@@ -26,7 +56,7 @@ export const HuntingControls: React.FC<HuntingControlsProps> = ({
     <View style={styles.container}>
       {/* Exploration area */}
       <View style={styles.explorationArea}>
-        <Animated.View 
+        <Animated.View
           style={[
             styles.explorerIcon,
             {
@@ -41,7 +71,7 @@ export const HuntingControls: React.FC<HuntingControlsProps> = ({
         >
           <ThemedText style={styles.explorerEmoji}>🧙‍♂️</ThemedText>
         </Animated.View>
-        
+
         <ThemedText style={styles.explorationHint}>
           Choose a direction to explore
         </ThemedText>
@@ -51,73 +81,49 @@ export const HuntingControls: React.FC<HuntingControlsProps> = ({
       <View style={styles.movementControls}>
         {/* Up Button */}
         <View style={styles.movementRow}>
-          <TouchableOpacity 
-            style={[styles.movementButton, isDisabled && styles.disabledButton]}
+          <DirectionButton
+            direction="up"
+            iconName="arrow-up"
+            label="Up"
+            isMoving={isMoving}
+            isDisabled={isDisabled}
             onPress={() => onMove('up')}
-            disabled={isDisabled}
-          >
-            <Panel variant="dark" style={styles.buttonPanel}>
-              {isMoving ? (
-                <ActivityIndicator size="small" color="#FFD700" />
-              ) : (
-                <Ionicons name="arrow-up" size={28} color="#FFD700" />
-              )}
-              <ThemedText style={styles.movementLabel}>Up</ThemedText>
-            </Panel>
-          </TouchableOpacity>
+          />
         </View>
-        
+
         {/* Left and Right Buttons */}
         <View style={styles.movementRow}>
-          <TouchableOpacity 
-            style={[styles.movementButton, isDisabled && styles.disabledButton]}
+          <DirectionButton
+            direction="left"
+            iconName="arrow-back"
+            label="Left"
+            isMoving={isMoving}
+            isDisabled={isDisabled}
             onPress={() => onMove('left')}
-            disabled={isDisabled}
-          >
-            <Panel variant="dark" style={styles.buttonPanel}>
-              {isMoving ? (
-                <ActivityIndicator size="small" color="#FFD700" />
-              ) : (
-                <Ionicons name="arrow-back" size={28} color="#FFD700" />
-              )}
-              <ThemedText style={styles.movementLabel}>Left</ThemedText>
-            </Panel>
-          </TouchableOpacity>
-          
+          />
+
           <View style={styles.dpadSpacer} />
-          
-          <TouchableOpacity 
-            style={[styles.movementButton, isDisabled && styles.disabledButton]}
+
+          <DirectionButton
+            direction="right"
+            iconName="arrow-forward"
+            label="Right"
+            isMoving={isMoving}
+            isDisabled={isDisabled}
             onPress={() => onMove('right')}
-            disabled={isDisabled}
-          >
-            <Panel variant="dark" style={styles.buttonPanel}>
-              {isMoving ? (
-                <ActivityIndicator size="small" color="#FFD700" />
-              ) : (
-                <Ionicons name="arrow-forward" size={28} color="#FFD700" />
-              )}
-              <ThemedText style={styles.movementLabel}>Right</ThemedText>
-            </Panel>
-          </TouchableOpacity>
+          />
         </View>
-        
+
         {/* Down Button */}
         <View style={styles.movementRow}>
-          <TouchableOpacity 
-            style={[styles.movementButton, isDisabled && styles.disabledButton]}
+          <DirectionButton
+            direction="down"
+            iconName="arrow-down"
+            label="Down"
+            isMoving={isMoving}
+            isDisabled={isDisabled}
             onPress={() => onMove('down')}
-            disabled={isDisabled}
-          >
-            <Panel variant="dark" style={styles.buttonPanel}>
-              {isMoving ? (
-                <ActivityIndicator size="small" color="#FFD700" />
-              ) : (
-                <Ionicons name="arrow-down" size={28} color="#FFD700" />
-              )}
-              <ThemedText style={styles.movementLabel}>Down</ThemedText>
-            </Panel>
-          </TouchableOpacity>
+          />
         </View>
       </View>
 

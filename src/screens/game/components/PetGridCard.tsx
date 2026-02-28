@@ -45,6 +45,18 @@ const getTypeColor = (type: string): string => {
   return colors[type.toLowerCase()] || '#999'
 }
 
+function getHpBarColor(currentHp: number, maxHp: number): string {
+  const hpPercent = currentHp / maxHp
+
+  if (hpPercent > 0.5) {
+    return '#4CAF50' // Green - healthy
+  }
+  if (hpPercent > 0.2) {
+    return '#FFA726' // Orange - warning
+  }
+  return '#F44336' // Red - critical
+}
+
 export const PetGridCard: React.FC<PetGridCardProps> = ({
   pet,
   onPress,
@@ -55,14 +67,6 @@ export const PetGridCard: React.FC<PetGridCardProps> = ({
   const petType = pet.type || 'Normal'
   // Get primary type (first type if dual-typed like "Fire/Flying")
   const primaryType = petType.split('/')[0]
-
-  // Get HP bar color based on HP percentage
-  const getHpBarColor = () => {
-    const hpPercent = pet.stats.hp / pet.stats.maxHp
-    if (hpPercent > 0.5) return '#4CAF50'
-    if (hpPercent > 0.2) return '#FFA726'
-    return '#F44336'
-  }
 
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(pet)}>
@@ -120,7 +124,7 @@ export const PetGridCard: React.FC<PetGridCardProps> = ({
                   styles.hpBarInner,
                   {
                     width: `${(pet.stats.hp / pet.stats.maxHp) * 100}%`,
-                    backgroundColor: getHpBarColor(),
+                    backgroundColor: getHpBarColor(pet.stats.hp, pet.stats.maxHp),
                   },
                 ]}
               />

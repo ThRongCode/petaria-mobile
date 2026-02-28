@@ -1,5 +1,3 @@
-import { API_CONFIG } from './config'
-import { mockApi } from './mockApi'
 import { authApi } from './authApi'
 import { userApi } from './userApi'
 import { petApi } from './petApi'
@@ -9,17 +7,11 @@ import { itemApi } from './itemApi'
 import { realApiClient } from './realApiClient'
 import type {
   ApiResponse,
-  LoginRequest,
-  RegisterRequest,
   AuthResponse,
-  HuntStartRequest,
   HuntResponse,
-  BattleCompleteRequest,
   BattleCompleteResponse,
-  CreateAuctionRequest,
-  PlaceBidRequest,
 } from './types'
-import type { Pet, Region, Item, Auction, Battle } from '@/stores/types/game'
+import type { Pet, Region, Item, Battle } from '@/stores/types/game'
 
 /**
  * Unified API client that switches between mock and real API based on configuration
@@ -49,151 +41,7 @@ class ApiClient {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     body?: any
   ): Promise<ApiResponse<T>> {
-    if (API_CONFIG.useMock) {
-      // Use mock API
-      return this.mockRequest<T>(endpoint, method, body)
-    } else {
-      // Use real API
-      return this.realRequest<T>(endpoint, method, body)
-    }
-  }
-
-  /**
-   * Route request to mock API
-   */
-  private async mockRequest<T>(
-    endpoint: string,
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    body?: any
-  ): Promise<ApiResponse<T>> {
-    // Route to appropriate mock API function based on endpoint
-    const [path, ...rest] = endpoint.split('?')
-    const segments = path.split('/').filter(Boolean)
-
-    // Endpoints that don't require authentication
-    const publicEndpoints = ['auth', 'items']
-    const isPublicEndpoint = publicEndpoints.includes(segments[0])
-    const isItemsCatalog = segments[0] === 'items' && method === 'GET' && !segments[1]
-
-    if (!this.userId && !isPublicEndpoint) {
-      throw new Error('Not authenticated')
-    }
-
-    // Auth endpoints
-    if (segments[0] === 'auth') {
-      if (segments[1] === 'login' && method === 'POST') {
-        return mockApi.login(body) as Promise<ApiResponse<T>>
-      }
-      if (segments[1] === 'register' && method === 'POST') {
-        return mockApi.register(body) as Promise<ApiResponse<T>>
-      }
-      if (segments[1] === 'validate' && method === 'GET') {
-        if (!this.authToken) throw new Error('No token to validate')
-        return mockApi.validateToken(this.authToken) as Promise<ApiResponse<T>>
-      }
-    }
-
-    // Profile endpoints
-    if (segments[0] === 'profile' && method === 'GET') {
-      return mockApi.getUserProfile(this.userId!) as Promise<ApiResponse<T>>
-    }
-    if (segments[0] === 'profile' && method === 'PUT') {
-      return mockApi.updateUserProfile(this.userId!, body) as Promise<ApiResponse<T>>
-    }
-
-    // Inventory endpoints
-    if (segments[0] === 'inventory' && method === 'GET') {
-      return mockApi.getUserInventory(this.userId!) as Promise<ApiResponse<T>>
-    }
-
-    // Pet endpoints
-    if (segments[0] === 'pets') {
-      if (method === 'GET' && !segments[1]) {
-        return mockApi.getUserPets(this.userId!) as Promise<ApiResponse<T>>
-      }
-      if (method === 'GET' && segments[1]) {
-        return mockApi.getPetDetails(segments[1]) as Promise<ApiResponse<T>>
-      }
-      if (method === 'PUT' && segments[1]) {
-        return mockApi.updatePet(segments[1], body) as Promise<ApiResponse<T>>
-      }
-      if (method === 'POST' && segments[1] === 'feed' && segments[2]) {
-        return mockApi.feedPet(segments[2]) as Promise<ApiResponse<T>>
-      }
-      if (method === 'POST' && segments[1] === 'release') {
-        return mockApi.releasePet(body.petId, this.userId!) as Promise<ApiResponse<T>>
-      }
-    }
-
-    // Region endpoints
-    if (segments[0] === 'regions' && method === 'GET') {
-      return mockApi.getRegions() as Promise<ApiResponse<T>>
-    }
-
-    // Hunt endpoints
-    if (segments[0] === 'hunt' && method === 'POST') {
-      return mockApi.startHunt(body, this.userId!) as Promise<ApiResponse<T>>
-    }
-
-    // Opponent endpoints
-    if (segments[0] === 'opponents' && method === 'GET') {
-      return mockApi.getOpponents() as Promise<ApiResponse<T>>
-    }
-
-    // Battle endpoints
-    if (segments[0] === 'battle') {
-      if (segments[1] === 'complete' && method === 'POST') {
-        return mockApi.completeBattle(body, this.userId!) as Promise<ApiResponse<T>>
-      }
-      if (segments[1] === 'history' && method === 'GET') {
-        return mockApi.getBattleHistory(this.userId!) as Promise<ApiResponse<T>>
-      }
-    }
-
-    // Item endpoints
-    if (segments[0] === 'items') {
-      if (method === 'GET') {
-        return mockApi.getItemsCatalog() as Promise<ApiResponse<T>>
-      }
-      if (segments[1] === 'use' && method === 'POST') {
-        return mockApi.useItemOnPet(body.itemId, body.petId, this.userId!) as Promise<ApiResponse<T>>
-      }
-    }
-
-    // Game endpoints
-    if (segments[0] === 'game') {
-      if (segments[1] === 'heal-center' && method === 'POST') {
-        return mockApi.healAllPets(body.userId) as Promise<ApiResponse<T>>
-      }
-    }
-
-    // Inventory endpoints
-    if (segments[0] === 'inventory') {
-      if (segments[1] === 'info' && method === 'GET') {
-        return mockApi.getInventoryInfo(body.userId || this.userId!) as Promise<ApiResponse<T>>
-      }
-    }
-
-    // Auction endpoints
-    if (segments[0] === 'auctions') {
-      if (method === 'GET') {
-        return mockApi.getActiveAuctions() as Promise<ApiResponse<T>>
-      }
-      if (method === 'POST') {
-        return mockApi.createAuction(body, this.userId!) as Promise<ApiResponse<T>>
-      }
-      if (method === 'DELETE' && segments[1]) {
-        // cancelAuction not implemented yet in mockApi
-        throw new Error('Cancel auction not yet implemented')
-      }
-    }
-
-    // Bid endpoints
-    if (segments[0] === 'auction' && segments[1] === 'bid' && method === 'POST') {
-      return mockApi.placeBid(body, this.userId!) as Promise<ApiResponse<T>>
-    }
-
-    throw new Error(`Mock API endpoint not implemented: ${method} ${endpoint}`)
+    return this.realRequest<T>(endpoint, method, body)
   }
 
   /**
@@ -304,29 +152,29 @@ class ApiClient {
 
       // Hunt endpoints
       if (segments[0] === 'hunt') {
-        console.log('🔷 [apiClient] Hunt endpoint detected, segments:', segments, 'method:', method)
+        if (__DEV__) console.log('🔷 [apiClient] Hunt endpoint detected, segments:', segments, 'method:', method)
         
         // Start hunt session
         if (segments[1] === 'start' && method === 'POST') {
-          console.log('🔷 [apiClient] Routing to huntApi.startHunt')
+          if (__DEV__) console.log('🔷 [apiClient] Routing to huntApi.startHunt')
           const result = await huntApi.startHunt(body.regionId)
           return result as ApiResponse<T>
         }
         // Get current session
         if (segments[1] === 'session' && method === 'GET') {
-          console.log('🔷 [apiClient] Routing to huntApi.getSession')
+          if (__DEV__) console.log('🔷 [apiClient] Routing to huntApi.getSession')
           const result = await huntApi.getSession()
           return result as ApiResponse<T>
         }
         // Delete/cancel session
         if (segments[1] === 'session' && segments[2] && method === 'DELETE') {
-          console.log('🔷 [apiClient] Routing to huntApi.cancelSession')
+          if (__DEV__) console.log('🔷 [apiClient] Routing to huntApi.cancelSession')
           const result = await huntApi.cancelSession(segments[2])
           return result as ApiResponse<T>
         }
         // Move in dungeon
         if (segments[1] === 'move' && method === 'POST') {
-          console.log('🔷 [apiClient] Routing to huntApi.move with body:', body)
+          if (__DEV__) console.log('🔷 [apiClient] Routing to huntApi.move')
           const result = await huntApi.move(body.sessionId, body.direction)
           return result as ApiResponse<T>
         }
@@ -358,7 +206,13 @@ class ApiClient {
         if (segments[1] === 'complete' && method === 'POST') {
           // Map old battle complete format to new format
           const victory = body.winner === 'player'
-          const result = await battleApi.completeBattle(body.battleId, victory, body.playerPetId)
+          const result = await battleApi.completeBattle(
+            body.battleId,
+            victory,
+            body.damageDealt || 0,
+            body.damageTaken || 0,
+            body.finalHp || 0
+          )
           return result as ApiResponse<T>
         }
         if (segments[1] === 'history' && method === 'GET') {
@@ -407,22 +261,12 @@ class ApiClient {
         return result as ApiResponse<T>
       }
 
-      // Game endpoints (removed - heal-all now in /pet/heal-all)
-
-      // Auction endpoints - not implemented in backend yet
-      if (segments[0] === 'auctions' || segments[0] === 'auction') {
-        return {
-          success: false,
-          error: { code: 'NOT_IMPLEMENTED', message: 'Auction system not yet implemented in backend' },
-        }
-      }
-
       return {
         success: false,
-        error: { code: 'NOT_FOUND', message: `Real API endpoint not found: ${method} ${endpoint}` },
+        error: { code: 'NOT_FOUND', message: `API endpoint not found: ${method} ${endpoint}` },
       }
     } catch (error) {
-      console.error('Real API request error:', error)
+      console.error('API request error:', error)
       if (error instanceof Error) {
         return {
           success: false,
@@ -612,40 +456,6 @@ class ApiClient {
       pets: { current: number; max: number }
       items: { current: number; max: number }
     }>('/inventory/info', 'GET', { userId })
-  }
-
-  /**
-   * Auctions
-   */
-  async getAuctions(): Promise<ApiResponse<Auction[]>> {
-    return this.request<Auction[]>('/auctions', 'GET')
-  }
-
-  async createAuction(
-    itemType: 'pet' | 'item',
-    itemId: string,
-    startingBid: number,
-    duration: number,
-    buyoutPrice?: number
-  ): Promise<ApiResponse<Auction>> {
-    return this.request<Auction>('/auctions', 'POST', {
-      itemType,
-      itemId,
-      startingBid,
-      duration,
-      buyoutPrice,
-    })
-  }
-
-  async placeBid(auctionId: string, amount: number): Promise<ApiResponse<Auction>> {
-    return this.request<Auction>('/auction/bid', 'POST', {
-      auctionId,
-      amount,
-    })
-  }
-
-  async cancelAuction(auctionId: string): Promise<ApiResponse<{ message: string }>> {
-    return this.request<{ message: string }>(`/auctions/${auctionId}`, 'DELETE')
   }
 }
 

@@ -84,28 +84,13 @@ export class PetController {
     return this.petService.getFavoritePets(userId);
   }
 
-  /**
-   * Get evolution options for a pet
-   * Returns available evolution paths and whether user has required items
-   */
   @Get(':id/evolution')
-  getEvolutionOptions(
-    @Param('id') petId: string,
-    @CurrentUser('id') userId: string,
-  ) {
+  getEvolutionOptions(@Param('id') petId: string, @CurrentUser('id') userId: string) {
     return this.petService.getEvolutionOptions(petId, userId);
   }
 
-  /**
-   * Evolve a pet using an evolution item
-   * Consumes the item and transforms the pet
-   */
   @Post(':id/evolve')
-  evolve(
-    @Param('id') petId: string,
-    @CurrentUser('id') userId: string,
-    @Body() evolvePetDto: EvolvePetDto,
-  ) {
-    return this.petService.evolve(petId, userId, evolvePetDto.itemId);
+  evolve(@Param('id') petId: string, @CurrentUser('id') userId: string, @Body() dto: EvolvePetDto) {
+    return this.petService.evolve(petId, userId, dto.itemId);
   }
 }

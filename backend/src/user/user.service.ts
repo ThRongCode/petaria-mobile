@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketResetUtil } from '../utils/ticketReset';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
 
 @Injectable()
 export class UserService {
@@ -26,6 +27,16 @@ export class UserService {
         battlesWon: true,
         battlesLost: true,
         huntsCompleted: true,
+        avatarUrl: true,
+        title: true,
+        lastHealTime: true,
+        // Settings
+        settingsNotifications: true,
+        settingsAutoFeed: true,
+        settingsBattleAnimations: true,
+        settingsSoundEnabled: true,
+        settingsMusicEnabled: true,
+        settingsLanguage: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -35,7 +46,23 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return {
+      ...user,
+      // Game constants bundled with profile for convenience
+      maxBattleTickets: 20,
+      maxHuntTickets: 5,
+      maxPetSlots: 20,
+      maxItemSlots: 100,
+      xpToNext: user.level * 200,
+      settings: {
+        notifications: user.settingsNotifications,
+        autoFeed: user.settingsAutoFeed,
+        battleAnimations: user.settingsBattleAnimations,
+        soundEnabled: user.settingsSoundEnabled,
+        musicEnabled: user.settingsMusicEnabled,
+        language: user.settingsLanguage,
+      },
+    };
   }
 
   async getInventory(userId: string) {
@@ -103,57 +130,112 @@ export class UserService {
     };
   }
 
-  // DEV ONLY: Add 5 battle tickets for testing
-  async addBattleTickets(userId: string) {
+  // DEV ONLY: Add tickets for testing
+  private async addTickets(
+    userId: string,
+    ticketType: 'battleTickets' | 'huntTickets',
+    amount: number,
+    maxAmount: number,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { battleTickets: true },
+      select: { battleTickets: true, huntTickets: true },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
+    const currentTickets = user[ticketType];
+    const newTickets = Math.min(currentTickets + amount, maxAmount);
+
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        battleTickets: Math.min(user.battleTickets + 5, 20), // Max 20
-      },
-      select: {
-        battleTickets: true,
-      },
+      data: { [ticketType]: newTickets },
+      select: { battleTickets: true, huntTickets: true },
     });
 
+    const ticketName = ticketType === 'battleTickets' ? 'battle' : 'hunt';
     return {
-      message: 'Added 5 battle tickets',
-      battleTickets: updatedUser.battleTickets,
+      message: `Added ${amount} ${ticketName} tickets`,
+      [ticketType]: updatedUser[ticketType],
     };
+  }
+
+  // DEV ONLY: Add 5 battle tickets for testing
+  async addBattleTickets(userId: string) {
+    return this.addTickets(userId, 'battleTickets', 5, 20);
   }
 
   // DEV ONLY: Add 5 hunt tickets for testing
   async addHuntTickets(userId: string) {
+    return this.addTickets(userId, 'huntTickets', 5, 5);
+  }
+
+  async getSettings(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { huntTickets: true },
+      select: {
+        settingsNotifications: true,
+        settingsAutoFeed: true,
+        settingsBattleAnimations: true,
+        settingsSoundEnabled: true,
+        settingsMusicEnabled: true,
+        settingsLanguage: true,
+      },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const updatedUser = await this.prisma.user.update({
+    return {
+      notifications: user.settingsNotifications,
+      autoFeed: user.settingsAutoFeed,
+      battleAnimations: user.settingsBattleAnimations,
+      soundEnabled: user.settingsSoundEnabled,
+      musicEnabled: user.settingsMusicEnabled,
+      language: user.settingsLanguage,
+    };
+  }
+
+  async updateSettings(userId: string, dto: UpdateSettingsDto) {
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        huntTickets: Math.min(user.huntTickets + 5, 5), // Max 5
-      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const data: Record<string, any> = {};
+    if (dto.notifications !== undefined) data.settingsNotifications = dto.notifications;
+    if (dto.autoFeed !== undefined) data.settingsAutoFeed = dto.autoFeed;
+    if (dto.battleAnimations !== undefined) data.settingsBattleAnimations = dto.battleAnimations;
+    if (dto.soundEnabled !== undefined) data.settingsSoundEnabled = dto.soundEnabled;
+    if (dto.musicEnabled !== undefined) data.settingsMusicEnabled = dto.musicEnabled;
+    if (dto.language !== undefined) data.settingsLanguage = dto.language;
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data,
       select: {
-        huntTickets: true,
+        settingsNotifications: true,
+        settingsAutoFeed: true,
+        settingsBattleAnimations: true,
+        settingsSoundEnabled: true,
+        settingsMusicEnabled: true,
+        settingsLanguage: true,
       },
     });
 
     return {
-      message: 'Added 5 hunt tickets',
-      huntTickets: updatedUser.huntTickets,
+      notifications: updated.settingsNotifications,
+      autoFeed: updated.settingsAutoFeed,
+      battleAnimations: updated.settingsBattleAnimations,
+      soundEnabled: updated.settingsSoundEnabled,
+      musicEnabled: updated.settingsMusicEnabled,
+      language: updated.settingsLanguage,
     };
   }
 }

@@ -120,20 +120,6 @@ export interface BattleCompleteResponse {
   battle: any
 }
 
-// Auction types
-export interface CreateAuctionRequest {
-  itemType: 'pet' | 'item'
-  itemId: string
-  startingBid: number
-  buyoutPrice?: number
-  duration: number // hours
-}
-
-export interface PlaceBidRequest {
-  auctionId: string
-  amount: number
-}
-
 // Evolution types
 export interface EvolutionPath {
   evolvesTo: string

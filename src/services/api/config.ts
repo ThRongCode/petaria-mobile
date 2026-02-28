@@ -1,27 +1,17 @@
 /**
  * API Configuration
- * Toggle useMock to switch between mock and real backend
  */
 
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL
+  || (__DEV__ ? 'http://localhost:3000/api' : 'https://api.vnpeteria.com/api')
+
 export const API_CONFIG = {
-  // Set to false when real backend is ready
-  useMock: false,
-  
-  // Real backend URL (for future)
-  baseURL: __DEV__ 
-    ? 'http://localhost:3000/api'
-    : 'https://api.vnpeteria.com/api',
-  
-  // Request timeout
+  baseURL: API_BASE_URL,
+
+  /** Request timeout in milliseconds */
   timeout: 10000,
-  
-  // Simulated network delay for mock (ms)
-  mockDelay: {
-    min: 300,
-    max: 800,
-  },
-  
-  // Retry configuration
+
+  /** Retry configuration */
   retry: {
     attempts: 3,
     delay: 1000,

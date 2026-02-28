@@ -19,6 +19,53 @@ interface BattlePetInfo {
   }
 }
 
+interface PokemonDisplayProps {
+  pet: BattlePetInfo
+  hpAnim: Animated.Value
+  hpPercentage: number
+  showHpNumbers?: boolean
+}
+
+function PokemonDisplay({ pet, hpAnim, hpPercentage, showHpNumbers = false }: PokemonDisplayProps): React.ReactElement {
+  return (
+    <View style={styles.pokemonColumn}>
+      <Image
+        source={getPokemonImage(pet.species) as any}
+        style={styles.pokemonSprite}
+        resizeMode="contain"
+      />
+      <Panel variant="dark" style={styles.infoBadge}>
+        <View style={styles.infoBadgeHeader}>
+          <ThemedText style={styles.badgeName}>{pet.name}</ThemedText>
+          <ThemedText style={styles.badgeLevel}>Lv.{pet.level}</ThemedText>
+        </View>
+        <View style={styles.hpBarContainer}>
+          <ThemedText style={styles.hpLabel}>HP</ThemedText>
+          <View style={styles.hpBarOuter}>
+            <Animated.View
+              style={[
+                styles.hpBarInner,
+                {
+                  width: hpAnim.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: ['0%', '100%']
+                  }),
+                  backgroundColor: getHpColor(hpPercentage)
+                }
+              ]}
+            />
+          </View>
+        </View>
+        {showHpNumbers && (
+          <ThemedText style={styles.hpNumbers}>
+            {pet.currentHp} / {pet.temporaryStats.maxHp}
+          </ThemedText>
+        )}
+      </Panel>
+    </View>
+  )
+}
+
 interface BattleFieldProps {
   playerPet: BattlePetInfo
   opponentPet: BattlePetInfo
@@ -39,74 +86,17 @@ export const BattleField: React.FC<BattleFieldProps> = ({
   return (
     <View style={styles.battleFieldArea}>
       <View style={styles.pokemonRow}>
-        {/* Player Pokemon - Left Half */}
-        <View style={styles.pokemonColumn}>
-          <Image 
-            source={getPokemonImage(playerPet.species) as any}
-            style={styles.pokemonSprite}
-            resizeMode="contain"
-          />
-          {/* Player Info Badge */}
-          <Panel variant="dark" style={styles.infoBadge}>
-            <View style={styles.infoBadgeHeader}>
-              <ThemedText style={styles.badgeName}>{playerPet.name}</ThemedText>
-              <ThemedText style={styles.badgeLevel}>Lv.{playerPet.level}</ThemedText>
-            </View>
-            <View style={styles.hpBarContainer}>
-              <ThemedText style={styles.hpLabel}>HP</ThemedText>
-              <View style={styles.hpBarOuter}>
-                <Animated.View 
-                  style={[
-                    styles.hpBarInner,
-                    {
-                      width: playerHpAnim.interpolate({
-                        inputRange: [0, 100],
-                        outputRange: ['0%', '100%']
-                      }),
-                      backgroundColor: getHpColor(playerHpPercentage)
-                    }
-                  ]} 
-                />
-              </View>
-            </View>
-            <ThemedText style={styles.hpNumbers}>
-              {playerPet.currentHp} / {playerPet.temporaryStats.maxHp}
-            </ThemedText>
-          </Panel>
-        </View>
-
-        {/* Opponent Pokemon - Right Half */}
-        <View style={styles.pokemonColumn}>
-          <Image 
-            source={getPokemonImage(opponentPet.species) as any}
-            style={styles.pokemonSprite}
-            resizeMode="contain"
-          />
-          {/* Opponent Info Badge */}
-          <Panel variant="dark" style={styles.infoBadge}>
-            <View style={styles.infoBadgeHeader}>
-              <ThemedText style={styles.badgeName}>{opponentPet.name}</ThemedText>
-              <ThemedText style={styles.badgeLevel}>Lv.{opponentPet.level}</ThemedText>
-            </View>
-            <View style={styles.hpBarContainer}>
-              <ThemedText style={styles.hpLabel}>HP</ThemedText>
-              <View style={styles.hpBarOuter}>
-                <Animated.View 
-                  style={[
-                    styles.hpBarInner,
-                    {
-                      width: opponentHpAnim.interpolate({
-                        inputRange: [0, 100],
-                        outputRange: ['0%', '100%']
-                      }),
-                      backgroundColor: getHpColor(opponentHpPercentage)
-                    }
-                  ]} 
-                />
-              </View>
-            </View>
-          </Panel>
-        </View>
+        <PokemonDisplay
+          pet={playerPet}
+          hpAnim={playerHpAnim}
+          hpPercentage={playerHpPercentage}
+          showHpNumbers
+        />
+        <PokemonDisplay
+          pet={opponentPet}
+          hpAnim={opponentHpAnim}
+          hpPercentage={opponentHpPercentage}
+        />
       </View>
     </View>
   )

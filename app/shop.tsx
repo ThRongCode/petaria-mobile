@@ -222,10 +222,8 @@ export default function ShopScreen() {
         <TopBar
           username={profile.username}
           coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 150}
+          gems={profile.currency?.gems || 0}
           pokeballs={profile.currency?.pokeballs || 0}
-          energy={80}
-          maxEnergy={100}
           battleTickets={profile.battleTickets}
           huntTickets={profile.huntTickets}
           onSettingsPress={() => router.push('/profile')}

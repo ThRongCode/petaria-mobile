@@ -1,192 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { GameState, Pet, Item, Battle, Auction, HuntResult, UserProfile, UserInventory, GameNotification, Move, Opponent } from '../types/game'
+import { GameState, Pet, Item, Battle, HuntResult, UserProfile, UserInventory, GameNotification, Move, Opponent } from '../types/game'
 import { getPokemonImage } from '@/assets/images'
-
-// Simple dummy data inline to avoid circular dependencies
-const createDummyData = () => {
-  // Create basic moves
-  const moves: Move[] = [
-    {
-      id: 'move-tackle',
-      name: 'Tackle',
-      type: 'Physical',
-      element: 'Normal',
-      power: 40,
-      accuracy: 100,
-      pp: 35,
-      maxPp: 35,
-      description: 'A physical attack where the user charges at the target.',
-    },
-    {
-      id: 'move-scratch',
-      name: 'Scratch',
-      type: 'Physical',
-      element: 'Normal',
-      power: 35,
-      accuracy: 100,
-      pp: 35,
-      maxPp: 35,
-      description: 'Hard, pointed claws rake the target.',
-    },
-    {
-      id: 'move-ember',
-      name: 'Ember',
-      type: 'Special',
-      element: 'Fire',
-      power: 40,
-      accuracy: 100,
-      pp: 25,
-      maxPp: 25,
-      description: 'Small flames are shot at the target.',
-    },
-    {
-      id: 'move-water-gun',
-      name: 'Water Gun',
-      type: 'Special',
-      element: 'Water',
-      power: 40,
-      accuracy: 100,
-      pp: 25,
-      maxPp: 25,
-      description: 'Water is blasted at the target.',
-    },
-    {
-      id: 'move-heal',
-      name: 'Heal',
-      type: 'Status',
-      element: 'Normal',
-      power: 0,
-      accuracy: 100,
-      pp: 10,
-      maxPp: 10,
-      description: 'Restores HP.',
-      effects: { healing: 20 }
-    },
-    {
-      id: 'move-power-up',
-      name: 'Power Up',
-      type: 'Status',
-      element: 'Normal',
-      power: 0,
-      accuracy: 100,
-      pp: 15,
-      maxPp: 15,
-      description: 'Increases Attack.',
-      effects: { statBoost: { attack: 10 } }
-    }
-  ]
-
-  const profile: UserProfile = {
-    id: 'user-001',
-    username: 'VnPetTrainer',
-    email: 'trainer@vnpet.com',
-    avatar: 'https://via.placeholder.com/100/4CAF50/FFFFFF?text=VT',
-    level: 15,
-    xp: 2840,
-    xpToNext: 3200,
-    currency: { coins: 15750, gems: 245 },
-    // Ticket system fields
-    huntTickets: 5,
-    battleTickets: 20,
-    lastTicketReset: new Date().toISOString(),
-    // Inventory tracking fields
-    petCount: 8,
-    itemCount: 45,
-    stats: {
-      battlesWon: 67,
-      battlesLost: 23,
-      petsOwned: 8,
-      legendPetsOwned: 1,
-      huntsCompleted: 142,
-      auctionsSold: 12,
-      totalEarnings: 89500,
-    },
-    achievements: ['first_pet', 'first_battle_win', 'pet_collector_10', 'hunt_master_100', 'legend_owner'],
-    settings: { notifications: true, autoFeed: false, battleAnimations: true },
-    lastLogin: Date.now() - 3600000,
-    createdAt: Date.now() - 86400000 * 30,
-  }
-
-  const pets: Pet[] = [
-    {
-      id: 'pet-001',
-      name: 'Pikachu',
-      species: 'Pikachu',
-      rarity: 'Common',
-      level: 12,
-      xp: 840,
-      xpToNext: 1200,
-      stats: { hp: 68, maxHp: 68, attack: 32, defense: 28, speed: 38 },
-      moves: [
-        moves.find(m => m.id === 'move-tackle'),
-        moves.find(m => m.id === 'move-scratch'),
-        moves.find(m => m.id === 'move-heal'),
-        moves.find(m => m.id === 'move-power-up'),
-      ].filter(Boolean) as Move[],
-      image: require('@/assets/images/pet_image/pikachu.png'),
-      evolutionStage: 1,
-      maxEvolutionStage: 3,
-      evolutionRequirements: { level: 15, itemId: 'item-evo-001' },
-      isLegendary: false,
-      ownerId: 'user-001',
-      isForSale: false,
-      mood: 85,
-      lastFed: Date.now() - 7200000,
-    }
-  ]
-
-  // Opponents moved to src/constants/opponents.ts
-
-  const items: Item[] = [
-    {
-      id: 'item-heal-001',
-      name: 'Health Potion',
-      description: 'Restores 50 HP to a pet',
-      type: 'Consumable',
-      rarity: 'Common',
-      effects: { hp: 50, permanent: false },
-      price: { coins: 100 },
-      image: 'https://via.placeholder.com/80/4CAF50/FFFFFF?text=🧪',
-    }
-  ]
-
-  const regions = [
-    {
-      id: 'region-001',
-      name: 'Mystic Forest',
-      description: 'A magical forest where grass and bug type pets thrive',
-      huntingCost: 100,
-      legendFee: 50,
-      legendPetId: 'pet-legend-001',
-      legendOwnerId: 'user-001',
-      availablePets: [
-        { petSpecies: 'Bulbasaur', rarity: 'Common' as const, spawnRate: 0.3 },
-        { petSpecies: 'Caterpie', rarity: 'Common' as const, spawnRate: 0.25 },
-        { petSpecies: 'Oddish', rarity: 'Common' as const, spawnRate: 0.2 },
-        { petSpecies: 'Bellsprout', rarity: 'Rare' as const, spawnRate: 0.15 },
-        { petSpecies: 'Scyther', rarity: 'Rare' as const, spawnRate: 0.08 },
-        { petSpecies: 'Celebi', rarity: 'Legendary' as const, spawnRate: 0.02 },
-      ],
-      exclusivePets: ['Celebi'],
-      image: 'https://via.placeholder.com/200/4CAF50/FFFFFF?text=🌲',
-      unlockLevel: 1,
-    }
-  ]
-
-  return {
-    profile,
-    pets,
-    items,
-    regions,
-    // opponents removed - now a constant
-    inventory: { pets: ['pet-001'], items: { 'item-heal-001': 5 }, maxPetSlots: 20, maxItemSlots: 100 },
-    battles: [],
-    auctions: [],
-    notifications: [],
-  }
-}
-
-// Dummy data creation function removed - all data now loaded from API
 
 export const gameInitialState: GameState = {
   profile: {
@@ -209,15 +23,25 @@ export const gameInitialState: GameState = {
       petsOwned: 0,
       legendPetsOwned: 0,
       huntsCompleted: 0,
-      auctionsSold: 0,
       totalEarnings: 0,
     },
+    achievements: [],
+    settings: {
+      notifications: true,
+      autoFeed: false,
+      battleAnimations: true,
+      soundEnabled: true,
+      musicEnabled: true,
+      language: 'en',
+    },
+    lastLogin: 0,
+    createdAt: 0,
   },
   inventory: { pets: [], items: {}, maxPetSlots: 20, maxItemSlots: 100 },
   pets: [],
   items: [],
   regions: [],
-  auctions: [],
+  opponents: [],
   battles: [],
   activeBattle: undefined,
   huntingCooldowns: {},
@@ -236,7 +60,6 @@ const gameSlice = createSlice({
     loadUserData: (state) => {
       // This is just a trigger action, actual loading is done in saga
       state.isLoading = true
-      console.log('🔄 Triggering user data load...')
     },
 
     setLoadingComplete: (state) => {
@@ -288,41 +111,6 @@ const gameSlice = createSlice({
     updateProfile: (state, action: PayloadAction<Partial<UserProfile>>) => {
       state.profile = { ...state.profile, ...action.payload }
     },
-    
-    // @deprecated Use API calls instead - backend is source of truth
-    addCurrency: (state, action: PayloadAction<{ coins?: number; gems?: number }>) => {
-      console.warn('⚠️ DEPRECATED: addCurrency is deprecated. Currency changes should come from API responses.')
-      if (action.payload.coins) {
-        state.profile.currency.coins += action.payload.coins
-      }
-      if (action.payload.gems) {
-        state.profile.currency.gems += action.payload.gems
-      }
-    },
-    
-    // @deprecated Use API calls instead - backend is source of truth
-    addXp: (state, action: PayloadAction<{ amount: number }>) => {
-      console.warn('⚠️ DEPRECATED: addXp is deprecated. XP changes should come from API responses.')
-      state.profile.xp += action.payload.amount
-      
-      // Check for level up
-      while (state.profile.xp >= state.profile.xpToNext) {
-        state.profile.xp -= state.profile.xpToNext
-        state.profile.level += 1
-        state.profile.xpToNext = Math.floor(state.profile.xpToNext * 1.2)
-      }
-    },
-    
-    // @deprecated Use API calls instead - backend is source of truth
-    spendCurrency: (state, action: PayloadAction<{ coins?: number; gems?: number }>) => {
-      console.warn('⚠️ DEPRECATED: spendCurrency is deprecated. Currency changes should come from API responses.')
-      if (action.payload.coins) {
-        state.profile.currency.coins = Math.max(0, state.profile.currency.coins - action.payload.coins)
-      }
-      if (action.payload.gems) {
-        state.profile.currency.gems = Math.max(0, state.profile.currency.gems - action.payload.gems)
-      }
-    },
 
     // Pet Actions
     addPet: (state, action: PayloadAction<Pet>) => {
@@ -331,43 +119,10 @@ const gameSlice = createSlice({
       state.profile.stats.petsOwned += 1
     },
     
-    // @deprecated Use API calls instead - backend is source of truth
-    updatePet: (state, action: PayloadAction<{ petId: string; updates: Partial<Pet> }>) => {
-      console.warn('⚠️ DEPRECATED: updatePet is deprecated. Pet updates should come from API responses.')
-      const petIndex = state.pets.findIndex(pet => pet.id === action.payload.petId)
-      if (petIndex !== -1) {
-        state.pets[petIndex] = { ...state.pets[petIndex], ...action.payload.updates }
-      }
-    },
-    
     removePet: (state, action: PayloadAction<string>) => {
       state.pets = state.pets.filter(pet => pet.id !== action.payload)
       state.inventory.pets = state.inventory.pets.filter(petId => petId !== action.payload)
       state.profile.stats.petsOwned -= 1
-    },
-    
-    // @deprecated Use API calls instead - backend is source of truth
-    levelUpPet: (state, action: PayloadAction<{ petId: string; xpGained: number }>) => {
-      console.warn('⚠️ DEPRECATED: levelUpPet is deprecated. Level-ups should be handled by backend after battles.')
-      const petIndex = state.pets.findIndex(pet => pet.id === action.payload.petId)
-      if (petIndex !== -1) {
-        const pet = state.pets[petIndex]
-        pet.xp += action.payload.xpGained
-        
-        // Check for level up
-        while (pet.xp >= pet.xpToNext) {
-          pet.xp -= pet.xpToNext
-          pet.level += 1
-          pet.xpToNext = Math.floor(pet.xpToNext * 1.2)
-          
-          // Stat increases on level up
-          pet.stats.maxHp += Math.floor(pet.level * 0.5) + 2
-          pet.stats.hp = pet.stats.maxHp
-          pet.stats.attack += Math.floor(pet.level * 0.3) + 1
-          pet.stats.defense += Math.floor(pet.level * 0.3) + 1
-          pet.stats.speed += Math.floor(pet.level * 0.2) + 1
-        }
-      }
     },
 
     // Item Actions
@@ -375,32 +130,6 @@ const gameSlice = createSlice({
       const quantity = action.payload.quantity || 1
       const currentQuantity = state.inventory.items[action.payload.itemId] || 0
       state.inventory.items[action.payload.itemId] = currentQuantity + quantity
-    },
-    
-    useItem: (state, action: PayloadAction<{ itemId: string; petId?: string; quantity?: number }>) => {
-      const quantity = action.payload.quantity || 1
-      const currentQuantity = state.inventory.items[action.payload.itemId] || 0
-      
-      if (currentQuantity >= quantity) {
-        state.inventory.items[action.payload.itemId] = currentQuantity - quantity
-        
-        // Apply item effects if pet is specified
-        if (action.payload.petId) {
-          const petIndex = state.pets.findIndex(pet => pet.id === action.payload.petId)
-          const item = state.items.find(item => item.id === action.payload.itemId)
-          
-          if (petIndex !== -1 && item) {
-            const pet = state.pets[petIndex]
-            if (item.effects) {
-              if (item.effects.hp) pet.stats.hp = Math.min(pet.stats.maxHp, pet.stats.hp + item.effects.hp)
-              if (item.effects.attack && item.effects.permanent) pet.stats.attack += item.effects.attack
-              if (item.effects.defense && item.effects.permanent) pet.stats.defense += item.effects.defense
-              if (item.effects.speed && item.effects.permanent) pet.stats.speed += item.effects.speed
-              if (item.effects.xpBoost) pet.xp += item.effects.xpBoost
-            }
-          }
-        }
-      }
     },
 
     // Battle Actions
@@ -475,81 +204,6 @@ const gameSlice = createSlice({
       state.profile.xp += action.payload.result.xp
     },
 
-    // Auction Actions
-    createAuction: (state, action: PayloadAction<Auction>) => {
-      state.auctions.push(action.payload)
-      
-      // Remove item from inventory (it's now in auction)
-      if (action.payload.itemType === 'pet') {
-        state.inventory.pets = state.inventory.pets.filter(petId => petId !== action.payload.itemId)
-      } else {
-        const currentQuantity = state.inventory.items[action.payload.itemId] || 0
-        state.inventory.items[action.payload.itemId] = Math.max(0, currentQuantity - 1)
-      }
-    },
-    
-    bidOnAuction: (state, action: PayloadAction<{ auctionId: string; bidAmount: number; bidderId: string; bidderUsername: string }>) => {
-      const auctionIndex = state.auctions.findIndex(auction => auction.id === action.payload.auctionId)
-      if (auctionIndex !== -1) {
-        const auction = state.auctions[auctionIndex]
-        
-        // Refund previous bidder
-        if (auction.currentBidderId && auction.currentBidderId !== action.payload.bidderId) {
-          // In a real app, this would be handled by the backend
-        }
-        
-        // Set new highest bid
-        auction.currentBid = action.payload.bidAmount
-        auction.currentBidderId = action.payload.bidderId
-        auction.currentBidderUsername = action.payload.bidderUsername
-        
-        auction.bids.push({
-          id: Date.now().toString(),
-          bidderId: action.payload.bidderId,
-          bidderUsername: action.payload.bidderUsername,
-          amount: action.payload.bidAmount,
-          timestamp: Date.now(),
-        })
-        
-        // Lock currency for current user's bid
-        if (action.payload.bidderId === state.profile.id) {
-          state.profile.currency.coins -= action.payload.bidAmount
-        }
-      }
-    },
-    
-    completeAuction: (state, action: PayloadAction<{ auctionId: string; winnerId?: string }>) => {
-      const auctionIndex = state.auctions.findIndex(auction => auction.id === action.payload.auctionId)
-      if (auctionIndex !== -1) {
-        const auction = state.auctions[auctionIndex]
-        auction.status = 'completed'
-        
-        if (auction.sellerId === state.profile.id) {
-          // Seller receives payment
-          const finalPrice = auction.currentBid
-          const commission = Math.floor(finalPrice * auction.commission)
-          state.profile.currency.coins += (finalPrice - commission)
-          state.profile.stats.auctionsSold += 1
-          state.profile.stats.totalEarnings += (finalPrice - commission)
-        }
-        
-        if (action.payload.winnerId === state.profile.id) {
-          // Winner receives item
-          if (auction.itemType === 'pet') {
-            const pet = state.pets.find(p => p.id === auction.itemId)
-            if (pet) {
-              pet.ownerId = state.profile.id
-              state.inventory.pets.push(auction.itemId)
-              state.profile.stats.petsOwned += 1
-            }
-          } else {
-            const currentQuantity = state.inventory.items[auction.itemId] || 0
-            state.inventory.items[auction.itemId] = currentQuantity + 1
-          }
-        }
-      }
-    },
-
     // Notification Actions
     addNotification: (state, action: PayloadAction<GameNotification>) => {
       state.notifications.unshift(action.payload)
@@ -573,6 +227,11 @@ const gameSlice = createSlice({
         state.regions[regionIndex].legendPetId = action.payload.legendPetId
         state.regions[regionIndex].legendOwnerId = action.payload.legendOwnerId
       }
+    },
+
+    // Settings Actions
+    updateSettings: (state, action: PayloadAction<Partial<UserProfile['settings']>>) => {
+      state.profile.settings = { ...state.profile.settings, ...action.payload }
     },
   },
 })

@@ -7,21 +7,13 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
-  /**
-   * GET /event/active
-   * Get all currently active events
-   */
   @Get('active')
-  async getActiveEvents() {
+  getActiveEvents() {
     return this.eventService.getActiveEvents();
   }
 
-  /**
-   * GET /event/upcoming
-   * Get upcoming events (not started yet)
-   */
   @Get('upcoming')
-  async getUpcomingEvents() {
+  getUpcomingEvents() {
     return this.eventService.getUpcomingEvents();
   }
 }

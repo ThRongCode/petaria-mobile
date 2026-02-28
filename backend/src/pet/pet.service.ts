@@ -5,7 +5,6 @@ import {
   getSpeciesEvolution,
   getAvailableEvolutions,
   canEvolveWith,
-  EVOLUTION_CHAINS,
 } from '../config/evolution-chains.config';
 import {
   getSpeciesBaseStats,
@@ -17,6 +16,50 @@ import {
 @Injectable()
 export class PetService {
   constructor(private prisma: PrismaService) {}
+
+  /**
+   * Consume one item from user's inventory
+   * Deletes the record if quantity reaches 0
+   */
+  private async consumeUserItem(
+    userId: string,
+    itemId: string,
+    prismaClient: typeof this.prisma = this.prisma,
+  ): Promise<void> {
+    const userItem = await prismaClient.userItem.findUnique({
+      where: { userId_itemId: { userId, itemId } },
+    });
+
+    if (!userItem || userItem.quantity < 1) {
+      throw new BadRequestException('Item not found in inventory');
+    }
+
+    if (userItem.quantity === 1) {
+      await prismaClient.userItem.delete({
+        where: { userId_itemId: { userId, itemId } },
+      });
+    } else {
+      await prismaClient.userItem.update({
+        where: { userId_itemId: { userId, itemId } },
+        data: { quantity: userItem.quantity - 1 },
+      });
+    }
+  }
+
+  /**
+   * Get pet evolution info enriched with species data
+   */
+  private getPetWithEvolutionInfo(pet: any) {
+    const evolutionData = getSpeciesEvolution(pet.species);
+    const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
+
+    return {
+      ...pet,
+      type: getSpeciesType(pet.species),
+      maxEvolutionStage: evolutionData.maxStage,
+      canEvolve: evolutionData.canEvolve && availableEvolutions.length > 0,
+    };
+  }
 
   async findAll(userId: string) {
     const pets = await this.prisma.pet.findMany({
@@ -39,34 +82,18 @@ export class PetService {
     });
 
     // Add isFavorite flag, type, and evolution info to each pet
-    return pets.map((pet) => {
-      const evolutionData = getSpeciesEvolution(pet.species);
-      const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
-      
-      return {
-        ...pet,
-        type: getSpeciesType(pet.species),
-        isFavorite: pet.favoritedBy.length > 0,
-        favoritedBy: undefined, // Remove the relation data
-        // Evolution info from config
-        maxEvolutionStage: evolutionData.maxStage,
-        canEvolve: evolutionData.canEvolve && availableEvolutions.length > 0,
-      };
-    });
+    return pets.map((pet) => ({
+      ...this.getPetWithEvolutionInfo(pet),
+      isFavorite: pet.favoritedBy.length > 0,
+      favoritedBy: undefined,
+    }));
   }
 
   async findOne(id: string, userId: string) {
     const pet = await this.prisma.pet.findFirst({
-      where: {
-        id,
-        ownerId: userId,
-      },
+      where: { id, ownerId: userId },
       include: {
-        moves: {
-          include: {
-            move: true,
-          },
-        },
+        moves: { include: { move: true } },
       },
     });
 
@@ -74,16 +101,7 @@ export class PetService {
       throw new NotFoundException('Pet not found');
     }
 
-    // Add type and evolution info from config
-    const evolutionData = getSpeciesEvolution(pet.species);
-    const availableEvolutions = getAvailableEvolutions(pet.species, pet.level);
-    
-    return {
-      ...pet,
-      type: getSpeciesType(pet.species),
-      maxEvolutionStage: evolutionData.maxStage,
-      canEvolve: evolutionData.canEvolve && availableEvolutions.length > 0,
-    };
+    return this.getPetWithEvolutionInfo(pet);
   }
 
   async update(id: string, userId: string, updatePetDto: UpdatePetDto) {
@@ -146,26 +164,18 @@ export class PetService {
   async heal(id: string, userId: string, itemId: string) {
     const pet = await this.findOne(id, userId);
 
-    // Check if user has the item
+    // Check if user has the item and get its details
     const userItem = await this.prisma.userItem.findUnique({
-      where: {
-        userId_itemId: {
-          userId,
-          itemId,
-        },
-      },
-      include: {
-        item: true,
-      },
+      where: { userId_itemId: { userId, itemId } },
+      include: { item: true },
     });
 
     if (!userItem || userItem.quantity < 1) {
       throw new BadRequestException('Item not found in inventory');
     }
 
-    const item = userItem.item;
+    const { item } = userItem;
 
-    // Check if item is a healing item
     if (!item.effectHp || item.effectHp <= 0) {
       throw new BadRequestException('This item cannot heal pets');
     }
@@ -174,39 +184,14 @@ export class PetService {
       throw new BadRequestException('Pet is already at full health');
     }
 
-    // Apply healing
     const healAmount = Math.min(item.effectHp, pet.maxHp - pet.hp);
-    const newHp = pet.hp + healAmount;
 
-    // Update pet HP
     const updated = await this.prisma.pet.update({
       where: { id },
-      data: { hp: newHp },
+      data: { hp: pet.hp + healAmount },
     });
 
-    // Decrease item quantity
-    if (userItem.quantity === 1) {
-      await this.prisma.userItem.delete({
-        where: {
-          userId_itemId: {
-            userId,
-            itemId,
-          },
-        },
-      });
-    } else {
-      await this.prisma.userItem.update({
-        where: {
-          userId_itemId: {
-            userId,
-            itemId,
-          },
-        },
-        data: {
-          quantity: userItem.quantity - 1,
-        },
-      });
-    }
+    await this.consumeUserItem(userId, itemId);
 
     return {
       pet: updated,
@@ -489,15 +474,8 @@ export class PetService {
 
     // Check user has the required item
     const userItem = await this.prisma.userItem.findUnique({
-      where: {
-        userId_itemId: {
-          userId,
-          itemId,
-        },
-      },
-      include: {
-        item: true,
-      },
+      where: { userId_itemId: { userId, itemId } },
+      include: { item: true },
     });
 
     if (!userItem || userItem.quantity < 1) {
@@ -521,28 +499,7 @@ export class PetService {
     // Perform evolution in a transaction
     const result = await this.prisma.$transaction(async (prisma) => {
       // Consume the evolution item
-      if (userItem.quantity === 1) {
-        await prisma.userItem.delete({
-          where: {
-            userId_itemId: {
-              userId,
-              itemId,
-            },
-          },
-        });
-      } else {
-        await prisma.userItem.update({
-          where: {
-            userId_itemId: {
-              userId,
-              itemId,
-            },
-          },
-          data: {
-            quantity: userItem.quantity - 1,
-          },
-        });
-      }
+      await this.consumeUserItem(userId, itemId, prisma as any);
 
       // Update the pet with new species and stats
       const evolvedPet = await prisma.pet.update({
@@ -551,14 +508,10 @@ export class PetService {
           species: newSpecies,
           evolutionStage: newEvolutionData.stage,
           ...newStats,
-          hp: newStats.maxHp, // Full heal on evolution
+          hp: newStats.maxHp,
         },
         include: {
-          moves: {
-            include: {
-              move: true,
-            },
-          },
+          moves: { include: { move: true } },
         },
       });
 

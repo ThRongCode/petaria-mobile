@@ -5,6 +5,7 @@ import {
   ScrollView,
   ImageBackground,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native'
 import { TopBar, Panel } from '@/components/ui'
 import { ThemedText } from '@/components'
@@ -13,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
-import { apiClient } from '@/services/api'
+import { battleApi } from '@/services/api'
 
 interface BattleType {
   id: string
@@ -29,43 +30,31 @@ interface BattleType {
 /**
  * EventScreen - Main event hub with different battle types
  * Event Battles, EXP Battles, Material Battles
+ * Battle types are loaded from the API
  */
 export const EventScreen: React.FC = () => {
   const router = useRouter()
   const profile = useSelector(getUserProfile)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [battleTypes, setBattleTypes] = useState<BattleType[]>([])
 
-  // Battle types - can be fetched from API
-  const battleTypes: BattleType[] = [
-    {
-      id: 'event',
-      name: '⚡ Event Battle',
-      description: 'Limited time event with exclusive rewards! Weekly rotating challenges.',
-      icon: 'trophy',
-      gradient: ['#FFD700', '#FFA500'],
-      rewards: ['Rare Pokemon', 'Premium Items', 'Event Coins'],
-      available: true,
-      endDate: 'Ends in 3 days',
-    },
-    {
-      id: 'exp',
-      name: '📚 EXP Battle',
-      description: 'Train your Pokemon and gain massive experience points!',
-      icon: 'trending-up',
-      gradient: ['#9C27B0', '#5E35B1'],
-      rewards: ['High EXP', 'Rare Candy', 'Training Items'],
-      available: true,
-    },
-    {
-      id: 'material',
-      name: '💎 Material Battle',
-      description: 'Farm materials, gold, and evolution stones!',
-      icon: 'diamond',
-      gradient: ['#2196F3', '#1976D2'],
-      rewards: ['Gold', 'Evolution Stones', 'Stat Boosters'],
-      available: true,
-    },
-  ]
+  useEffect(() => {
+    loadBattleTypes()
+  }, [])
+
+  const loadBattleTypes = async () => {
+    try {
+      setLoading(true)
+      const response = await battleApi.getBattleTypes()
+      if (response.success && response.data) {
+        setBattleTypes(response.data)
+      }
+    } catch (error) {
+      console.error('Failed to load battle types:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleBattleTypeSelect = (battleType: BattleType) => {
     router.push({
@@ -202,7 +191,7 @@ export const EventScreen: React.FC = () => {
         <TopBar
           username={profile.username}
           coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 150}
+          gems={profile.currency?.gems || 0}
           pokeballs={profile.currency?.pokeballs || 0}
           
           
@@ -223,7 +212,16 @@ export const EventScreen: React.FC = () => {
 
         {/* Battle Types */}
         <View style={styles.battleTypesContainer}>
-          {battleTypes.map(renderBattleCard)}
+          {loading ? (
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <ActivityIndicator color="#FFD700" size="large" />
+              <ThemedText style={{ color: 'rgba(255,255,255,0.6)', marginTop: 12 }}>
+                Loading battle types...
+              </ThemedText>
+            </View>
+          ) : (
+            battleTypes.map(renderBattleCard)
+          )}
         </View>
       </ScrollView>
     </View>
