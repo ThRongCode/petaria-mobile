@@ -24,6 +24,9 @@ import { gameActions } from '@/stores/reducers'
 import { Ionicons } from '@expo/vector-icons'
 import { apiClient, itemApi } from '@/services/api'
 import type { Pet, Item } from '@/stores/types/game'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 // Extracted components
 import { PetGridCard, ItemGridCard, EmptyState } from './components'
@@ -168,24 +171,24 @@ export const PetsScreen: React.FC = () => {
       message="Start hunting to catch your first Pokemon!"
       buttonText="Go Hunt"
       onButtonPress={handleGoHunt}
-      buttonColors={['#4CAF50', '#2E7D32']}
+      buttonColors={[colors.primaryContainer, colors.primary]}
     />
   ), [handleGoHunt])
 
   const renderItemEmptyState = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Panel variant="dark" style={styles.emptyPanel}>
-        <Ionicons name="cube-outline" size={64} color="rgba(255, 255, 255, 0.3)" />
+        <Ionicons name="cube-outline" size={64} color={colors.outline} />
         <ThemedText style={styles.emptyTitle}>No Items Yet</ThemedText>
         <ThemedText style={styles.emptyText}>
           Visit the shop to purchase items for your Pokémon
         </ThemedText>
         <TouchableOpacity style={styles.shopButton} onPress={handleGoShop}>
           <LinearGradient
-            colors={['rgba(255, 215, 0, 0.3)', 'rgba(255, 152, 0, 0.5)']}
+            colors={['rgba(255, 215, 0, 0.25)', 'rgba(255, 152, 0, 0.4)']}
             style={styles.shopButtonGradient}
           >
-            <Ionicons name="cart" size={20} color="#FFD700" />
+            <Ionicons name="cart" size={20} color={colors.secondaryContainer} />
             <ThemedText style={styles.shopButtonText}>Visit Shop</ThemedText>
           </LinearGradient>
         </TouchableOpacity>
@@ -202,7 +205,7 @@ export const PetsScreen: React.FC = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
+          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
           style={styles.gradientOverlay}
         />
       </ImageBackground>
@@ -231,7 +234,7 @@ export const PetsScreen: React.FC = () => {
               <Ionicons
                 name="paw"
                 size={18}
-                color={activeTab === 'pokemon' ? '#FFD700' : 'rgba(255, 255, 255, 0.5)'}
+                color={activeTab === 'pokemon' ? colors.secondaryContainer : colors.outline}
               />
               <ThemedText style={[styles.tabText, activeTab === 'pokemon' && styles.tabTextActive]}>
                 Pokemon
@@ -253,7 +256,7 @@ export const PetsScreen: React.FC = () => {
               <Ionicons
                 name="cube"
                 size={18}
-                color={activeTab === 'items' ? '#FFD700' : 'rgba(255, 255, 255, 0.5)'}
+                color={activeTab === 'items' ? colors.secondaryContainer : colors.outline}
               />
               <ThemedText style={[styles.tabText, activeTab === 'items' && styles.tabTextActive]}>
                 Inventory
@@ -274,7 +277,7 @@ export const PetsScreen: React.FC = () => {
                 <Ionicons
                   name={showFavoritesOnly ? 'heart' : 'heart-outline'}
                   size={18}
-                  color={showFavoritesOnly ? '#FF4081' : 'rgba(255, 255, 255, 0.5)'}
+                  color={showFavoritesOnly ? '#FF4081' : colors.outline}
                 />
               </TouchableOpacity>
             )}
@@ -337,7 +340,7 @@ export const PetsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   background: {
     position: 'absolute',
@@ -352,111 +355,109 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  // Header & Tabs
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   tabsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   tabActive: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 219, 60, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.5)',
+    borderColor: 'rgba(255, 219, 60, 0.4)',
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: fonts.semiBold,
+    color: colors.outline,
   },
   tabTextActive: {
-    color: '#FFD700',
+    color: colors.secondaryContainer,
   },
   countBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.3)',
-    borderRadius: 10,
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255, 219, 60, 0.2)',
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    marginLeft: 4,
+    marginLeft: spacing.xs,
   },
   countText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   favoriteToggle: {
     padding: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     marginLeft: 'auto',
   },
   favoriteToggleActive: {
-    backgroundColor: 'rgba(255, 64, 129, 0.2)',
+    backgroundColor: 'rgba(255, 64, 129, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 64, 129, 0.5)',
+    borderColor: 'rgba(255, 64, 129, 0.4)',
   },
-  // Grid
   gridRow: {
-    gap: 12,
-    paddingHorizontal: 16,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   gridContent: {
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
   },
-  // Empty States
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 20,
+    paddingVertical: spacing['5xl'],
+    paddingHorizontal: spacing.xl,
   },
   emptyPanel: {
-    padding: 40,
+    padding: spacing['4xl'],
     alignItems: 'center',
     width: '100%',
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 16,
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing['2xl'],
   },
   shopButton: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   shopButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing['2xl'],
+    borderRadius: radii.sm,
   },
   shopButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
 })

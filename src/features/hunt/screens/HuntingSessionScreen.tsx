@@ -16,6 +16,9 @@ import { useSelector } from 'react-redux'
 import { getUserCurrency, getUserProfile } from '@/stores/selectors'
 import { TopBar, CustomAlert } from '@/components/ui'
 import { ThemedText } from '@/components'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing } from '@/themes/metrics'
 
 // Import from hunt feature module
 import {
@@ -155,7 +158,7 @@ export const HuntingSessionScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFD700" />
+        <ActivityIndicator size="large" color={colors.secondaryContainer} />
         <ThemedText style={styles.loadingText}>Loading hunt session...</ThemedText>
       </View>
     )
@@ -237,17 +240,18 @@ export const HuntingSessionScreen: React.FC = () => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: '#1a0a2e',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a0a2e',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   loadingText: {
-    marginTop: 16,
-    color: '#FFD700',
+    marginTop: spacing.lg,
+    fontFamily: fonts.medium,
+    color: colors.secondaryContainer,
     fontSize: 16,
   },
   controlsContainer: {

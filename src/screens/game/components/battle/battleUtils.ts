@@ -133,14 +133,16 @@ export function applyMoveEffects(user: any, target: any, move: Move): void {
   }
 }
 
+import { colors } from '@/themes/colors'
+
 export function getHpColor(percentage: number): string {
   if (percentage > 50) {
-    return '#4CAF50' // Green - healthy
+    return colors.success
   }
   if (percentage > 20) {
-    return '#FFA726' // Orange - warning
+    return colors.warning
   }
-  return '#EF5350' // Red - critical
+  return colors.error
 }
 
 interface BattleResultForMessage {

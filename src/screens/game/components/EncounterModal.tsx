@@ -5,6 +5,9 @@ import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPokemonImage } from '@/assets/images'
 import { CaptureState } from './useCaptureAnimation'
+import { colors, rarityColors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface BackendEncounter {
   id: string
@@ -37,14 +40,7 @@ interface EncounterModalProps {
 }
 
 function getRarityColor(rarity: string): string {
-  const colors: Record<string, string> = {
-    Common: '#9E9E9E',
-    Uncommon: '#4CAF50',
-    Rare: '#2196F3',
-    Epic: '#9C27B0',
-    Legendary: '#FF9800',
-  }
-  return colors[rarity] ?? '#9E9E9E'
+  return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
 }
 
 function getCaptureStatusText(captureState: CaptureState, speciesName: string): string {
@@ -87,8 +83,8 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
           <View style={styles.encounterContent}>
             <ThemedText style={[
               styles.encounterTitle,
-              captureState === 'success' && { color: '#4CAF50' },
-              captureState === 'failed' && { color: '#FF5722' }
+              captureState === 'success' && { color: colors.success },
+              captureState === 'failed' && { color: colors.error }
             ]}>
               {getCaptureStatusText(captureState, encounter.species)}
             </ThemedText>
@@ -168,14 +164,14 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                 disabled={encounter.caught || isCapturing}
               >
                 <LinearGradient
-                  colors={encounter.caught || isCapturing ? ['#666', '#444'] : ['#4CAF50', '#45a049']}
+                  colors={encounter.caught || isCapturing ? [colors.surfaceContainerHighest, colors.surfaceContainerHigh] : [colors.success, '#2E7D32']}
                   style={styles.gradientButton}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
                   {isCapturing ? (
                     <View style={styles.capturingContainer}>
-                      <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+                      <ActivityIndicator size="small" color={colors.onSurface} style={{ marginRight: 8 }} />
                       <ThemedText style={styles.buttonText}>
                         {captureState === 'throwing' ? 'Throwing...' : 
                          captureState === 'shaking' ? 'Catching...' : 'Capturing...'}
@@ -195,7 +191,7 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                 disabled={isCapturing}
               >
                 <LinearGradient
-                  colors={isCapturing ? ['#666', '#444'] : ['#FF9800', '#F57C00']}
+                  colors={isCapturing ? [colors.surfaceContainerHighest, colors.surfaceContainerHigh] : [colors.warning, '#E65100']}
                   style={styles.gradientButton}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -214,10 +210,10 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.lg,
   },
   modalContent: {
     width: '100%',
@@ -228,10 +224,10 @@ const styles = StyleSheet.create({
   },
   encounterTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#FFD700',
+    marginBottom: spacing.lg,
+    color: colors.secondaryContainer,
   },
   pokemonContainer: {
     position: 'relative',
@@ -239,7 +235,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 150,
     height: 150,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   pokemonWrapper: {
     width: '100%',
@@ -248,8 +244,8 @@ const styles = StyleSheet.create({
   monsterImage: {
     width: 150,
     height: 150,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceContainerHigh,
   },
   pokeballOverlay: {
     position: 'absolute',
@@ -266,15 +262,15 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     overflow: 'hidden',
     borderWidth: 3,
-    borderColor: '#333',
+    borderColor: colors.surfaceContainerHighest,
   },
   pokeballTop: {
     flex: 1,
-    backgroundColor: '#EF5350',
+    backgroundColor: colors.error,
   },
   pokeballMiddle: {
     height: 8,
-    backgroundColor: '#333',
+    backgroundColor: colors.surfaceContainerHighest,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -282,14 +278,14 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.onSurface,
     borderWidth: 3,
-    borderColor: '#333',
+    borderColor: colors.surfaceContainerHighest,
     position: 'absolute',
   },
   pokeballBottom: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.onSurface,
   },
   sparkleContainer: {
     position: 'absolute',
@@ -323,37 +319,39 @@ const styles = StyleSheet.create({
   },
   monsterName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     textAlign: 'center',
-    marginBottom: 8,
-    color: '#FFFFFF',
+    marginBottom: spacing.sm,
+    color: colors.onSurface,
   },
   monsterRarity: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   captureInfo: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 20,
+    backgroundColor: colors.surfaceContainerHigh,
+    padding: spacing.lg,
+    borderRadius: radii.md,
+    marginBottom: spacing.lg,
     width: '100%',
   },
   captureText: {
     textAlign: 'center',
     fontSize: 16,
-    marginBottom: 8,
-    color: '#FFFFFF',
+    fontFamily: fonts.medium,
+    marginBottom: spacing.sm,
+    color: colors.onSurface,
   },
   captureRate: {
     textAlign: 'center',
     fontSize: 14,
-    color: '#B0B0B0',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   encounterActions: {
-    gap: 12,
+    gap: spacing.md,
     width: '100%',
   },
   actionButton: {
@@ -363,13 +361,13 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   gradientButton: {
-    padding: 16,
-    borderRadius: 8,
+    padding: spacing.lg,
+    borderRadius: radii.md,
     alignItems: 'center',
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
 })

@@ -1,21 +1,26 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * Hook: useThemeColor
+ *
+ * Returns a color from the design token system.
+ * Currently dark-mode only. To add themes later:
+ *   1. Add a theme context / selector
+ *   2. Return color from the active theme's palette
+ *
+ * The `props` param allows per-instance overrides (backward compat).
  */
 
-import { colors } from '@/themes'
-import { useColorScheme } from 'react-native'
+import { colors, type ColorToken } from '@/themes/colors'
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
-  colorName: keyof typeof colors.light & keyof typeof colors.dark,
+  colorName: ColorToken,
 ) {
-  const theme = useColorScheme() ?? 'light'
-  const colorFromProps = props[theme]
-
-  if (colorFromProps) {
-    return colorFromProps
-  } else {
-    return colors[theme][colorName]
+  // Allow explicit per-instance override
+  if (props.dark) {
+    return props.dark
   }
+
+  // Return from centralized dark palette
+  const value = colors[colorName]
+  return typeof value === 'string' ? value : colors.onSurface
 }

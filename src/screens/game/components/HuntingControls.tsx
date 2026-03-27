@@ -4,6 +4,9 @@ import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 type Direction = 'up' | 'down' | 'left' | 'right'
 
@@ -33,9 +36,9 @@ function DirectionButton({ direction, iconName, label, isMoving, isDisabled, onP
     >
       <Panel variant="dark" style={styles.buttonPanel}>
         {isMoving ? (
-          <ActivityIndicator size="small" color="#FFD700" />
+          <ActivityIndicator size="small" color={colors.secondaryContainer} />
         ) : (
-          <Ionicons name={iconName} size={28} color="#FFD700" />
+          <Ionicons name={iconName} size={28} color={colors.secondaryContainer} />
         )}
         <ThemedText style={styles.movementLabel}>{label}</ThemedText>
       </Panel>
@@ -134,12 +137,12 @@ export const HuntingControls: React.FC<HuntingControlsProps> = ({
           style={styles.exitButtonContainer}
         >
           <LinearGradient
-            colors={['#757575', '#616161']}
+            colors={[colors.surfaceContainerHighest, colors.surfaceContainerHigh]}
             style={styles.exitButton}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name="arrow-back" size={18} color="#FFF" style={{ marginRight: 6 }} />
+            <Ionicons name="arrow-back" size={18} color={colors.onSurface} style={{ marginRight: 6 }} />
             <ThemedText style={styles.exitButtonText}>Save & Exit</ThemedText>
           </LinearGradient>
         </TouchableOpacity>
@@ -156,29 +159,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: spacing.xl,
   },
   explorerIcon: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   explorerEmoji: {
     fontSize: 60,
   },
   explorationHint: {
     fontSize: 16,
-    color: '#E0E0E0',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
   movementControls: {
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 8,
+    marginBottom: spacing.lg,
+    marginTop: spacing.sm,
   },
   movementRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 6,
+    marginVertical: spacing.sm,
   },
   movementButton: {
     width: 100,
@@ -193,34 +197,34 @@ const styles = StyleSheet.create({
   buttonPanel: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
+    padding: spacing.md,
     flex: 1,
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 219, 60, 0.3)',
   },
   movementLabel: {
     fontSize: 13,
-    color: '#FFD700',
-    marginTop: 6,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.secondaryContainer,
+    marginTop: spacing.sm,
   },
   exitContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   exitButtonContainer: {
     width: '100%',
   },
   exitButton: {
-    padding: 16,
-    borderRadius: 8,
+    padding: spacing.lg,
+    borderRadius: radii.md,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
   },
   exitButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
 })

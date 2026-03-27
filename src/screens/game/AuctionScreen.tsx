@@ -1,6 +1,8 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { ThemedText } from '@/components'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
 
 /**
  * AuctionScreen — Placeholder (feature disabled)
@@ -17,10 +19,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   text: {
-    color: 'rgba(255,255,255,0.5)',
+    color: colors.onSurfaceVariant,
     fontSize: 16,
+    fontFamily: fonts.regular,
   },
 })

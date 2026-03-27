@@ -17,6 +17,9 @@ import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { huntApi } from '@/services/api'
 import { getPokemonImage } from '@/assets/images'
+import { colors, rarityColors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 // Spawn type for featured Pokémon
 interface RegionSpawn {
@@ -201,11 +204,11 @@ export const HuntScreen: React.FC = () => {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Easy': return '#4CAF50'
-      case 'Medium': return '#FFA726'
-      case 'Hard': return '#EF5350'
+      case 'Easy': return colors.success
+      case 'Medium': return colors.warning
+      case 'Hard': return colors.error
       case 'Expert': return '#9C27B0'
-      default: return '#999'
+      default: return colors.onSurfaceVariant
     }
   }
 
@@ -220,14 +223,7 @@ export const HuntScreen: React.FC = () => {
   }
 
   const getRarityColor = (rarity: string) => {
-    switch (rarity.toLowerCase()) {
-      case 'common': return '#9E9E9E'
-      case 'uncommon': return '#4CAF50'
-      case 'rare': return '#2196F3'
-      case 'epic': return '#9C27B0'
-      case 'legendary': return '#FFD700'
-      default: return '#9E9E9E'
-    }
+    return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
   }
 
   return (
@@ -239,7 +235,7 @@ export const HuntScreen: React.FC = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
+          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
           style={styles.gradientOverlay}
         />
       </ImageBackground>
@@ -279,19 +275,19 @@ export const HuntScreen: React.FC = () => {
           onPress={() => router.push('/events')}
         >
           <LinearGradient
-            colors={['#FF6B00', '#FF9800']}
+            colors={[colors.secondaryContainer, '#FFA000']}
             style={styles.eventsBannerGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
             <View style={styles.eventsBannerContent}>
-              <Ionicons name="sparkles" size={24} color="#fff" />
+              <Ionicons name="sparkles" size={24} color={colors.onSecondary} />
               <View style={styles.eventsBannerText}>
                 <ThemedText style={styles.eventsBannerTitle}>🎉 Events</ThemedText>
                 <ThemedText style={styles.eventsBannerSubtitle}>Check out special hunts!</ThemedText>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#fff" />
+            <Ionicons name="chevron-forward" size={24} color={colors.onSecondary} />
           </LinearGradient>
         </TouchableOpacity>
 
@@ -300,7 +296,7 @@ export const HuntScreen: React.FC = () => {
           <View style={styles.activeHuntContainer}>
             <Panel variant="dark" style={styles.activeHuntPanel}>
               <View style={styles.activeHuntHeader}>
-                <Ionicons name="walk" size={24} color="#4CAF50" />
+                <Ionicons name="walk" size={24} color={colors.success} />
                 <ThemedText style={styles.activeHuntTitle}>
                   Active Hunt
                 </ThemedText>
@@ -339,7 +335,7 @@ export const HuntScreen: React.FC = () => {
 
         {/* Loading State */}
         {(isLoading || checkingSession) && regions.length === 0 && (
-          <LoadingContainer message="Loading regions..." color="#4CAF50" />
+          <LoadingContainer message="Loading regions..." color={colors.primary} />
         )}
 
         {/* Error State */}
@@ -347,7 +343,7 @@ export const HuntScreen: React.FC = () => {
           <View style={styles.errorContainer}>
             <Panel variant="dark" style={styles.errorPanel}>
               <View style={styles.errorContent}>
-                <Ionicons name="warning" size={24} color="#FF6B6B" />
+                <Ionicons name="warning" size={24} color={colors.error} />
                 <View style={styles.errorTextContainer}>
                   <ThemedText style={styles.errorTitle}>
                     Error Loading Regions
@@ -405,7 +401,7 @@ export const HuntScreen: React.FC = () => {
                       </View>
                       {!isUnlocked && (
                         <View style={styles.lockIcon}>
-                          <Ionicons name="lock-closed" size={24} color="#FFD700" />
+                          <Ionicons name="lock-closed" size={24} color={colors.secondaryContainer} />
                         </View>
                       )}
                     </View>
@@ -418,19 +414,19 @@ export const HuntScreen: React.FC = () => {
                     {/* Region Stats */}
                     <View style={styles.regionStats}>
                       <View style={styles.statItem}>
-                        <Ionicons name="flash" size={16} color="#FF6B6B" />
+                        <Ionicons name="flash" size={16} color={colors.error} />
                         <ThemedText style={styles.statText}>
                           {region.energyCost} Energy
                         </ThemedText>
                       </View>
                       <View style={styles.statItem}>
-                        <Ionicons name="cash-outline" size={16} color="#FFD700" />
+                        <Ionicons name="cash-outline" size={16} color={colors.secondaryContainer} />
                         <ThemedText style={styles.statText}>
                           {region.coinsCost} Coins
                         </ThemedText>
                       </View>
                       <View style={styles.statItem}>
-                        <Ionicons name="bar-chart" size={16} color="#4CAF50" />
+                        <Ionicons name="bar-chart" size={16} color={colors.success} />
                         <ThemedText style={styles.statText}>
                           Lv.{region.unlockLevel}+
                         </ThemedText>
@@ -459,7 +455,7 @@ export const HuntScreen: React.FC = () => {
                         {/* Rare Spawns indicator */}
                         {region.rareSpawns && region.rareSpawns.length > 0 && (
                           <View style={styles.rareSpawnsRow}>
-                            <Ionicons name="sparkles" size={14} color="#FFD700" />
+                            <Ionicons name="sparkles" size={14} color={colors.secondaryContainer} />
                             <ThemedText style={styles.rareSpawnsText}>
                               Rare: {region.rareSpawns.map(s => s.species).join(', ')}
                             </ThemedText>
@@ -475,7 +471,7 @@ export const HuntScreen: React.FC = () => {
                         onPress={() => handleStartHunt(region)}
                       >
                         <LinearGradient
-                          colors={['rgba(76, 175, 80, 0.3)', 'rgba(46, 125, 50, 0.5)']}
+                          colors={['rgba(68, 216, 241, 0.25)', 'rgba(0, 188, 212, 0.4)']}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
                           style={styles.huntGradient}
@@ -484,7 +480,7 @@ export const HuntScreen: React.FC = () => {
                             <ThemedText style={styles.huntButtonText}>
                               Start Hunt
                             </ThemedText>
-                            <Ionicons name="arrow-forward" size={20} color="#4CAF50" />
+                            <Ionicons name="arrow-forward" size={20} color={colors.primary} />
                           </View>
                         </LinearGradient>
                       </TouchableOpacity>
@@ -506,7 +502,7 @@ export const HuntScreen: React.FC = () => {
         {regions.length > 0 && (
           <Panel variant="dark" style={styles.infoPanel}>
             <View style={styles.infoRow}>
-              <Ionicons name="information-circle" size={24} color="#00BFFF" />
+              <Ionicons name="information-circle" size={24} color={colors.primary} />
               <View style={styles.infoText}>
                 <ThemedText style={styles.infoTitle}>Hunt Tips</ThemedText>
                 <ThemedText style={styles.infoDescription}>
@@ -526,7 +522,7 @@ export const HuntScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   background: {
     position: 'absolute',
@@ -543,89 +539,91 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: spacing['4xl'],
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    marginBottom: 8,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   headerPanel: {
-    padding: 20,
+    padding: spacing.xl,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   loadingContainer: {
-    padding: 40,
+    padding: spacing['4xl'],
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: spacing.lg,
+    color: colors.onSurfaceVariant,
   },
   errorContainer: {
-    padding: 20,
-    margin: 16,
+    padding: spacing.xl,
+    margin: spacing.lg,
   },
   errorPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   errorContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   errorTextContainer: {
     flex: 1,
   },
   errorTitle: {
-    color: '#FF6B6B',
-    fontWeight: 'bold',
-    marginBottom: 4,
+    color: colors.error,
+    fontFamily: fonts.bold,
+    marginBottom: spacing.xs,
   },
   errorMessage: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.onSurfaceVariant,
     fontSize: 13,
+    fontFamily: fonts.regular,
   },
   retryButton: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    borderRadius: 8,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: 'rgba(68, 216, 241, 0.15)',
+    borderRadius: radii.sm,
     alignItems: 'center',
   },
   retryButtonText: {
-    color: '#4CAF50',
-    fontWeight: '600',
+    color: colors.primary,
+    fontFamily: fonts.semiBold,
   },
   regionsContainer: {
-    paddingHorizontal: 16,
-    gap: 16,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.lg,
   },
   regionCard: {
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   regionPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   regionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   regionTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
     flex: 1,
   },
   regionIcon: {
@@ -633,12 +631,12 @@ const styles = StyleSheet.create({
   },
   regionTitleText: {
     flex: 1,
-    gap: 4,
+    gap: spacing.xs,
   },
   regionName: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   difficultyBadge: {
     flexDirection: 'row',
@@ -652,22 +650,23 @@ const styles = StyleSheet.create({
   },
   difficultyText: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
+    color: colors.onSurfaceVariant,
+    fontFamily: fonts.semiBold,
   },
   lockIcon: {
-    padding: 4,
+    padding: spacing.xs,
   },
   regionDescription: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 12,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.md,
     lineHeight: 20,
   },
   regionStats: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 12,
+    gap: spacing.lg,
+    marginBottom: spacing.md,
   },
   statItem: {
     flexDirection: 'row',
@@ -676,28 +675,27 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
+    color: colors.onSurfaceVariant,
+    fontFamily: fonts.semiBold,
   },
-  // Featured Pokemon styles
   featuredSection: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   featuredTitle: {
     fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: 8,
+    fontFamily: fonts.semiBold,
+    color: colors.outline,
+    marginBottom: spacing.sm,
   },
   featuredList: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   featuredPokemon: {
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     padding: 6,
-    borderRadius: 10,
+    borderRadius: radii.sm,
     minWidth: 60,
   },
   pokemonImage: {
@@ -706,8 +704,8 @@ const styles = StyleSheet.create({
   },
   pokemonName: {
     fontSize: 9,
-    color: '#fff',
-    fontWeight: '600',
+    color: colors.onSurface,
+    fontFamily: fonts.semiBold,
     marginTop: 2,
     maxWidth: 55,
     textAlign: 'center',
@@ -722,158 +720,159 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 8,
-    paddingTop: 8,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: colors.outlineVariant,
   },
   rareSpawnsText: {
     fontSize: 11,
-    color: 'rgba(255, 215, 0, 0.8)',
-    fontWeight: '600',
+    color: colors.secondaryContainer,
+    fontFamily: fonts.semiBold,
     flex: 1,
   },
   huntButton: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   huntGradient: {
     padding: 2,
   },
   huntButtonBorder: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 10,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    gap: 8,
+    gap: spacing.sm,
   },
   huntButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#66BB6A',
+    fontFamily: fonts.bold,
+    color: colors.primary,
   },
   lockedButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: radii.sm,
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: colors.outlineVariant,
   },
   lockedButtonText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontWeight: '600',
+    color: colors.outline,
+    fontFamily: fonts.semiBold,
   },
   infoPanel: {
-    margin: 16,
-    padding: 16,
+    margin: spacing.lg,
+    padding: spacing.lg,
   },
   infoRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   infoText: {
     flex: 1,
   },
   infoTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
   },
   infoDescription: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     lineHeight: 20,
   },
-  // Active Hunt Card Styles
   activeHuntContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.lg,
   },
   activeHuntPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   activeHuntHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   activeHuntTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontFamily: fonts.bold,
+    color: colors.success,
   },
   activeHuntContent: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   activeHuntRegion: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   activeHuntMoves: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   activeHuntButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   activeHuntButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: spacing.md,
+    borderRadius: radii.sm,
     gap: 6,
   },
   resumeButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.success,
   },
   cancelButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: colors.error,
   },
   activeHuntButtonText: {
-    color: '#FFF',
+    color: colors.onSurface,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
-  // Events Banner
   eventsBanner: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   eventsBannerGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   eventsBannerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   eventsBannerText: {
     gap: 2,
   },
   eventsBannerTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSecondary,
   },
   eventsBannerSubtitle: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
+    fontFamily: fonts.regular,
+    color: colors.onSecondary,
   },
 })

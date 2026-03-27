@@ -3,6 +3,7 @@ import { Modal, View, StyleSheet, TouchableOpacity, Platform } from 'react-nativ
 import { ThemedText } from '@/components'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Panel } from './Panel'
+import { colors, fonts, radii } from '@/themes'
 
 interface AlertButton {
   text: string
@@ -45,11 +46,11 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
   const getButtonColors = (style?: string): [string, string] => {
     switch (style) {
       case 'destructive':
-        return ['#EF5350', '#E53935']
+        return [colors.error, colors.errorContainer]
       case 'cancel':
-        return ['#757575', '#616161']
+        return [colors.surfaceContainerHighest, colors.surfaceContainerHigh]
       default:
-        return ['#2196F3', '#1976D2']
+        return [colors.primaryContainer, colors.primary]
     }
   }
 
@@ -117,7 +118,7 @@ export const showCustomAlert = (
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -127,18 +128,19 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     textAlign: 'center',
     marginBottom: 12,
   },
   message: {
     fontSize: 15,
-    color: '#E0E0E0',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
@@ -152,7 +154,7 @@ const styles = StyleSheet.create({
   buttonGradient: {
     paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: radii.DEFAULT,
     alignItems: 'center',
     ...Platform.select({
       ios: {
@@ -168,7 +170,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontFamily: fonts.semiBold,
+    color: colors.onPrimary,
   },
 })

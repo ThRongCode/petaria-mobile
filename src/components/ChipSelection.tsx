@@ -27,7 +27,7 @@ export const ChipSelection: React.FC<IChipSelectionProps> = ({ data, label, valu
             <Text
               fontSize={fontSizes.small}
               fontFamily={fonts.medium}
-              color={isSelected ? colors.white : colors.primary}>
+              color={isSelected ? colors.onPrimary : colors.primary}>
               {item.label}
             </Text>
           </TouchableOpacity>

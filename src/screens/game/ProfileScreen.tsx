@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAppDispatch } from '@/stores/store'
 import { userActions, gameActions } from '@/stores/reducers'
 import { userApi } from '@/services/api'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 /**
  * ProfileScreen - Trainer profile with stats and achievements
@@ -79,10 +80,10 @@ export const ProfileScreen: React.FC = () => {
   }
 
   const stats = [
-    { label: 'Total Battles', value: profile.stats?.battlesWon || 0, icon: 'flame', color: '#F44336' },
-    { label: 'Pokemon Caught', value: profile.stats?.petsOwned || 0, icon: 'cube', color: '#4CAF50' },
+    { label: 'Total Battles', value: profile.stats?.battlesWon || 0, icon: 'flame', color: colors.error },
+    { label: 'Pokemon Caught', value: profile.stats?.petsOwned || 0, icon: 'cube', color: colors.success },
     { label: 'Pokeballs', value: profile.currency?.pokeballs || 0, icon: 'baseball', color: '#FF6B6B' },
-    { label: 'Hunts Completed', value: profile.stats?.huntsCompleted || 0, icon: 'map', color: '#2196F3' },
+    { label: 'Hunts Completed', value: profile.stats?.huntsCompleted || 0, icon: 'map', color: colors.primary },
   ]
 
   return (
@@ -123,7 +124,7 @@ export const ProfileScreen: React.FC = () => {
           <Panel variant="dark" style={styles.headerPanel}>
             <View style={styles.avatarContainer}>
               <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={50} color="rgba(255, 255, 255, 0.5)" />
+                <Ionicons name="person" size={50} color={colors.onSurfaceVariant} />
               </View>
               <View style={styles.levelBadge}>
                 <ThemedText style={styles.levelText}>Lv.{profile.level}</ThemedText>
@@ -138,7 +139,7 @@ export const ProfileScreen: React.FC = () => {
               <View style={styles.xpContainer}>
                 <View style={styles.xpBarOuter}>
                   <LinearGradient
-                    colors={['#9C27B0', '#673AB7']}
+                    colors={[colors.primaryContainer, colors.primary]}
                     style={[styles.xpBarInner, { width: `${Math.min((profile.xp / profile.xpToNext) * 100, 100)}%` }]}
                   />
                 </View>
@@ -242,7 +243,7 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   background: {
     position: 'absolute',
@@ -258,53 +259,53 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: spacing['4xl'],
   },
   headerContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    marginBottom: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    marginBottom: spacing.lg,
   },
   headerPanel: {
-    padding: 20,
+    padding: spacing.xl,
     alignItems: 'center',
   },
   avatarContainer: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   avatarPlaceholder: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: colors.surfaceContainerHigh,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: '#FFD700',
+    borderColor: colors.primary,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
     borderWidth: 4,
-    borderColor: '#FFD700',
+    borderColor: colors.primary,
   },
   levelBadge: {
     position: 'absolute',
     bottom: -5,
     right: -5,
-    backgroundColor: '#FFD700',
+    backgroundColor: colors.secondaryContainer,
     borderRadius: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: colors.surfaceContainerLowest,
   },
   levelText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
+    fontFamily: fonts.bold,
+    color: colors.onSecondaryContainer,
   },
   profileInfo: {
     alignItems: 'center',
@@ -312,120 +313,122 @@ const styles = StyleSheet.create({
   },
   trainerName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   trainerId: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: 4,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
   },
   trainerTitle: {
     fontSize: 14,
-    color: '#FFD700',
-    fontWeight: '600',
-    marginBottom: 12,
+    fontFamily: fonts.semiBold,
+    color: colors.primary,
+    marginBottom: spacing.md,
   },
   xpContainer: {
     width: '100%',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   xpBarOuter: {
     width: '100%',
     height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
+    backgroundColor: colors.surfaceContainerHighest,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   xpBarInner: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: radii.sm,
   },
   xpText: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
   },
   section: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 12,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.md,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: spacing.md,
   },
   statCard: {
     width: '48%',
   },
   statPanel: {
-    padding: 16,
+    padding: spacing.lg,
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
   actionButton: {
-    marginBottom: 12,
-    borderRadius: 12,
+    marginBottom: spacing.md,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   actionGradient: {
     padding: 2,
   },
   actionButtonBorder: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 10,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
   },
   actionButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   devButtonsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   devButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   devGradient: {
     padding: 2,
   },
   devButtonContent: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 10,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
   },
   devButtonText: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
 })

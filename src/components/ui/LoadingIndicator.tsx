@@ -3,6 +3,7 @@ import { View, ActivityIndicator, StyleSheet, ViewStyle } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import { colors, fonts, spacing } from '@/themes'
 
 interface LoadingIndicatorProps {
   /** Loading message to display */
@@ -30,7 +31,7 @@ interface LoadingIndicatorProps {
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   message,
   size = 'large',
-  color = '#FFD700',
+  color = colors.primary,
   fullScreen = false,
   style,
   showPokeball = false,
@@ -45,7 +46,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         <ActivityIndicator size={size} color={color} />
       )}
       {message && (
-        <ThemedText style={[styles.message, { color: fullScreen ? '#fff' : 'rgba(255, 255, 255, 0.7)' }]}>
+        <ThemedText style={[styles.message, { color: fullScreen ? colors.onSurface : colors.onSurfaceVariant }]}>
           {message}
         </ThemedText>
       )}
@@ -56,7 +57,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     return (
       <View style={styles.fullScreenOverlay}>
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.9)']}
+          colors={['rgba(10, 14, 26, 0.7)', 'rgba(10, 14, 26, 0.95)']}
           style={styles.gradientOverlay}
         />
         {content}
@@ -73,7 +74,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
 export const InlineLoadingIndicator: React.FC<{
   color?: string
   size?: number
-}> = ({ color = '#fff', size = 20 }) => (
+}> = ({ color = colors.onSurface, size = 20 }) => (
   <ActivityIndicator size={size} color={color} />
 )
 
@@ -83,7 +84,7 @@ export const InlineLoadingIndicator: React.FC<{
 export const LoadingContainer: React.FC<{
   message?: string
   color?: string
-}> = ({ message = 'Loading...', color = '#FFD700' }) => (
+}> = ({ message = 'Loading...', color = colors.primary }) => (
   <View style={styles.loadingContainer}>
     <ActivityIndicator size="large" color={color} />
     <ThemedText style={styles.loadingText}>{message}</ThemedText>
@@ -94,11 +95,12 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   message: {
-    marginTop: 12,
+    marginTop: spacing.md,
     fontSize: 14,
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
   fullScreenOverlay: {
@@ -121,12 +123,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: spacing['4xl'],
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: spacing.md,
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
   },
 })
 

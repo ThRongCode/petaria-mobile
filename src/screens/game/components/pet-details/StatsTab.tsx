@@ -3,6 +3,9 @@ import { StyleSheet, View } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
 import { Panel } from '@/components/ui'
 import { Pet } from '@/stores/types/game'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing } from '@/themes/metrics'
 
 const MAX_STAT_VALUE = 200
 
@@ -34,39 +37,39 @@ export const StatsTab: React.FC<StatsTabProps> = ({ pet }) => (
   <Panel variant="dark" style={styles.tabPanel}>
     <ThemedText style={styles.sectionTitle}>Base Stats</ThemedText>
 
-    <StatRow name="HP" value={pet.stats.hp} color="#4CAF50" />
-    <StatRow name="Attack" value={pet.stats.attack} color="#FF5722" />
-    <StatRow name="Defense" value={pet.stats.defense} color="#2196F3" />
-    <StatRow name="Speed" value={pet.stats.speed} color="#FFC107" />
+    <StatRow name="HP" value={pet.stats.hp} color={colors.success} />
+    <StatRow name="Attack" value={pet.stats.attack} color={colors.error} />
+    <StatRow name="Defense" value={pet.stats.defense} color={colors.info} />
+    <StatRow name="Speed" value={pet.stats.speed} color={colors.warning} />
   </Panel>
 )
 
 const styles = StyleSheet.create({
   tabPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.lg,
   },
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    gap: 12,
+    marginBottom: spacing.lg,
+    gap: spacing.md,
   },
   statName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
     width: 80,
   },
   statBarBackground: {
     flex: 1,
     height: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 5,
     overflow: 'hidden',
   },
@@ -76,8 +79,8 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     width: 40,
     textAlign: 'right',
   },

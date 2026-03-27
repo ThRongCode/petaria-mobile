@@ -82,15 +82,15 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     paddingHorizontal: metrics.marginHorizontal,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainer,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(10, 14, 26, 0.7)',
   },
   indicator: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.onSurfaceVariant,
     width: metrics.xxl,
     borderRadius: metrics.tiny,
     height: metrics.tiny,

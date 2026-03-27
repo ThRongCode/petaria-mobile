@@ -7,7 +7,7 @@
 import React from 'react'
 import { TouchableOpacity, View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing, radii } from '@/themes'
 import { SvgIcons } from '@/assets/images/gui-icons-components'
 
 interface BattleRecordButtonProps {
@@ -34,17 +34,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent', // Transparent since it's in a card
-    paddingVertical: metrics.medium,
-    paddingHorizontal: metrics.large,
-    borderRadius: metrics.borderRadiusLarge,
+    backgroundColor: 'transparent',
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing['2xl'],
+    borderRadius: radii.xl,
   },
   iconContainer: {
-    marginRight: metrics.small,
+    marginRight: spacing.sm,
   },
   text: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.primary,
   },
 })

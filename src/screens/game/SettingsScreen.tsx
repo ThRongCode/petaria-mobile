@@ -18,6 +18,9 @@ import { gameActions } from '@/stores/reducers'
 import { userApi } from '@/services/api'
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 type SettingsKey = 'notifications' | 'autoFeed' | 'battleAnimations' | 'soundEnabled' | 'musicEnabled'
 
@@ -52,8 +55,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
       value={value}
       onValueChange={onToggle}
       disabled={disabled}
-      trackColor={{ false: 'rgba(255,255,255,0.15)', true: '#56ab2f' }}
-      thumbColor={value ? '#fff' : '#888'}
+      trackColor={{ false: colors.surfaceContainerHigh, true: colors.primaryContainer }}
+      thumbColor={value ? colors.onSurface : colors.outline}
     />
   </View>
 )
@@ -99,7 +102,7 @@ export const SettingsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a1a2e', '#16213e', '#0f3460']}
+        colors={[colors.surfaceContainerLowest, colors.surface, colors.surfaceContainerLow]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -109,7 +112,7 @@ export const SettingsScreen: React.FC = () => {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Settings</ThemedText>
-        {isSaving && <ActivityIndicator color="#56ab2f" size="small" />}
+        {isSaving && <ActivityIndicator color={colors.primary} size="small" />}
         <View style={styles.headerSpacer} />
       </View>
 
@@ -206,90 +209,92 @@ export const SettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     paddingTop: 60,
-    paddingBottom: 16,
-    gap: 12,
+    paddingBottom: spacing.lg,
+    gap: spacing.md,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceContainerHigh,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   headerSpacer: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+    padding: spacing.lg,
+    paddingBottom: spacing['4xl'],
   },
   section: {
-    marginBottom: 16,
-    paddingVertical: 12,
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'rgba(255,255,255,0.9)',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: colors.outlineVariant,
   },
   settingIcon: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   settingInfo: {
     flex: 1,
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   settingLabel: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   settingDescription: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     marginTop: 2,
   },
   linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: colors.outlineVariant,
   },
   appInfo: {
     alignItems: 'center',
-    marginTop: 24,
-    gap: 4,
+    marginTop: spacing['2xl'],
+    gap: spacing.xs,
   },
   appInfoText: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.3)',
+    fontFamily: fonts.regular,
+    color: colors.outlineVariant,
   },
 })

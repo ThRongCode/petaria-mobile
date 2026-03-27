@@ -2,7 +2,7 @@ import React, { ReactNode, useCallback, useState } from 'react'
 import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native'
 import { Text } from 'rn-base-component'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
-import { colors, fonts, fontSizes, metrics } from '../themes'
+import { colors, fonts, fontSizes, metrics, spacing, radii } from '../themes'
 import dayjs from 'dayjs'
 import { DATE_FORMAT } from '@/constants'
 import { IconSymbol } from './IconSymbol'
@@ -36,11 +36,11 @@ export const DatePicker: React.FC<IDatePickerProps> = ({
     if (!children) {
       if (value) {
         if (typeof value === 'string') {
-          return <Text color={colors.black}>{value}</Text>
+          return <Text color={colors.onSurface}>{value}</Text>
         }
-        return <Text color={colors.black}>{dayjs(value).format(DATE_FORMAT.date)}</Text>
+        return <Text color={colors.onSurface}>{dayjs(value).format(DATE_FORMAT.date)}</Text>
       }
-      return <Text color={colors.dark}>{placeholder}</Text>
+      return <Text color={colors.onSurfaceVariant}>{placeholder}</Text>
     }
     return children
   }, [children, placeholder, value])
@@ -71,7 +71,7 @@ export const DatePicker: React.FC<IDatePickerProps> = ({
         <View style={styles.flex}>{renderChildren()}</View>
         <IconSymbol
           name="keyboard-arrow-down"
-          color={colors.black}
+          color={colors.onSurfaceVariant}
           size={18}
           weight="medium"
           style={styles.icon}
@@ -100,9 +100,9 @@ const styles = StyleSheet.create({
     borderWidth: metrics.borderWidth,
     height: metrics.textInputHeight,
     paddingHorizontal: metrics.marginVertical,
-    borderRadius: metrics.borderRadius,
-    backgroundColor: colors.white,
-    borderColor: colors.black,
+    borderRadius: radii.DEFAULT,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderColor: colors.outlineVariant,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -110,19 +110,20 @@ const styles = StyleSheet.create({
     fontSize: metrics.span,
     marginBottom: metrics.tiny,
     fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
   },
   input: {
     fontSize: fontSizes.span,
   },
   labelFocus: {
-    color: colors.black,
+    color: colors.primary,
   },
   outlineFocus: {
-    borderColor: colors.border,
+    borderColor: colors.primary,
   },
   error: {
     fontSize: fontSizes.span,
-    color: colors.red,
+    color: colors.error,
     fontFamily: fonts.regular,
     position: 'absolute',
     bottom: -metrics.small,
@@ -133,10 +134,10 @@ const styles = StyleSheet.create({
     marginLeft: metrics.tiny,
   },
   required: {
-    color: colors.red,
+    color: colors.error,
     fontFamily: fonts.medium,
   },
   disabled: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceContainerHighest,
   },
 })

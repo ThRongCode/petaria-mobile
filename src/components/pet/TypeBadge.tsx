@@ -8,7 +8,7 @@ import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
 import { TYPE_COLORS, PokemonType } from './types'
-import { metrics } from '@/themes'
+import { radii, spacing, fonts } from '@/themes'
 
 interface TypeBadgeProps {
   type: PokemonType
@@ -29,29 +29,29 @@ export const TypeBadge: React.FC<TypeBadgeProps> = ({ type, size = 'medium' }) =
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: metrics.borderRadius,
-    paddingHorizontal: metrics.small,
-    paddingVertical: metrics.tiny,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
   small: {
-    paddingHorizontal: metrics.tiny,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: metrics.borderRadius,
+    borderRadius: radii.full,
   },
   medium: {
-    paddingHorizontal: metrics.small,
-    paddingVertical: metrics.tiny,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   large: {
-    paddingHorizontal: metrics.medium,
-    paddingVertical: metrics.small,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   text: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     fontSize: 12,
   },
   smallText: {

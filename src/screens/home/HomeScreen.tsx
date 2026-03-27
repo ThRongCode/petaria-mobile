@@ -2,7 +2,7 @@ import React from 'react'
 import { StyleSheet } from 'react-native'
 
 import { ThemedText, ThemedView } from '@/components'
-import { metrics } from '@/themes'
+import { spacing } from '@/themes/metrics'
 import { getString } from '@/locale/I18nConfig'
 
 export const HomeScreen: React.FC = () => (
@@ -16,10 +16,10 @@ export const HomeScreen: React.FC = () => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: metrics.medium,
+    padding: spacing.xl,
   },
   link: {
-    marginTop: metrics.small,
-    paddingVertical: metrics.small,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.lg,
   },
 })

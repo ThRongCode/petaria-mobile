@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { Text, TextInput } from 'rn-base-component'
 import { BottomSheet, BottomSheetMethods } from './BottomSheet'
-import { colors, fonts, fontSizes, metrics } from '@/themes'
+import { colors, fonts, fontSizes, metrics, spacing, radii } from '@/themes'
 import { IOptions, ISelectionProps } from '@/constants/interface/selection'
 import { getString } from '@/locale/I18nConfig'
 import { IconSymbol } from './IconSymbol'
@@ -60,7 +60,7 @@ export const Selection = <T extends object>({
           {getTitle ? getTitle(item) : (item as IOptions).label}
         </Text>
       ) : (
-        <Text color={colors.black} style={styles.childrenText}>
+        <Text color={colors.onSurface} style={styles.childrenText}>
           {placeholder}
         </Text>
       )
@@ -97,7 +97,7 @@ export const Selection = <T extends object>({
           <View style={styles.flex}>{renderChildren()}</View>
           <IconSymbol
             name="keyboard-arrow-down"
-            color={colors.black}
+            color={colors.onSurfaceVariant}
             size={18}
             weight="medium"
             style={styles.icon}
@@ -143,15 +143,15 @@ const styles = StyleSheet.create({
     height: metrics.textInputHeight,
     justifyContent: 'center',
     borderBottomWidth: metrics.borderWidth,
-    borderColor: colors.border,
+    borderColor: colors.outlineVariant,
   },
   wrapper: {
     borderWidth: metrics.borderWidth,
     height: metrics.textInputHeight,
     paddingHorizontal: metrics.marginVertical,
-    borderRadius: metrics.borderRadius,
-    backgroundColor: colors.white,
-    borderColor: colors.border,
+    borderRadius: radii.DEFAULT,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderColor: colors.outlineVariant,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -169,9 +169,9 @@ const styles = StyleSheet.create({
     marginLeft: metrics.tiny,
   },
   required: {
-    color: colors.red,
+    color: colors.error,
   },
   disabled: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceContainerHighest,
   },
 })

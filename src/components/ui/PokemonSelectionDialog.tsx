@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { Panel } from './Panel'
 import { getPokemonImage } from '@/assets/images'
+import { colors, fonts, spacing, radii } from '@/themes'
 import type { Pet } from '@/stores/types/game'
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
@@ -103,11 +104,11 @@ export const PokemonSelectionDialog: React.FC<PokemonSelectionDialogProps> = ({
           onPress={() => onSelect(pet)}
         >
           <LinearGradient
-            colors={['#4CAF50', '#2E7D32']}
+            colors={[colors.primaryContainer, colors.primary]}
             style={styles.selectGradient}
           >
             <ThemedText style={styles.selectButtonText}>Select</ThemedText>
-            <Ionicons name="checkmark-circle" size={18} color="#fff" />
+            <Ionicons name="checkmark-circle" size={18} color={colors.onPrimary} />
           </LinearGradient>
         </TouchableOpacity>
       </Panel>
@@ -133,7 +134,7 @@ export const PokemonSelectionDialog: React.FC<PokemonSelectionDialogProps> = ({
                 </ThemedText>
               </View>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close-circle" size={32} color="#fff" />
+                <Ionicons name="close-circle" size={32} color={colors.onSurface} />
               </TouchableOpacity>
             </View>
           </Panel>
@@ -169,19 +170,19 @@ export const PokemonSelectionDialog: React.FC<PokemonSelectionDialogProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   modalContent: {
     width: SCREEN_WIDTH - 40,
     maxHeight: SCREEN_HEIGHT * 0.8,
-    borderRadius: 16,
+    borderRadius: radii.DEFAULT,
     overflow: 'hidden',
   },
   header: {
-    padding: 20,
+    padding: spacing.xl,
   },
   headerContent: {
     flexDirection: 'row',
@@ -190,36 +191,37 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   closeButton: {
-    padding: 4,
+    padding: spacing.xs,
   },
   gridRow: {
-    gap: 12,
-    paddingHorizontal: 12,
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   gridContent: {
-    paddingVertical: 12,
-    paddingBottom: 20,
+    paddingVertical: spacing.md,
+    paddingBottom: spacing.xl,
   },
   pokemonCard: {
     flex: 1,
     maxWidth: '48%',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   cardPanel: {
-    padding: 12,
+    padding: spacing.md,
   },
   imageContainer: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     position: 'relative',
   },
   pokemonImage: {
@@ -230,58 +232,59 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: colors.secondaryContainer,
   },
   levelText: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   pokemonInfo: {
-    gap: 4,
+    gap: spacing.xs,
   },
   pokemonName: {
     fontSize: 15,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   pokemonSpecies: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   hpBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   hpBarOuter: {
     flex: 1,
     height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: colors.surfaceContainerHighest,
     borderRadius: 3,
     overflow: 'hidden',
   },
   hpBarInner: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.success,
   },
   hpText: {
     fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     minWidth: 35,
     textAlign: 'right',
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   statItem: {
     flexDirection: 'row',
@@ -290,50 +293,51 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
   },
   selectButton: {
-    marginTop: 10,
-    borderRadius: 8,
+    marginTop: spacing.md,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   selectGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
   },
   selectButtonText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onPrimary,
   },
   emptyContainer: {
     flex: 1,
-    padding: 32,
+    padding: spacing['3xl'],
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyPanel: {
-    padding: 32,
+    padding: spacing['3xl'],
     alignItems: 'center',
     width: '100%',
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
 })

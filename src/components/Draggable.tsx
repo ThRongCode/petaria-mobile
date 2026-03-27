@@ -14,6 +14,7 @@ import {
   ViewStyle,
   LayoutChangeEvent,
 } from 'react-native'
+import { colors } from '@/themes/colors'
 
 const clamp = (number: number, min: number, max: number) => Math.max(min, Math.min(number, max))
 
@@ -302,7 +303,7 @@ export function Draggable(props: IProps) {
 }
 
 const styles = StyleSheet.create({
-  text: { color: '#fff', textAlign: 'center' },
+  text: { color: colors.onSurface, textAlign: 'center' },
   debugView: {
     backgroundColor: '#ff000044',
     position: 'absolute',

@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { apiClient } from '@/services/api'
 import { getItemImage } from '@/assets/images'
+import { colors, fonts, spacing, radii } from '@/themes'
 import type { Item, Pet } from '@/stores/types/game'
 
 interface ItemsModalProps {
@@ -75,11 +76,11 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'Common': return '#9E9E9E'
-      case 'Rare': return '#2196F3'
-      case 'Epic': return '#9C27B0'
-      case 'Legendary': return '#FFD700'
-      default: return '#9E9E9E'
+      case 'Common': return colors.rarityColors.common
+      case 'Rare': return colors.rarityColors.rare
+      case 'Epic': return colors.rarityColors.epic
+      case 'Legendary': return colors.rarityColors.legendary
+      default: return colors.rarityColors.common
     }
   }
 
@@ -118,7 +119,7 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
                 </ThemedText>
               </View>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color="#fff" />
+                <Ionicons name="close" size={24} color={colors.onSurface} />
               </TouchableOpacity>
             </View>
 
@@ -138,7 +139,7 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
                   <LinearGradient
                     colors={
                       filter === type
-                        ? ['rgba(255, 215, 0, 0.3)', 'rgba(255, 215, 0, 0.1)']
+                        ? ['rgba(68, 216, 241, 0.3)', 'rgba(68, 216, 241, 0.1)']
                         : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']
                     }
                     style={styles.filterGradient}
@@ -159,7 +160,7 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
             {/* Items Grid */}
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FFD700" />
+                <ActivityIndicator size="large" color={colors.primary} />
                 <ThemedText style={styles.loadingText}>Loading items...</ThemedText>
               </View>
             ) : (
@@ -177,7 +178,7 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
                     <LinearGradient
                       colors={
                         selectedItem?.id === item.id
-                          ? ['rgba(255, 215, 0, 0.2)', 'rgba(255, 215, 0, 0.1)']
+                          ? ['rgba(68, 216, 241, 0.2)', 'rgba(68, 216, 241, 0.1)']
                           : ['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.02)']
                       }
                       style={[
@@ -297,91 +298,93 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
     maxHeight: '90%',
   },
   modalPanel: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: radii.lg,
+    borderTopRightRadius: radii.lg,
+    padding: spacing.xl,
     minHeight: 500,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   closeButton: {
-    padding: 4,
+    padding: spacing.xs,
   },
   filterContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     maxHeight: 50,
   },
   filterContent: {
-    gap: 8,
+    gap: spacing.sm,
   },
   filterButton: {
-    borderRadius: 8,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   filterGradient: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.sm,
   },
   filterText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
   },
   filterTextActive: {
-    color: '#FFD700',
+    color: colors.primary,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: spacing['4xl'],
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: spacing.md,
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
   },
   itemsScroll: {
     flex: 1,
   },
   itemsContent: {
-    gap: 12,
-    paddingBottom: 20,
+    gap: spacing.md,
+    paddingBottom: spacing.xl,
   },
   itemCard: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   itemGradient: {
-    padding: 12,
-    borderRadius: 12,
+    padding: spacing.md,
+    borderRadius: radii.md,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   itemSelected: {
-    borderColor: 'rgba(255, 215, 0, 0.5)',
+    borderColor: colors.primary + '80',
     borderWidth: 2,
   },
   rarityIndicator: {
@@ -390,15 +393,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    borderTopLeftRadius: radii.md,
+    borderTopRightRadius: radii.md,
   },
   itemImageContainer: {
     width: 60,
     height: 60,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: radii.sm,
+    marginBottom: spacing.sm,
   },
   itemImage: {
     width: '100%',
@@ -411,18 +414,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   itemName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     flex: 1,
   },
   itemDescription: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: 8,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.sm,
     lineHeight: 16,
   },
   itemFooter: {
@@ -431,51 +435,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rarityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
   },
   rarityText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   priceContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   price: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   priceText: {
     fontSize: 12,
-    color: '#fff',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   priceIcon: {
     fontSize: 12,
   },
   actionButton: {
-    marginTop: 16,
-    borderRadius: 12,
+    marginTop: spacing.lg,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   actionGradient: {
     padding: 2,
   },
   actionButtonBorder: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 10,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
   },
   actionButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#66BB6A',
+    fontFamily: fonts.bold,
+    color: colors.success,
   },
 })

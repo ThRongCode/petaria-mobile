@@ -15,6 +15,9 @@ import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { battleApi } from '@/services/api'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface BattleType {
   id: string
@@ -91,7 +94,7 @@ export const EventScreen: React.FC = () => {
                 <Ionicons 
                   name={battleType.icon as any} 
                   size={28} 
-                  color={battleType.available ? '#FFD700' : '#999'} 
+                  color={battleType.available ? colors.secondaryContainer : colors.outline} 
                 />
                 <View style={styles.battleTitleContainer}>
                   <ThemedText style={styles.battleTitle}>
@@ -132,7 +135,7 @@ export const EventScreen: React.FC = () => {
               <LinearGradient
                 colors={
                   battleType.available
-                    ? ['rgba(76, 175, 80, 0.3)', 'rgba(46, 125, 50, 0.5)']
+                    ? ['rgba(68, 216, 241, 0.25)', 'rgba(0, 188, 212, 0.4)']
                     : ['rgba(158, 158, 158, 0.3)', 'rgba(97, 97, 97, 0.5)']
                 }
                 start={{ x: 0, y: 0 }}
@@ -176,7 +179,7 @@ export const EventScreen: React.FC = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
+          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
           style={styles.gradientOverlay}
         />
       </ImageBackground>
@@ -214,7 +217,7 @@ export const EventScreen: React.FC = () => {
         <View style={styles.battleTypesContainer}>
           {loading ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <ActivityIndicator color="#FFD700" size="large" />
+              <ActivityIndicator color={colors.secondaryContainer} size="large" />
               <ThemedText style={{ color: 'rgba(255,255,255,0.6)', marginTop: 12 }}>
                 Loading battle types...
               </ThemedText>
@@ -231,7 +234,7 @@ export const EventScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   background: {
     position: 'absolute',
@@ -247,89 +250,91 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    marginBottom: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    marginBottom: spacing.lg,
   },
   headerPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   battleTypesContainer: {
-    paddingHorizontal: 16,
-    gap: 16,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.lg,
   },
   battleCard: {
-    borderRadius: 16,
+    borderRadius: radii.DEFAULT,
     overflow: 'hidden',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   battleGradient: {
     padding: 3,
   },
   battleContent: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(10, 14, 26, 0.7)',
     borderRadius: 14,
-    padding: 16,
+    padding: spacing.lg,
     position: 'relative',
   },
   battleHeader: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   battleTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   battleTitleContainer: {
     flex: 1,
   },
   battleTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   endDateBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 82, 82, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    gap: spacing.xs,
+    backgroundColor: 'rgba(255, 82, 82, 0.15)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
     alignSelf: 'flex-start',
   },
   endDateText: {
     fontSize: 11,
-    color: '#FF5252',
-    fontWeight: '600',
+    color: colors.error,
+    fontFamily: fonts.semiBold,
   },
   battleDescription: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 12,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.md,
     lineHeight: 18,
   },
   rewardsSection: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   rewardsTitle: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
     marginBottom: 6,
   },
   rewardsList: {
@@ -340,57 +345,57 @@ const styles = StyleSheet.create({
   rewardBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(76, 175, 80, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: spacing.xs,
+    backgroundColor: 'rgba(35, 193, 107, 0.1)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
+    borderColor: 'rgba(35, 193, 107, 0.25)',
   },
   rewardText: {
     fontSize: 11,
-    color: '#4CAF50',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.success,
   },
   actionButtonContainer: {
-    borderRadius: 10,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   actionGradient: {
     padding: 2,
   },
   actionButtonBorder: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
   },
   actionButtonText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#66BB6A',
+    fontFamily: fonts.bold,
+    color: colors.primary,
   },
   actionButtonTextDisabled: {
-    color: '#999',
+    color: colors.outline,
   },
   statusBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(158, 158, 158, 0.3)',
+    top: spacing.md,
+    right: spacing.md,
+    backgroundColor: 'rgba(158, 158, 158, 0.2)',
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: 'rgba(158, 158, 158, 0.5)',
+    borderColor: 'rgba(158, 158, 158, 0.4)',
   },
   statusText: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#999',
+    fontFamily: fonts.bold,
+    color: colors.outline,
   },
 })

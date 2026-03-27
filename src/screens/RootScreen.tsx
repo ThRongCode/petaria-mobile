@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { ThemedText, ThemedView } from '@/components'
 import { RouteKeys } from '@/routes/RouteKeys'
-import { metrics } from '@/themes'
+import { spacing } from '@/themes/metrics'
 import { getString } from '@/locale/I18nConfig'
 import { STORAGE_KEYS } from '@/services/api/config'
 import { getUserInfo } from '@/stores/selectors'
@@ -61,9 +61,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: metrics.medium,
+    padding: spacing.xl,
   },
   spacingTop: {
-    marginTop: metrics.small,
+    marginTop: spacing.lg,
   },
 })

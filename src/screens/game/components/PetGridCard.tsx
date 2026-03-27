@@ -12,6 +12,9 @@ import { Panel } from '@/components/ui'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import type { Pet } from '@/stores/types/game'
+import { colors, typeColors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface PetGridCardProps {
   pet: Pet
@@ -22,39 +25,14 @@ interface PetGridCardProps {
 
 // Get color for Pokemon type
 const getTypeColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    fire: '#F44336',
-    water: '#2196F3',
-    grass: '#4CAF50',
-    electric: '#FFEB3B',
-    psychic: '#E91E63',
-    ice: '#00BCD4',
-    fighting: '#FF5722',
-    normal: '#9E9E9E',
-    flying: '#03A9F4',
-    poison: '#7B1FA2',
-    ground: '#795548',
-    rock: '#5D4037',
-    bug: '#8BC34A',
-    ghost: '#673AB7',
-    steel: '#607D8B',
-    dragon: '#3F51B5',
-    dark: '#424242',
-    fairy: '#E91E63',
-  }
-  return colors[type.toLowerCase()] || '#999'
+  return typeColors[type.toLowerCase()] ?? '#9E9E9E'
 }
 
 function getHpBarColor(currentHp: number, maxHp: number): string {
   const hpPercent = currentHp / maxHp
-
-  if (hpPercent > 0.5) {
-    return '#4CAF50' // Green - healthy
-  }
-  if (hpPercent > 0.2) {
-    return '#FFA726' // Orange - warning
-  }
-  return '#F44336' // Red - critical
+  if (hpPercent > 0.5) return colors.success
+  if (hpPercent > 0.2) return colors.warning
+  return colors.error
 }
 
 export const PetGridCard: React.FC<PetGridCardProps> = ({
@@ -89,12 +67,12 @@ export const PetGridCard: React.FC<PetGridCardProps> = ({
             disabled={isTogglingFavorite}
           >
             {isTogglingFavorite ? (
-              <ActivityIndicator size="small" color="#FFD700" />
+              <ActivityIndicator size="small" color={colors.secondaryContainer} />
             ) : (
               <Ionicons
                 name={pet.isFavorite ? 'bookmark' : 'bookmark-outline'}
                 size={24}
-                color={pet.isFavorite ? '#FFD700' : '#FFFFFF'}
+                color={pet.isFavorite ? colors.secondaryContainer : colors.onSurface}
               />
             )}
           </TouchableOpacity>
@@ -177,14 +155,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     maxWidth: '48%',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   panel: {
-    padding: 12,
+    padding: spacing.md,
   },
   imageContainer: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     position: 'relative',
   },
   image: {
@@ -195,27 +173,27 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(10, 14, 26, 0.8)',
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: colors.secondaryContainer,
   },
   levelText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   favoriteButton: {
     position: 'absolute',
     top: 0,
     left: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.lg,
     padding: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: colors.outlineVariant,
   },
   info: {
     gap: 2,
@@ -228,39 +206,40 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   typeBadge: {
-    borderRadius: 8,
+    borderRadius: radii.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   typeText: {
     fontSize: 9,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     textTransform: 'capitalize',
   },
   species: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   hpBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   hpLabel: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
+    color: colors.onSurfaceVariant,
   },
   hpBarOuter: {
     flex: 1,
     height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -269,8 +248,8 @@ const styles = StyleSheet.create({
   },
   hpValue: {
     fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     minWidth: 30,
     textAlign: 'right',
   },
@@ -278,44 +257,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   xpLabel: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
+    color: colors.onSurfaceVariant,
   },
   xpBarOuter: {
     flex: 1,
     height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 3,
     overflow: 'hidden',
   },
   xpBarInner: {
     height: '100%',
-    backgroundColor: '#64B5F6',
+    backgroundColor: colors.info,
   },
   xpValue: {
     fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     minWidth: 30,
     textAlign: 'right',
   },
   statsPreview: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
     marginTop: 6,
   },
   statMini: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   statMiniText: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
   },
 })

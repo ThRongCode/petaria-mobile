@@ -8,6 +8,9 @@ import { StyleSheet, View } from 'react-native'
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { SessionRewards } from '../types'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing } from '@/themes/metrics'
 
 interface SessionStatsProps {
   rewards: SessionRewards
@@ -40,9 +43,9 @@ const StatItem: React.FC<StatItemProps> = ({ label, value }) => (
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   statsRow: {
     flexDirection: 'row',
@@ -53,12 +56,13 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 4,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
   },
   statValue: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
 })

@@ -15,13 +15,16 @@ import { getUserProfile } from '@/stores/selectors'
 import { eventApi, GameEvent, UpcomingEvent } from '@/services/api/eventApi'
 import { getPokemonImage } from '@/assets/images'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { colors, rarityColors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 // Event type icons and colors
 const EVENT_TYPE_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string; label: string }> = {
-  hunt_boost: { icon: 'trending-up', color: '#4CAF50', label: 'Hunt Boost' },
-  rare_spawn: { icon: 'sparkles', color: '#FFD700', label: 'Rare Spawn' },
+  hunt_boost: { icon: 'trending-up', color: colors.success, label: 'Hunt Boost' },
+  rare_spawn: { icon: 'sparkles', color: colors.secondaryContainer, label: 'Rare Spawn' },
   double_xp: { icon: 'star', color: '#9C27B0', label: 'Double XP' },
-  special_hunt: { icon: 'leaf', color: '#00BCD4', label: 'Special Hunt' },
+  special_hunt: { icon: 'leaf', color: colors.primary, label: 'Special Hunt' },
   shiny_chance: { icon: 'diamond', color: '#E91E63', label: 'Shiny Chance' },
 }
 
@@ -193,7 +196,7 @@ export default function EventsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#FFD700"
+            tintColor={colors.secondaryContainer}
           />
         }
       >
@@ -249,13 +252,7 @@ export default function EventsScreen() {
 
 // Helper functions
 function getRarityColor(rarity: string): string {
-  const colors: Record<string, string> = {
-    Common: '#9E9E9E',
-    Rare: '#2196F3',
-    Epic: '#9C27B0',
-    Legendary: '#FFD700',
-  }
-  return colors[rarity] || '#9E9E9E'
+  return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
 }
 
 function shadeColor(color: string, percent: number): string {
@@ -278,8 +275,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
   },
   backButton: {
     width: 40,
@@ -289,154 +286,145 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   placeholder: {
     width: 40,
   },
-  
-  // Loading
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 60,
+    padding: spacing['5xl'],
   },
   loadingText: {
-    marginTop: 12,
-    color: 'rgba(255,255,255,0.6)',
+    marginTop: spacing.md,
+    color: colors.onSurfaceVariant,
     fontSize: 14,
+    fontFamily: fonts.regular,
   },
-  
-  // Empty
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 60,
+    padding: spacing['5xl'],
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'rgba(255,255,255,0.5)',
-    marginTop: 16,
+    fontFamily: fonts.bold,
+    color: colors.outline,
+    marginTop: spacing.lg,
   },
   emptySubtext: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.3)',
-    marginTop: 8,
+    fontFamily: fonts.regular,
+    color: colors.outlineVariant,
+    marginTop: spacing.sm,
   },
-  
-  // Sections
   section: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing['2xl'],
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   activeDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.success,
   },
-  
-  // Event Card
   eventCard: {
-    padding: 16,
-    marginBottom: 16,
-    borderRadius: 16,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: radii.DEFAULT,
     borderWidth: 1,
-    borderColor: 'rgba(255,215,0,0.3)',
+    borderColor: 'rgba(255, 219, 60, 0.25)',
   },
   eventHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: radii.md,
     gap: 6,
   },
   typeLabel: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   timeRemaining: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   timeText: {
     fontSize: 13,
     color: '#FF5722',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   eventTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   eventDescription: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 12,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.md,
   },
-  
-  // Bonuses
   bonusRow: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
+    gap: spacing.lg,
+    marginBottom: spacing.lg,
   },
   bonusItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: radii.sm,
   },
   bonusText: {
     fontSize: 13,
-    color: '#fff',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
-  
-  // Featured Pokemon
   featuredSection: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   featuredTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.semiBold,
+    color: colors.outline,
     marginBottom: 10,
   },
   featuredList: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   featuredPokemon: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 8,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: spacing.sm,
+    borderRadius: radii.md,
     minWidth: 70,
   },
   pokemonImage: {
@@ -445,20 +433,18 @@ const styles = StyleSheet.create({
   },
   pokemonName: {
     fontSize: 11,
-    color: '#fff',
-    fontWeight: '600',
-    marginTop: 4,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
+    marginTop: spacing.xs,
   },
   rarityDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
-  
-  // Hunt Button
   huntButtonContainer: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   huntButton: {
@@ -466,36 +452,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    gap: 8,
+    gap: spacing.sm,
   },
   huntButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
-  
-  // Upcoming Card
   upcomingCard: {
-    padding: 12,
+    padding: spacing.md,
     marginBottom: 10,
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
   upcomingHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   upcomingInfo: {
     flex: 1,
   },
   upcomingTitle: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   upcomingTime: {
     fontSize: 12,
-    color: '#2196F3',
+    fontFamily: fonts.regular,
+    color: colors.info,
     marginTop: 2,
   },
 })

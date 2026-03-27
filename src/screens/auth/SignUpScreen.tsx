@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import { Image, StyleSheet } from 'react-native'
 import { ThemedText, ThemedView } from '@/components'
-import { Images, metrics } from '@/themes'
+import { Images, colors, fonts, spacing } from '@/themes'
 import { getString } from '@/locale/I18nConfig'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -52,18 +52,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: metrics.medium,
+    padding: spacing.xl,
   },
   title: {
-    marginTop: metrics.small,
-    marginBottom: metrics.large,
+    marginTop: spacing.sm,
+    marginBottom: spacing['2xl'],
   },
   logo: {
-    width: metrics.logoHeight,
-    height: metrics.logoHeight,
+    width: 70,
+    height: 70,
   },
   link: {
-    marginTop: metrics.medium,
-    paddingVertical: metrics.small,
+    marginTop: spacing.xl,
+    paddingVertical: spacing.sm,
   },
 })

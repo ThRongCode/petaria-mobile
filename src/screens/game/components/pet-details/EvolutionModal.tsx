@@ -6,6 +6,9 @@ import { getPokemonImage } from '@/assets/images'
 import { Pet } from '@/stores/types/game'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { EvolutionPath } from './EvolutionsTab'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface EvolutionModalProps {
   visible: boolean
@@ -47,7 +50,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   <ThemedText style={styles.evolutionPetName}>{pet.species}</ThemedText>
                 </View>
                 
-                <Ionicons name="arrow-forward" size={32} color="#FFD700" />
+                <Ionicons name="arrow-forward" size={32} color={colors.secondaryContainer} />
                 
                 <View style={styles.evolutionPetPreview}>
                   <Image
@@ -61,7 +64,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
               
               {selectedEvolution.itemRequired && (
                 <View style={styles.itemCostRow}>
-                  <Ionicons name="diamond" size={20} color="#9C27B0" />
+                  <Ionicons name="diamond" size={20} color={colors.tertiary} />
                   <ThemedText style={styles.itemCostText}>
                     Will use 1x {selectedEvolution.itemRequired.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </ThemedText>
@@ -87,7 +90,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   disabled={evolving}
                 >
                   {evolving ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.onSurface} />
                   ) : (
                     <ThemedText style={styles.evolveButtonText}>✨ Evolve!</ThemedText>
                   )}
@@ -104,30 +107,30 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
   modalPanel: {
     width: '100%',
     maxWidth: 360,
-    padding: 24,
-    borderRadius: 16,
+    padding: spacing.xl,
+    borderRadius: radii.xl,
   },
   modalTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   evolutionPreview: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    marginBottom: 20,
+    gap: spacing.lg,
+    marginBottom: spacing.lg,
   },
   evolutionPetPreview: {
     alignItems: 'center',
@@ -138,58 +141,59 @@ const styles = StyleSheet.create({
   },
   evolutionPetName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 8,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
+    marginTop: spacing.sm,
   },
   itemCostRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(156,39,176,0.2)',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    gap: spacing.sm,
+    backgroundColor: 'rgba(156, 39, 176, 0.15)',
+    padding: spacing.md,
+    borderRadius: radii.md,
+    marginBottom: spacing.lg,
   },
   itemCostText: {
-    color: '#CE93D8',
+    color: colors.tertiary,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   modalDescription: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   modalButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: radii.md,
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.outlineVariant,
   },
   cancelButtonText: {
-    color: '#fff',
+    color: colors.onSurface,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   evolveButtonModal: {
-    backgroundColor: '#FFD700',
+    backgroundColor: colors.secondaryContainer,
   },
   evolveButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontFamily: fonts.bold,
+    color: colors.surfaceContainerLowest,
   },
 })

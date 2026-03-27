@@ -6,7 +6,7 @@
 
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { colors, metrics } from '@/themes'
+import { colors, spacing } from '@/themes'
 import { SvgIcons } from '@/assets/images/gui-icons-components'
 import Svg, { Polygon } from 'react-native-svg'
 
@@ -17,10 +17,10 @@ interface EmblemBadgeProps {
 }
 
 const RARITY_COLORS = {
-  common: '#A8A878',
-  rare: '#48A7F8',
-  epic: '#A040A0',
-  legendary: '#F8D030',
+  common: colors.rarityColors.common,
+  rare: colors.rarityColors.rare,
+  epic: colors.rarityColors.epic,
+  legendary: colors.rarityColors.legendary,
 }
 
 export const EmblemBadge: React.FC<EmblemBadgeProps> = ({
@@ -43,7 +43,7 @@ export const EmblemBadge: React.FC<EmblemBadgeProps> = ({
         />
         <Polygon
           points="50 10, 87 28, 87 72, 50 90, 13 72, 13 28"
-          fill={colors.white}
+          fill={colors.surfaceContainerHigh}
         />
       </Svg>
 
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: metrics.medium,
+    marginRight: spacing.lg,
   },
   hexagon: {
     position: 'absolute',

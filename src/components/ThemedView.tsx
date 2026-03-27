@@ -1,11 +1,11 @@
 import React from 'react'
 import { KeyboardAvoidingView, StyleSheet, View, type ViewProps } from 'react-native'
 
-import { useThemeColor } from '@/hooks/useThemeColor'
-import { isIOS } from '@/themes'
+import { colors, isIOS } from '@/themes'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export type ThemedViewProps = ViewProps & {
+  /** @deprecated Use style={{ backgroundColor }} directly */
   lightColor?: string
   darkColor?: string
   full?: boolean
@@ -13,14 +13,13 @@ export type ThemedViewProps = ViewProps & {
 
 export const ThemedView: React.FC<ThemedViewProps> = ({
   style,
-  lightColor,
   darkColor,
   children,
   full = false,
   ...otherProps
 }) => {
   const insets = useSafeAreaInsets()
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background')
+  const backgroundColor = darkColor ?? colors.surfaceContainerLowest
 
   return (
     <View

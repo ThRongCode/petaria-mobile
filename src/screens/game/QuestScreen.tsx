@@ -15,21 +15,24 @@ import { getUserProfile } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers/game'
 import { questApi, Quest } from '@/services/api/questApi'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 // Category icons and colors
 const CATEGORY_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
-  hunt: { icon: 'leaf', color: '#4CAF50' },
+  hunt: { icon: 'leaf', color: colors.success },
   battle: { icon: 'flash', color: '#FF5722' },
   care: { icon: 'heart', color: '#E91E63' },
-  evolution: { icon: 'sparkles', color: '#FFD700' },
-  shop: { icon: 'cart', color: '#2196F3' },
+  evolution: { icon: 'sparkles', color: colors.secondaryContainer },
+  shop: { icon: 'cart', color: colors.info },
 }
 
 // Difficulty colors
 const DIFFICULTY_COLORS: Record<string, string> = {
-  easy: '#4CAF50',
-  normal: '#2196F3',
-  hard: '#FF9800',
+  easy: colors.success,
+  normal: colors.info,
+  hard: colors.warning,
 }
 
 export default function QuestScreen() {
@@ -179,11 +182,11 @@ export default function QuestScreen() {
               style={styles.claimButtonContainer}
             >
               <LinearGradient
-                colors={isComplete ? ['#FFD700', '#FFA000'] : ['#555', '#333']}
+                colors={isComplete ? [colors.secondaryContainer, colors.warning] : [colors.surfaceContainerHighest, colors.surfaceContainerHigh]}
                 style={styles.claimButton}
               >
                 {claimingId === quest.id ? (
-                  <ActivityIndicator size="small" color="#000" />
+                  <ActivityIndicator size="small" color={colors.surfaceContainerLowest} />
                 ) : (
                   <>
                     <Ionicons 
@@ -233,7 +236,7 @@ export default function QuestScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#FFD700"
+            tintColor={colors.secondaryContainer}
           />
         }
       >
@@ -260,7 +263,7 @@ export default function QuestScreen() {
             {completedQuests.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="gift" size={20} color="#FFD700" />
+                  <Ionicons name="gift" size={20} color={colors.secondaryContainer} />
                   <ThemedText style={styles.sectionTitle}>Ready to Claim!</ThemedText>
                 </View>
                 {completedQuests.map(renderQuestCard)}
@@ -271,7 +274,7 @@ export default function QuestScreen() {
             {activeQuests.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="time" size={20} color="#2196F3" />
+                  <Ionicons name="time" size={20} color={colors.info} />
                   <ThemedText style={styles.sectionTitle}>In Progress</ThemedText>
                 </View>
                 {activeQuests.map(renderQuestCard)}
@@ -282,7 +285,7 @@ export default function QuestScreen() {
             {claimedQuests.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                   <ThemedText style={styles.sectionTitle}>Completed</ThemedText>
                 </View>
                 {claimedQuests.map(renderQuestCard)}
@@ -309,8 +312,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
   },
   backButton: {
     width: 40,
@@ -320,131 +323,122 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   placeholder: {
     width: 40,
   },
-  
-  // Loading
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 60,
+    padding: spacing['5xl'],
   },
   loadingText: {
-    marginTop: 12,
-    color: 'rgba(255,255,255,0.6)',
+    marginTop: spacing.md,
+    color: colors.onSurfaceVariant,
     fontSize: 14,
+    fontFamily: fonts.regular,
   },
-  
-  // Empty
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 60,
+    padding: spacing['5xl'],
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'rgba(255,255,255,0.5)',
-    marginTop: 16,
+    fontFamily: fonts.bold,
+    color: colors.outline,
+    marginTop: spacing.lg,
   },
   emptySubtext: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.3)',
-    marginTop: 8,
+    fontFamily: fonts.regular,
+    color: colors.outlineVariant,
+    marginTop: spacing.sm,
   },
-  
-  // Sections
   section: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing['2xl'],
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
-  
-  // Quest Card
   questCard: {
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderRadius: radii.md,
   },
   questHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   categoryBadge: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radii.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   questInfo: {
     flex: 1,
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   questName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   questDescription: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   difficultyBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
   },
   difficultyText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
-  
-  // Progress
   progressSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   progressBar: {
     flex: 1,
     height: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 4,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
-    borderRadius: 4,
+    backgroundColor: colors.primary,
+    borderRadius: radii.sm,
   },
   progressText: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
     minWidth: 50,
     textAlign: 'right',
   },
-  
-  // Rewards
   rewardsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -452,41 +446,37 @@ const styles = StyleSheet.create({
   },
   rewardsList: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   rewardItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   rewardText: {
     fontSize: 13,
-    color: '#fff',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
-  
-  // Claim Button
   claimButtonContainer: {
-    borderRadius: 8,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   claimButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     gap: 6,
   },
   claimButtonText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
+    fontFamily: fonts.bold,
+    color: colors.onSecondary,
   },
   claimButtonTextDisabled: {
-    color: '#888',
+    color: colors.outline,
   },
-  
-  // Claimed Badge
   claimedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -494,7 +484,7 @@ const styles = StyleSheet.create({
   },
   claimedText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontFamily: fonts.semiBold,
+    color: colors.success,
   },
 })

@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { authApi } from '@/services/api'
 import { ThemedText } from '@/components/ThemedText'
 import { TextInput } from '@/components/TextInput'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 // ── Validation Schemas ──────────────────────────────────────────
 const EmailSchema = z.object({
@@ -103,7 +104,7 @@ export const ForgotPasswordScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a1a2e', '#16213e', '#0f3460']}
+        colors={[colors.surfaceContainerLowest, colors.surface, '#0A1628']}
         style={StyleSheet.absoluteFill}
       />
 
@@ -117,7 +118,7 @@ export const ForgotPasswordScreen: React.FC = () => {
         >
           {/* Back Button */}
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
           </TouchableOpacity>
 
           {/* ── Step 1: Email ── */}
@@ -125,7 +126,7 @@ export const ForgotPasswordScreen: React.FC = () => {
             <>
               <View style={styles.header}>
                 <View style={styles.iconCircle}>
-                  <Ionicons name="lock-open" size={36} color="#667eea" />
+                  <Ionicons name="lock-open" size={36} color={colors.primary} />
                 </View>
                 <ThemedText style={styles.title}>Forgot Password?</ThemedText>
                 <ThemedText style={styles.subtitle}>
@@ -174,13 +175,13 @@ export const ForgotPasswordScreen: React.FC = () => {
                         disabled={isLoading}
                       >
                         <LinearGradient
-                          colors={['#667eea', '#764ba2']}
+                          colors={[colors.primaryContainer, colors.primary]}
                           style={styles.buttonGradient}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 0 }}
                         >
                           {isLoading ? (
-                            <ActivityIndicator color="#fff" size="small" />
+                            <ActivityIndicator color={colors.onPrimary} size="small" />
                           ) : (
                             <ThemedText style={styles.buttonText}>Send Reset Code</ThemedText>
                           )}
@@ -198,7 +199,7 @@ export const ForgotPasswordScreen: React.FC = () => {
             <>
               <View style={styles.header}>
                 <View style={styles.iconCircle}>
-                  <Ionicons name="key" size={36} color="#56ab2f" />
+                  <Ionicons name="key" size={36} color={colors.primary} />
                 </View>
                 <ThemedText style={styles.title}>Enter Reset Code</ThemedText>
                 <ThemedText style={styles.subtitle}>
@@ -304,13 +305,13 @@ export const ForgotPasswordScreen: React.FC = () => {
                         disabled={isLoading}
                       >
                         <LinearGradient
-                          colors={['#56ab2f', '#a8e063']}
+                          colors={[colors.primaryContainer, colors.primary]}
                           style={styles.buttonGradient}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 0 }}
                         >
                           {isLoading ? (
-                            <ActivityIndicator color="#fff" size="small" />
+                            <ActivityIndicator color={colors.onPrimary} size="small" />
                           ) : (
                             <ThemedText style={styles.buttonText}>Reset Password</ThemedText>
                           )}
@@ -336,8 +337,8 @@ export const ForgotPasswordScreen: React.FC = () => {
           {/* ── Step 3: Success ── */}
           {step === 'success' && (
             <View style={styles.successContainer}>
-              <View style={[styles.iconCircle, { backgroundColor: 'rgba(86,171,47,0.15)' }]}>
-                <Ionicons name="checkmark-circle" size={48} color="#56ab2f" />
+              <View style={[styles.iconCircle, { backgroundColor: 'rgba(68, 216, 241, 0.1)' }]}>
+                <Ionicons name="checkmark-circle" size={48} color={colors.primary} />
               </View>
               <ThemedText style={styles.title}>Password Reset!</ThemedText>
               <ThemedText style={styles.subtitle}>
@@ -347,7 +348,7 @@ export const ForgotPasswordScreen: React.FC = () => {
 
               <TouchableOpacity style={styles.button} onPress={() => router.replace('/sign-in')}>
                 <LinearGradient
-                  colors={['#56ab2f', '#a8e063']}
+                  colors={[colors.primaryContainer, colors.primary]}
                   style={styles.buttonGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
@@ -366,7 +367,7 @@ export const ForgotPasswordScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   keyboardView: {
     flex: 1,
@@ -374,79 +375,80 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: spacing['2xl'],
   },
   backButton: {
     position: 'absolute',
-    top: 16,
+    top: spacing.lg,
     left: 0,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
-    gap: 8,
+    marginBottom: spacing['3xl'],
+    gap: spacing.sm,
   },
   iconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(102,126,234,0.15)',
+    backgroundColor: 'rgba(68, 216, 241, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   title: {
     fontSize: 26,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
   },
   formCard: {
-    borderRadius: 20,
+    borderRadius: radii.lg,
     overflow: 'hidden',
   },
   blurCard: {
-    borderRadius: 20,
+    borderRadius: radii.lg,
     overflow: 'hidden',
   },
   cardBorder: {
-    borderRadius: 20,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   form: {
-    padding: 24,
-    gap: 20,
+    padding: spacing['2xl'],
+    gap: spacing.xl,
   },
   inputGroup: {
-    gap: 6,
+    gap: spacing.xs,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   inputWrapper: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.outlineVariant,
+    backgroundColor: colors.surfaceContainerHigh,
   },
   input: {
     backgroundColor: 'transparent',
@@ -456,53 +458,62 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   inputText: {
-    color: '#fff',
+    color: colors.onSurface,
     fontSize: 15,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    fontFamily: fonts.regular,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
   },
   errorText: {
-    color: '#FF6B6B',
+    color: colors.error,
     fontSize: 12,
+    fontFamily: fonts.regular,
   },
   apiError: {
-    color: '#FF6B6B',
+    color: colors.error,
     fontSize: 13,
+    fontFamily: fonts.medium,
     textAlign: 'center',
-    backgroundColor: 'rgba(255,107,107,0.1)',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 180, 171, 0.1)',
+    padding: spacing.md,
+    borderRadius: radii.sm,
   },
   button: {
-    borderRadius: 14,
+    borderRadius: radii.md,
     overflow: 'hidden',
-    marginTop: 4,
+    marginTop: spacing.xs,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonGradient: {
-    paddingVertical: 16,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
+    borderRadius: radii.md,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.onPrimary,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   resendButton: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   resendText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: colors.onSurfaceVariant,
     fontSize: 14,
+    fontFamily: fonts.regular,
   },
   successContainer: {
     alignItems: 'center',
-    gap: 16,
-    paddingHorizontal: 24,
+    gap: spacing.lg,
+    paddingHorizontal: spacing['2xl'],
   },
 })

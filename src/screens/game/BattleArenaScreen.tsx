@@ -8,6 +8,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { battleApi } from '@/services/api'
 import { LinearGradient } from 'expo-linear-gradient'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 import {
   BattleField,
   BattleActions,
@@ -311,12 +314,12 @@ export const BattleArenaScreen: React.FC = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
+          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
           style={styles.gradientOverlay}
         />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
           </TouchableOpacity>
           <ThemedText style={styles.headerTitle}>Battle Arena</ThemedText>
           <View style={{ width: 40 }} />
@@ -338,7 +341,7 @@ export const BattleArenaScreen: React.FC = () => {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Battle Arena</ThemedText>
         <View style={{ width: 40 }} />
@@ -397,10 +400,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     paddingTop: 50,
-    paddingBottom: 12,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingBottom: spacing.md,
+    backgroundColor: 'rgba(10, 14, 26, 0.5)',
   },
   backButton: {
     width: 40,
@@ -410,8 +413,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   scrollView: {
     flex: 1,

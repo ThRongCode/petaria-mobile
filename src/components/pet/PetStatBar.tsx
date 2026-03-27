@@ -7,7 +7,7 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 interface PetStatBarProps {
   name: string
@@ -22,7 +22,7 @@ export const PetStatBar: React.FC<PetStatBarProps> = ({
   name, 
   value, 
   maxValue = 150,
-  color = '#F8D030' // Yellow by default
+  color = colors.secondaryContainer // Gold default
 }) => {
   // Calculate how many dots should be filled
   const filledDots = Math.round((value / maxValue) * MAX_DOTS)
@@ -42,7 +42,7 @@ export const PetStatBar: React.FC<PetStatBarProps> = ({
               styles.dot,
               index < filledDots 
                 ? { backgroundColor: color }
-                : { backgroundColor: colors.disabled }
+                : { backgroundColor: colors.surfaceContainerHighest }
             ]}
           />
         ))}
@@ -53,30 +53,30 @@ export const PetStatBar: React.FC<PetStatBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: metrics.medium,
+    marginBottom: spacing.lg,
   },
   labelContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: metrics.xxs,
+    marginBottom: spacing.xs,
   },
   statName: {
     fontSize: 14,
-    fontWeight: '500',
-    color: colors.black,
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
     minWidth: 80,
   },
   statValue: {
     fontSize: 16,
-    fontWeight: '700',
-    color: colors.black,
-    marginRight: metrics.small,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginRight: spacing.sm,
   },
   dotsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   dot: {
     width: 18,

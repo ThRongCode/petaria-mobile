@@ -12,6 +12,7 @@ import { Panel } from './Panel'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getItemImage } from '@/assets/images'
+import { colors, fonts, spacing, radii } from '@/themes'
 import type { Item } from '@/stores/types/game'
 
 interface ItemDetailDialogProps {
@@ -38,11 +39,11 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'Common': return '#9E9E9E'
-      case 'Rare': return '#2196F3'
-      case 'Epic': return '#9C27B0'
-      case 'Legendary': return '#FFD700'
-      default: return '#9E9E9E'
+      case 'Common': return colors.rarityColors.common
+      case 'Rare': return colors.rarityColors.rare
+      case 'Epic': return colors.rarityColors.epic
+      case 'Legendary': return colors.rarityColors.legendary
+      default: return colors.rarityColors.common
     }
   }
 
@@ -90,7 +91,7 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
           <Panel variant="dark" style={styles.dialogPanel}>
             {/* Close Button */}
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#fff" />
+              <Ionicons name="close" size={24} color={colors.onSurface} />
             </TouchableOpacity>
 
             {/* Rarity Indicator */}
@@ -169,7 +170,7 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
                   <ThemedText style={styles.sectionTitle}>Effects</ThemedText>
                   {getEffectDescription().map((effect, index) => (
                     <View key={index} style={styles.effectRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
                       <ThemedText style={styles.effectText}>{effect}</ThemedText>
                     </View>
                   ))}
@@ -181,7 +182,7 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
                 <View style={styles.section}>
                   <ThemedText style={styles.sectionTitle}>In Inventory</ThemedText>
                   <View style={styles.quantityContainer}>
-                    <Ionicons name="cube" size={20} color="#4CAF50" />
+                    <Ionicons name="cube" size={20} color={colors.success} />
                     <ThemedText style={styles.quantityText}>
                       {itemQuantity} owned
                     </ThemedText>
@@ -274,10 +275,10 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   dialogContainer: {
     width: '100%',
@@ -285,16 +286,16 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
   },
   dialogPanel: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: radii.lg,
+    padding: spacing.xl,
     position: 'relative',
   },
   closeButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: spacing.lg,
+    right: spacing.lg,
     zIndex: 10,
-    padding: 4,
+    padding: spacing.xs,
   },
   rarityIndicator: {
     position: 'absolute',
@@ -302,13 +303,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 4,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: radii.lg,
+    borderTopRightRadius: radii.lg,
   },
   imageContainer: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
   },
   imageBorder: {
     width: 120,
@@ -324,132 +325,135 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   name: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
   typeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   rarityBadge: {
     alignSelf: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
-    marginBottom: 20,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.DEFAULT,
+    marginBottom: spacing.xl,
   },
   rarityText: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
   },
   description: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     lineHeight: 20,
   },
   effectRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   effectText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: fonts.regular,
+    color: colors.onSurface,
     flex: 1,
   },
   priceContainer: {
-    gap: 8,
+    gap: spacing.sm,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.sm,
   },
   priceAmount: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   priceIcon: {
     fontSize: 18,
   },
   priceCurrency: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    gap: spacing.sm,
+    backgroundColor: 'rgba(35, 193, 107, 0.1)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
+    borderColor: 'rgba(35, 193, 107, 0.3)',
   },
   quantityText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontFamily: fonts.semiBold,
+    color: colors.success,
   },
   actions: {
-    gap: 12,
-    marginTop: 20,
+    gap: spacing.md,
+    marginTop: spacing.xl,
   },
   actionButton: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   actionGradient: {
     padding: 2,
   },
   actionButtonBorder: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 10,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
   },
   actionButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#66BB6A',
+    fontFamily: fonts.bold,
+    color: colors.success,
   },
   closeButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#B0B0B0',
+    fontFamily: fonts.bold,
+    color: colors.onSurfaceVariant,
   },
 })

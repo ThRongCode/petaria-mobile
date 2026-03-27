@@ -7,7 +7,7 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing, radii } from '@/themes'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
 interface ProfileInfoCardProps {
@@ -54,22 +54,23 @@ const styles = StyleSheet.create({
     // Removed marginBottom since it's now in a card
   },
   bioContainer: {
-    backgroundColor: '#F8F9FA', // Very light gray
-    paddingHorizontal: metrics.large,
-    paddingVertical: metrics.medium,
-    borderRadius: metrics.borderRadiusHuge,
-    marginBottom: metrics.medium,
+    backgroundColor: colors.surfaceContainerHigh,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.lg,
+    borderRadius: radii['2xl'],
+    marginBottom: spacing.lg,
   },
   bioText: {
     fontSize: 14,
-    color: colors.gray,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
   friendIdContainer: {
-    backgroundColor: '#F8F9FA', // Very light gray
-    paddingHorizontal: metrics.large,
-    paddingVertical: metrics.medium,
-    borderRadius: metrics.borderRadiusHuge,
+    backgroundColor: colors.surfaceContainerHigh,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.lg,
+    borderRadius: radii['2xl'],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -79,13 +80,14 @@ const styles = StyleSheet.create({
   },
   friendIdLabel: {
     fontSize: 12,
-    color: colors.placeholder,
-    marginBottom: metrics.tiny,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.xxs,
   },
   friendIdValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.black,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
     letterSpacing: 0.5,
   },
   copyButton: {
@@ -93,7 +95,7 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderRadius: metrics.borderRadiusLarge,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: radii.lg,
   },
 })

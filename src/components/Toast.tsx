@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, Image, LayoutAnimation, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import Emitter from '../utilities/Emitter'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { colors, fontSizes, hitSlop, Images, metrics } from '@/themes'
+import { colors, fonts, fontSizes, hitSlop, Images, metrics, spacing, radii } from '@/themes'
 
 export const TOAST_TYPE = {
   SUCCESS: 'SUCCESS',
@@ -157,28 +157,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    borderRadius: metrics.borderRadius,
-    paddingHorizontal: metrics.xs,
-    paddingVertical: metrics.xxs,
+    borderRadius: radii.DEFAULT,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   textContent: {
     flex: 1,
-    paddingHorizontal: metrics.xxs,
+    paddingHorizontal: spacing.sm,
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
   },
   titleStyle: {
     fontSize: fontSizes.title,
-    color: colors.white,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   textStyle: {
     fontSize: fontSizes.body,
-    color: colors.white,
+    fontFamily: fonts.regular,
+    color: colors.onSurface,
   },
   icon: {
     width: metrics.icon,
     height: metrics.icon,
-    tintColor: colors.white,
+    tintColor: colors.onSurface,
   },
 })

@@ -17,6 +17,9 @@ import { Pet } from '@/stores/types/game'
 import { petApi } from '@/services/api/petApi'
 import { gameActions } from '@/stores/reducers/game'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 import {
   AboutTab,
   StatsTab,
@@ -136,7 +139,7 @@ export default function PetDetailsScreen() {
               style={styles.backButtonContainer}
             >
               <LinearGradient
-                colors={['#2196F3', '#1976D2']}
+                colors={[colors.info, '#1565C0']}
                 style={styles.backButton}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -174,7 +177,7 @@ export default function PetDetailsScreen() {
               onPress={() => router.back()}
               style={styles.navButton}
             >
-              <Ionicons name="chevron-back" size={28} color="#fff" />
+              <Ionicons name="chevron-back" size={28} color={colors.onSurface} />
             </TouchableOpacity>
             
             <ThemedText style={styles.petId}>#{pet.id.toString().padStart(3, '0')}</ThemedText>
@@ -328,43 +331,44 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
   errorPanel: {
     alignItems: 'center',
-    padding: 32,
+    padding: spacing.xl,
     width: '100%',
   },
   errorTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 12,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.md,
   },
   errorText: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 24,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.xl,
   },
   backButtonContainer: {
     width: '100%',
-    borderRadius: 8,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   backButton: {
-    padding: 16,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
 
   // Header Panel
   headerPanel: {
-    margin: 16,
-    padding: 16,
+    margin: spacing.lg,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   headerTop: {
@@ -372,7 +376,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   navButton: {
     width: 40,
@@ -382,15 +386,15 @@ const styles = StyleSheet.create({
   },
   petId: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   imageContainer: {
     width: 200,
     height: 200,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: spacing.lg,
   },
   petImage: {
     width: '100%',
@@ -399,60 +403,61 @@ const styles = StyleSheet.create({
   petInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
+    gap: spacing.md,
+    marginBottom: spacing.sm,
   },
   petName: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   levelBadge: {
-    backgroundColor: 'rgba(76, 175, 80, 0.3)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: '#4CAF50',
+    borderColor: colors.success,
   },
   levelText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontFamily: fonts.bold,
+    color: colors.success,
   },
   species: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 16,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.lg,
   },
   hpSection: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   hpLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     width: 30,
   },
   hpBarBackground: {
     flex: 1,
     height: 10,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 5,
     overflow: 'hidden',
   },
   hpBarFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.success,
     borderRadius: 5,
   },
   hpText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
     minWidth: 80,
     textAlign: 'right',
   },
@@ -460,31 +465,31 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   xpLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
     width: 30,
   },
   xpBarBackground: {
     flex: 1,
     height: 8,
-    backgroundColor: 'rgba(255,215,0,0.2)',
+    backgroundColor: 'rgba(255, 219, 60, 0.2)',
     borderRadius: 4,
     overflow: 'hidden',
   },
   xpBarFill: {
     height: '100%',
-    backgroundColor: '#FFD700',
+    backgroundColor: colors.secondaryContainer,
     borderRadius: 4,
   },
   xpText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#FFD700',
+    fontFamily: fonts.semiBold,
+    color: colors.secondaryContainer,
     minWidth: 80,
     textAlign: 'right',
   },
@@ -492,33 +497,33 @@ const styles = StyleSheet.create({
   // Tabs
   tabsContainer: {
     flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 12,
-    padding: 4,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    backgroundColor: 'rgba(10, 14, 26, 0.5)',
+    borderRadius: radii.lg,
+    padding: spacing.xs,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: radii.md,
   },
   activeTab: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surfaceContainerHigh,
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
   },
   activeTabText: {
-    color: '#fff',
+    color: colors.onSurface,
   },
 
   // Content
   contentContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
   },
 })

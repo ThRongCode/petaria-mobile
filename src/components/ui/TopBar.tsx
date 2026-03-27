@@ -1,9 +1,10 @@
 import React from 'react'
-import { StyleSheet, View, TouchableOpacity, Image } from 'react-native'
+import { StyleSheet, View, TouchableOpacity, Image, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ThemedText } from '@/components'
 import { Ionicons } from '@expo/vector-icons'
 import { Panel } from './Panel'
+import { colors, fonts, radii, spacing } from '@/themes'
 
 interface TopBarProps {
   username: string
@@ -119,63 +120,72 @@ export const TopBar: React.FC<TopBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 12,
-    paddingBottom: 8,
-    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+      },
+    }),
   },
   avatarPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   userText: {
     gap: 2,
   },
   username: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.primary,
   },
   spacer: {
     flex: 1,
   },
   currencies: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   currencyPanel: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 8,
+    borderRadius: radii.full,
   },
   currencyText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 10,
+    fontFamily: fonts.bold,
+    color: colors.primary,
   },
   settingsButton: {
     marginLeft: 0,
@@ -184,11 +194,12 @@ const styles = StyleSheet.create({
     padding: 6,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: radii.full,
   },
   ticketsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
+    gap: spacing.sm,
+    marginTop: 4,
   },
   ticketPanel: {
     flex: 1,
@@ -196,18 +207,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
   },
   ticketLabel: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontWeight: '600',
+    color: colors.onSurfaceVariant,
+    fontFamily: fonts.semiBold,
   },
   ticketText: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   pokeballIcon: {
     fontSize: 14,

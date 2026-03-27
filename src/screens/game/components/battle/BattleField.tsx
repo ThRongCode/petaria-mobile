@@ -4,6 +4,9 @@ import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { getPokemonImage } from '@/assets/images'
 import { getHpColor } from './battleUtils'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing } from '@/themes/metrics'
 
 interface BattlePetInfo {
   name: string
@@ -105,14 +108,14 @@ export const BattleField: React.FC<BattleFieldProps> = ({
 const styles = StyleSheet.create({
   battleFieldArea: {
     paddingTop: 40,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   pokemonRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    gap: 16,
+    gap: spacing.lg,
   },
   pokemonColumn: {
     flex: 1,
@@ -121,28 +124,28 @@ const styles = StyleSheet.create({
   pokemonSprite: {
     width: 130,
     height: 130,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   infoBadge: {
     width: '100%',
     maxWidth: 180,
-    padding: 12,
+    padding: spacing.md,
   },
   infoBadgeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.sm,
   },
   badgeName: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   badgeLevel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#ccc',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
   },
   hpBarContainer: {
     flexDirection: 'row',
@@ -150,14 +153,14 @@ const styles = StyleSheet.create({
   },
   hpLabel: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginRight: 6,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginRight: spacing.sm,
   },
   hpBarOuter: {
     flex: 1,
     height: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -166,9 +169,9 @@ const styles = StyleSheet.create({
   },
   hpNumbers: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
     textAlign: 'right',
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
 })

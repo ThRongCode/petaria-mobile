@@ -3,6 +3,9 @@ import { StyleSheet, View } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
 import { Panel } from '@/components/ui'
 import { Pet } from '@/stores/types/game'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface MovesTabProps {
   pet: Pet
@@ -44,67 +47,69 @@ export const MovesTab: React.FC<MovesTabProps> = ({ pet }) => (
 
 const styles = StyleSheet.create({
   tabPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.lg,
   },
   moveCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: colors.surfaceContainerHigh,
+    padding: spacing.md,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.outlineVariant,
   },
   moveHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   moveName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   movePpBadge: {
-    backgroundColor: 'rgba(33, 150, 243, 0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: 'rgba(99, 144, 240, 0.2)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: colors.info,
   },
   movePpText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#2196F3',
+    fontFamily: fonts.semiBold,
+    color: colors.info,
   },
   moveStats: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   moveStatItem: {
     flex: 1,
   },
   moveStatLabel: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     marginBottom: 2,
   },
   moveStatValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   emptyText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginTop: 24,
+    marginTop: spacing.xl,
   },
 })

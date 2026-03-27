@@ -4,37 +4,26 @@
  */
 
 import { CaptureState } from './types'
+import { colors, rarityColors } from '@/themes/colors'
 
 /**
  * Get color for rarity display
  */
 export const getRarityColor = (rarity: string): string => {
-  const colors: Record<string, string> = {
-    'Common': '#9E9E9E',
-    'common': '#9E9E9E',
-    'Uncommon': '#4CAF50',
-    'uncommon': '#4CAF50',
-    'Rare': '#2196F3',
-    'rare': '#2196F3',
-    'Epic': '#9C27B0',
-    'epic': '#9C27B0',
-    'Legendary': '#FF9800',
-    'legendary': '#FF9800',
-  }
-  return colors[rarity] || '#9E9E9E'
+  return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
 }
 
 /**
  * Get color for difficulty display
  */
 export const getDifficultyColor = (difficulty: string): string => {
-  const colors: Record<string, string> = {
-    'Easy': '#4CAF50',
-    'Medium': '#FFA726',
-    'Hard': '#EF5350',
-    'Expert': '#9C27B0',
+  const difficultyColors: Record<string, string> = {
+    'Easy': colors.success,
+    'Medium': colors.warning,
+    'Hard': colors.error,
+    'Expert': colors.tertiary,
   }
-  return colors[difficulty] || '#999'
+  return difficultyColors[difficulty] || colors.onSurfaceVariant
 }
 
 /**

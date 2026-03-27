@@ -12,7 +12,7 @@ import { ThemedView } from '@/components/ThemedView'
 import { ThemedText } from '@/components/ThemedText'
 import { TextInput } from '@/components/TextInput'
 import { SignInSchema } from './signin.schema'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 type SignInFormData = z.infer<typeof SignInSchema>
 
@@ -49,7 +49,7 @@ export const SignInScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a1a2e', '#16213e', '#0f3460']}
+        colors={[colors.surfaceContainerLowest, colors.surface, '#0A1628']}
         style={StyleSheet.absoluteFill}
       />
       
@@ -65,7 +65,7 @@ export const SignInScreen: React.FC = () => {
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={[colors.primaryContainer, colors.primary]}
                 style={styles.logoGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -141,14 +141,14 @@ export const SignInScreen: React.FC = () => {
                     disabled={isLoading}
                   >
                     <LinearGradient
-                      colors={['#56ab2f', '#a8e063']}
+                      colors={[colors.primaryContainer, colors.primary]}
                       style={styles.buttonGradient}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                     >
                       {isLoading ? (
                         <View style={styles.loadingContainer}>
-                          <ActivityIndicator color="#fff" size="small" />
+                          <ActivityIndicator color={colors.onPrimary} size="small" />
                           <ThemedText style={styles.buttonText}>Signing in...</ThemedText>
                         </View>
                       ) : (
@@ -194,7 +194,7 @@ export const SignInScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   keyboardView: {
     flex: 1,
@@ -202,14 +202,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: spacing['2xl'],
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: spacing['4xl'],
   },
   logoContainer: {
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   logoGradient: {
     width: 80,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#667eea',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -228,78 +228,81 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
   formCard: {
-    marginBottom: 24,
+    marginBottom: spacing['2xl'],
   },
   blurCard: {
-    borderRadius: 24,
+    borderRadius: radii.lg,
     overflow: 'hidden',
   },
   cardBorder: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 24,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 24,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    padding: spacing['2xl'],
   },
   form: {
-    gap: 24,
+    gap: spacing['2xl'],
   },
   inputContainer: {
-    gap: 8,
+    gap: spacing.sm,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 4,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
   },
   inputWrapper: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: colors.outlineVariant,
   },
   input: {
-    padding: 14,
+    padding: spacing.lg,
     fontSize: 16,
-    color: '#fff',
+    color: colors.onSurface,
   },
   inputInner: {
     backgroundColor: 'transparent',
     borderWidth: 0,
   },
   inputText: {
-    color: '#fff',
+    color: colors.onSurface,
     fontSize: 16,
+    fontFamily: fonts.regular,
   },
   errorText: {
-    color: '#FF6B6B',
+    color: colors.error,
     fontSize: 12,
-    marginTop: 4,
+    fontFamily: fonts.regular,
+    marginTop: spacing.xs,
   },
   button: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     overflow: 'hidden',
-    marginTop: 8,
-    shadowColor: '#56ab2f',
+    marginTop: spacing.sm,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   buttonGradient: {
-    padding: 16,
+    padding: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -307,25 +310,26 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.onPrimary,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   devInfo: {
-    backgroundColor: 'rgba(86, 171, 47, 0.15)',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: 'rgba(68, 216, 241, 0.1)',
+    borderRadius: radii.md,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(86, 171, 47, 0.3)',
+    borderColor: 'rgba(68, 216, 241, 0.2)',
   },
   devInfoText: {
     fontSize: 12,
-    color: '#a8e063',
+    fontFamily: fonts.medium,
+    color: colors.primary,
     textAlign: 'center',
   },
   footer: {
@@ -335,19 +339,21 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   linkText: {
     fontSize: 15,
-    color: '#a8e063',
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
+    color: colors.primary,
   },
   forgotPasswordButton: {
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
   },
   forgotPasswordText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
 })

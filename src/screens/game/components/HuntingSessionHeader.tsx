@@ -2,6 +2,9 @@ import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing } from '@/themes/metrics'
 
 interface SessionRewards {
   totalXp: number
@@ -66,7 +69,7 @@ export const HuntingSessionHeader: React.FC<HuntingSessionHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerPanel: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   headerContent: {
     flexDirection: 'row',
@@ -78,29 +81,31 @@ const styles = StyleSheet.create({
   },
   regionName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
+    marginBottom: spacing.xs,
   },
   sessionSubtitle: {
     fontSize: 14,
-    color: '#B0B0B0',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   actionsCounter: {
     alignItems: 'center',
   },
   actionsText: {
     fontSize: 12,
-    color: '#B0B0B0',
-    marginBottom: 4,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
   },
   actionsNumber: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   rewardsPanel: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   rewardsBar: {
     flexDirection: 'row',
@@ -111,12 +116,13 @@ const styles = StyleSheet.create({
   },
   rewardLabel: {
     fontSize: 12,
-    color: '#B0B0B0',
-    marginBottom: 4,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
   },
   rewardValue: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
 })

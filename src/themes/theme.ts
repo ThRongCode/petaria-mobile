@@ -1,68 +1,82 @@
+/**
+ * Theme Configuration
+ *
+ * Integrates our design tokens with rn-base-component's extendTheme().
+ * Dark mode only for now, but structured so adding themes is trivial:
+ *   1. Add a new color set in colors.ts (or a separate file)
+ *   2. Create a new theme object here following the same shape
+ *   3. Switch via a ThemeContext or redux selector
+ */
+
 import { colors } from './colors'
-import { metrics } from './metrics'
+import { metrics, radii } from './metrics'
 import { fonts } from './fonts'
 import { extendTheme } from 'rn-base-component'
 
 export const theme = extendTheme({
   fonts: fonts,
   colors: {
+    // Core
     primary: colors.primary,
-    secondary: colors.warning,
-    backgroundPrimary: colors.backgroundPrimary,
-    backgroundSecondary: colors.backgroundSecondary,
-    lightBackground: colors.white,
-    mainBackground: colors.white,
-    backgroundColor: colors.white,
-    cardPrimaryBackground: colors.success,
+    secondary: colors.secondaryContainer,
 
-    // border
-    primaryBorder: colors.border,
+    // Backgrounds (map to surface hierarchy)
+    backgroundPrimary: colors.surfaceContainerLowest,
+    backgroundSecondary: colors.surface,
+    lightBackground: colors.surfaceContainerHigh,
+    mainBackground: colors.surfaceContainerLowest,
+    backgroundColor: colors.surface,
+    cardPrimaryBackground: colors.surfaceContainerHigh,
 
-    // text
-    textColor: colors.black,
-    lightTextColor: colors.white,
-    darkTextColor: colors.gray,
-    placeHolderText: colors.placeholder,
-    errorText: colors.red,
+    // Border
+    primaryBorder: colors.outlineVariant,
+
+    // Text
+    textColor: colors.onSurface,
+    lightTextColor: colors.onSurfaceVariant,
+    darkTextColor: colors.onSurface,
+    placeHolderText: colors.onSurfaceVariant,
+    errorText: colors.error,
   },
   darkColors: {
+    // Same as light — we're dark-only, but rn-base-component requires both
     primary: colors.primary,
-    secondary: colors.warning,
-    backgroundPrimary: colors.backgroundPrimary,
-    backgroundSecondary: colors.backgroundSecondary,
-    lightBackground: colors.black,
-    mainBackground: colors.backgroundPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    cardPrimaryBackground: colors.gray,
+    secondary: colors.secondaryContainer,
 
-    // border
-    primaryBorder: colors.border,
+    backgroundPrimary: colors.surfaceContainerLowest,
+    backgroundSecondary: colors.surface,
+    lightBackground: colors.surfaceContainerHigh,
+    mainBackground: colors.surfaceContainerLowest,
+    backgroundColor: colors.surface,
+    cardPrimaryBackground: colors.surfaceContainerHigh,
 
-    // text
-    textColor: colors.white,
-    lightTextColor: colors.gray,
-    darkTextColor: colors.white,
-    placeHolderText: colors.placeholder,
-    errorText: colors.red,
+    primaryBorder: colors.outlineVariant,
+
+    textColor: colors.onSurface,
+    lightTextColor: colors.onSurfaceVariant,
+    darkTextColor: colors.onSurface,
+    placeHolderText: colors.onSurfaceVariant,
+    errorText: colors.error,
   },
   components: {
     Button: {
       height: metrics.huge,
-      borderRadius: metrics.borderRadius,
+      borderRadius: radii.DEFAULT,
     },
     ButtonPrimary: {
       backgroundColor: colors.primary,
-      disabledColor: colors.disabled,
-      borderRadius: metrics.tiny,
+      disabledColor: colors.surfaceContainerHighest,
+      borderRadius: radii.DEFAULT,
+      textColor: colors.onPrimary,
     },
     ButtonSecondary: {
-      backgroundColor: colors.white,
-      disabledColor: colors.gray,
-      borderRadius: metrics.tiny,
-      textColor: colors.primary,
+      backgroundColor: colors.surfaceContainerHigh,
+      disabledColor: colors.surfaceContainerHighest,
+      borderRadius: radii.DEFAULT,
+      textColor: colors.onSurface,
     },
     ButtonOutline: {
-      borderRadius: metrics.large,
+      borderRadius: radii.DEFAULT,
     },
     Checkbox: {
       fillColor: colors.primary,

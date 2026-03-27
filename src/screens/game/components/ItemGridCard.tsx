@@ -12,26 +12,17 @@ import { Panel } from '@/components/ui'
 import { Ionicons } from '@expo/vector-icons'
 import { getItemImage } from '@/assets/images'
 import type { Item } from '@/stores/types/game'
+import { colors, rarityColors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface ItemGridCardProps {
   item: Item & { quantity?: number }
   onPress: (item: Item) => void
 }
 
-// Get color for item rarity
 const getRarityColor = (rarity: string): string => {
-  switch (rarity) {
-    case 'Common':
-      return '#9E9E9E'
-    case 'Rare':
-      return '#2196F3'
-    case 'Epic':
-      return '#9C27B0'
-    case 'Legendary':
-      return '#FFD700'
-    default:
-      return '#9E9E9E'
-  }
+  return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
 }
 
 export const ItemGridCard: React.FC<ItemGridCardProps> = ({ item, onPress }) => {
@@ -70,13 +61,13 @@ export const ItemGridCard: React.FC<ItemGridCardProps> = ({ item, onPress }) => 
           <View style={styles.priceContainer}>
             {item.price.coins && item.price.coins > 0 && (
               <View style={styles.priceTag}>
-                <Ionicons name="cash" size={12} color="#FFD700" />
+                <Ionicons name="cash" size={12} color={colors.secondaryContainer} />
                 <ThemedText style={styles.priceValue}>{item.price.coins}</ThemedText>
               </View>
             )}
             {item.price.gems && item.price.gems > 0 && (
               <View style={styles.priceTag}>
-                <Ionicons name="diamond" size={12} color="#00BFFF" />
+                <Ionicons name="diamond" size={12} color={colors.info} />
                 <ThemedText style={styles.priceValue}>{item.price.gems}</ThemedText>
               </View>
             )}
@@ -90,10 +81,10 @@ export const ItemGridCard: React.FC<ItemGridCardProps> = ({ item, onPress }) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   panel: {
-    padding: 12,
+    padding: spacing.md,
     position: 'relative',
   },
   rarityIndicator: {
@@ -102,17 +93,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    borderTopLeftRadius: radii.md,
+    borderTopRightRadius: radii.md,
   },
   imageContainer: {
     width: '100%',
     height: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radii.md,
     position: 'relative',
   },
   image: {
@@ -127,58 +118,59 @@ const styles = StyleSheet.create({
   },
   quantityBadge: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 8,
-    paddingHorizontal: 6,
+    bottom: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: 'rgba(10, 14, 26, 0.8)',
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
   quantityText: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   info: {
-    gap: 4,
+    gap: spacing.xs,
   },
   name: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   type: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   rarityBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginTop: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
+    marginTop: spacing.xs,
   },
   rarityText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   priceContainer: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   priceTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    gap: spacing.xs,
+    backgroundColor: colors.surfaceContainerHigh,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
   },
   priceValue: {
     fontSize: 12,
-    color: '#FFD700',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.secondaryContainer,
   },
 })

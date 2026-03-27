@@ -8,7 +8,7 @@ import React from 'react'
 import { View, StyleSheet, ViewStyle } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 interface HeaderBaseProps {
   title: string
@@ -20,7 +20,7 @@ interface HeaderBaseProps {
 
 export const HeaderBase: React.FC<HeaderBaseProps> = ({
   title,
-  gradientColors = ['#FF6B9D', '#C44569'], // Default pink/red
+  gradientColors = ['#00BCD4', '#004E59'],
   height = 140,
   children,
   style,
@@ -46,10 +46,10 @@ export const HeaderBase: React.FC<HeaderBaseProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    borderBottomLeftRadius: metrics.borderRadiusHuge,
-    borderBottomRightRadius: metrics.borderRadiusHuge,
-    paddingTop: 50, // Space for status bar
-    paddingHorizontal: metrics.large,
+    borderBottomLeftRadius: radii['2xl'],
+    borderBottomRightRadius: radii['2xl'],
+    paddingTop: 50,
+    paddingHorizontal: spacing['2xl'],
     justifyContent: 'center',
     overflow: 'hidden',
   },
@@ -59,11 +59,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
-    color: colors.white,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     textAlign: 'center',
   },
   childrenContainer: {
-    marginTop: metrics.medium,
+    marginTop: spacing.lg,
   },
 })

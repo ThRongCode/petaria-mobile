@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, ViewStyle, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { ThemedText } from '@/components'
 import { Panel } from './Panel'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 interface IconButtonProps {
   icon: keyof typeof Ionicons.glyphMap
@@ -26,7 +27,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   locked = false,
   badge,
   style,
-  iconColor = '#fff',
+  iconColor = colors.onSurface,
   iconSize = 32,
 }) => {
   return (
@@ -39,11 +40,11 @@ export const IconButton: React.FC<IconButtonProps> = ({
         <Ionicons 
           name={icon} 
           size={iconSize} 
-          color={locked ? '#666' : iconColor} 
+          color={locked ? colors.onSurfaceVariant : iconColor} 
         />
         {locked && (
           <View style={styles.lockOverlay}>
-            <Ionicons name="lock-closed" size={20} color="#fff" />
+            <Ionicons name="lock-closed" size={20} color={colors.onSurface} />
           </View>
         )}
         {badge && badge > 0 && (
@@ -64,7 +65,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     width: 80,
   },
   panel: {
@@ -82,35 +83,35 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(10, 14, 26, 0.7)',
+    borderRadius: radii.md,
   },
   badge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#FF4444',
-    borderRadius: 10,
+    backgroundColor: colors.error,
+    borderRadius: radii.full,
     minWidth: 20,
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing.xs,
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: colors.surfaceContainerLowest,
   },
   badgeText: {
-    color: '#fff',
+    color: colors.onError,
     fontSize: 11,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   label: {
     fontSize: 12,
-    color: '#fff',
+    color: colors.onSurface,
     textAlign: 'center',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   labelLocked: {
-    color: '#666',
+    color: colors.onSurfaceVariant,
   },
 })

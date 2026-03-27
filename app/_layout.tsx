@@ -9,11 +9,10 @@ import { Stack } from 'expo-router'
 import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
-import { useColorScheme } from 'react-native'
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import { DarkTheme, ThemeProvider } from '@react-navigation/native'
 import { injectStore } from '@/services/networking/axios'
 import { BaseProvider } from 'rn-base-component'
-import { theme } from '@/themes'
+import { theme, colors, fontAssets } from '@/themes'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { configureLocalization } from '@/locale/I18nConfig'
 import { useSelector } from 'react-redux'
@@ -27,14 +26,26 @@ SplashScreen.preventAutoHideAsync()
 injectStore(store)
 configureLocalization('en')
 
+/**
+ * Navigation theme — force dark mode with our surface colors.
+ * Extend @react-navigation DarkTheme with our design tokens.
+ */
+const AppNavigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: colors.primary,
+    background: colors.surfaceContainerLowest,
+    card: colors.surfaceContainer,
+    text: colors.onSurface,
+    border: colors.outlineVariant,
+    notification: colors.error,
+  },
+}
+
 function RootLayoutContent() {
-  const colorScheme = useColorScheme()
   const showGlobalIndicator = useSelector(getLoadingIndicator)
-  const [loaded] = useFonts({
-    RobotoRegular: require('../src/assets/fonts/Roboto-Regular.ttf'),
-    RobotoMedium: require('../src/assets/fonts/Roboto-Medium.ttf'),
-    RobotoBold: require('../src/assets/fonts/Roboto-Bold.ttf'),
-  })
+  const [loaded] = useFonts(fontAssets)
 
   // Handle session expiration globally
   useSessionExpiration()
@@ -52,7 +63,7 @@ function RootLayoutContent() {
   return (
     <>
       <BaseProvider theme={theme}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={AppNavigationTheme}>
           <BottomSheetModalProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
@@ -60,7 +71,7 @@ function RootLayoutContent() {
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="+not-found" />
             </Stack>
-            <StatusBar style="auto" />
+            <StatusBar style="light" />
           </BottomSheetModalProvider>
         </ThemeProvider>
       </BaseProvider>

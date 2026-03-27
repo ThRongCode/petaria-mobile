@@ -8,6 +8,9 @@ import { getUserCurrency, getUserProfile } from '@/stores/selectors'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import { huntApi } from '@/services/api'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 import { 
   EncounterModal, 
   HuntingControls, 
@@ -560,41 +563,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
+    padding: spacing.lg,
+    paddingBottom: spacing['3xl'],
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   errorPanel: {
-    padding: 24,
+    padding: spacing['2xl'],
     alignItems: 'center',
   },
   errorTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-    marginBottom: 12,
+    fontFamily: fonts.bold,
+    color: colors.error,
+    marginBottom: spacing.md,
   },
   errorText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   errorButton: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.md,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: colors.secondaryContainer,
   },
   errorButtonText: {
-    color: '#FFD700',
-    fontWeight: 'bold',
+    color: colors.secondaryContainer,
+    fontFamily: fonts.bold,
   },
 })

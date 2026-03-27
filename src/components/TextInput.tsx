@@ -48,11 +48,11 @@ export const TextInput: React.FC<TextInputProps> = ({
       inputStyle={styles.textInput}
       labelStyle={[styles.labelStyle, !!errorText && styles.labelError]}
       style={[styles.input, style]}
-      placeholderTextColor={colors.black}
+      placeholderTextColor={colors.onSurfaceVariant}
       onFocus={() => setFocus(true)}
       onBlur={() => setFocus(false)}
       errorProps={{ style: styles.error }}
-      selectionColor={errorText ? colors.red : colors.primary}
+      selectionColor={errorText ? colors.error : colors.primary}
     />
   )
 }
@@ -71,7 +71,8 @@ const styles = StyleSheet.create({
     height: metrics.textInputHeight,
     paddingHorizontal: metrics.marginVertical,
     borderRadius: metrics.borderRadius,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderColor: colors.outlineVariant,
   },
   labelStyle: {
     fontSize: metrics.span,
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
   errorIcon: {
     width: metrics.medium,
     height: metrics.medium,
-    tintColor: colors.red,
+    tintColor: colors.error,
     marginRight: metrics.tiny,
     resizeMode: 'contain',
   },
@@ -104,16 +105,16 @@ const styles = StyleSheet.create({
     marginTop: metrics.tiny,
   },
   labelError: {
-    color: colors.red,
+    color: colors.error,
   },
   outlineError: {
     borderColor: colors.error,
   },
   focusView: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerHigh,
     borderColor: colors.primary,
   },
   disabled: {
-    backgroundColor: colors.gray,
+    backgroundColor: colors.surfaceContainerHighest,
   },
 })

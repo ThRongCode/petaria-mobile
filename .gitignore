@@ -37,3 +37,9 @@ yarn-error.*
 
 app-example
 .claude/
+render-env.txt
+.vscode/mcp.json
+stitch 2/*
+download.html
+backend/.env.render
+stitch-html/*

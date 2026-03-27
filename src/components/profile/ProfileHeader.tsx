@@ -9,7 +9,7 @@ import { View, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
 import { ProfileAvatar } from './ProfileAvatar'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 interface ProfileHeaderProps {
   avatarSource: any
@@ -32,7 +32,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <View style={styles.container}>
       {/* Banner Background */}
       <LinearGradient
-        colors={['#FF6B9D', '#C44569']}
+        colors={['#00BCD4', '#004E59']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.banner}
@@ -80,13 +80,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginBottom: metrics.large,
+    marginBottom: spacing['2xl'],
   },
   banner: {
     width: '100%',
     height: 180,
-    borderBottomLeftRadius: metrics.borderRadiusHuge,
-    borderBottomRightRadius: metrics.borderRadiusHuge,
+    borderBottomLeftRadius: radii['2xl'],
+    borderBottomRightRadius: radii['2xl'],
     position: 'relative',
     overflow: 'hidden',
   },
@@ -96,38 +96,39 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   content: {
     position: 'absolute',
     bottom: -40,
     left: 0,
     right: 0,
-    paddingHorizontal: metrics.large,
+    paddingHorizontal: spacing['2xl'],
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
   avatarSection: {
-    marginRight: metrics.medium,
+    marginRight: spacing.lg,
   },
   infoSection: {
     flex: 1,
-    paddingBottom: metrics.small,
+    paddingBottom: spacing.sm,
   },
   levelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: metrics.xxs,
+    marginBottom: spacing.xxs,
   },
   levelLabel: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.black,
-    marginRight: metrics.xxs,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginRight: spacing.xs,
   },
   xpText: {
     fontSize: 14,
-    color: colors.gray,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   usernameContainer: {
     flexDirection: 'row',
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
   },
   username: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.black,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
 })

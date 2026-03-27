@@ -5,6 +5,9 @@ import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { Move } from '@/stores/types/game'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface BattleResult {
   won: boolean
@@ -79,7 +82,7 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
                     disabled={isAnimating}
                   >
                     <LinearGradient
-                      colors={selectedMove?.name === move.name ? ['#4CAF50', '#45a049'] : ['#2196F3', '#1976D2']}
+                      colors={selectedMove?.name === move.name ? [colors.success, '#2E7D32'] : [colors.info, '#1565C0']}
                       style={styles.moveButton}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
@@ -97,7 +100,7 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
                 onPress={onRun}
               >
                 <LinearGradient
-                  colors={['#EF5350', '#E53935']}
+                  colors={[colors.error, '#C62828']}
                   style={styles.runButton}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -121,16 +124,16 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
             {battleResult && (
               <View style={styles.rewardsSummary}>
                 <View style={styles.rewardRow}>
-                  <Ionicons name="star" size={18} color="#9C27B0" />
+                  <Ionicons name="star" size={18} color={colors.tertiary} />
                   <ThemedText style={styles.rewardText}>+{battleResult.xpReward} XP</ThemedText>
                 </View>
                 <View style={styles.rewardRow}>
-                  <Ionicons name="cash" size={18} color="#FFD700" />
+                  <Ionicons name="cash" size={18} color={colors.secondaryContainer} />
                   <ThemedText style={styles.rewardText}>+{battleResult.coinReward} Coins</ThemedText>
                 </View>
                 {battleResult.petLeveledUp && (
                   <View style={styles.levelUpBadge}>
-                    <Ionicons name="arrow-up-circle" size={18} color="#4CAF50" />
+                    <Ionicons name="arrow-up-circle" size={18} color={colors.success} />
                     <ThemedText style={styles.levelUpText}>
                       Pet leveled up to Lv.{battleResult.petNewLevel}!
                     </ThemedText>
@@ -138,7 +141,7 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
                 )}
                 {battleResult.userLeveledUp && (
                   <View style={styles.levelUpBadge}>
-                    <Ionicons name="ribbon" size={18} color="#FFD700" />
+                    <Ionicons name="ribbon" size={18} color={colors.secondaryContainer} />
                     <ThemedText style={styles.levelUpText}>
                       You leveled up to Lv.{battleResult.userNewLevel}!
                     </ThemedText>
@@ -152,7 +155,7 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
               onPress={onContinue}
             >
               <LinearGradient
-                colors={winner === 'player' ? ['#4CAF50', '#45a049'] : ['#757575', '#616161']}
+                colors={winner === 'player' ? [colors.success, '#2E7D32'] : [colors.surfaceContainerHighest, colors.surfaceContainerHigh]}
                 style={styles.continueButton}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -169,46 +172,46 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
 
 const styles = StyleSheet.create({
   bottomSection: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   battleLogBox: {
-    padding: 12,
-    marginBottom: 8,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
     minHeight: 50,
     justifyContent: 'center',
   },
   battleLogText: {
     fontSize: 14,
-    color: '#fff',
-    fontWeight: '500',
+    fontFamily: fonts.medium,
+    color: colors.onSurface,
   },
   actionBox: {
-    padding: 16,
+    padding: spacing.lg,
   },
   actionContent: {
     // Container for action elements
   },
   actionTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 12,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.md,
   },
   movesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   moveButtonContainer: {
     width: '48%',
-    marginBottom: 8,
-    borderRadius: 8,
+    marginBottom: spacing.sm,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   moveButton: {
-    padding: 12,
+    padding: spacing.md,
     alignItems: 'center',
   },
   selectedMoveButton: {
@@ -216,86 +219,87 @@ const styles = StyleSheet.create({
   },
   moveButtonText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   movePpText: {
     fontSize: 11,
+    fontFamily: fonts.regular,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
   },
   runButtonContainer: {
-    borderRadius: 8,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   runButton: {
-    padding: 12,
+    padding: spacing.md,
     alignItems: 'center',
   },
   runButtonText: {
-    color: '#fff',
+    color: colors.onSurface,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     textAlign: 'center',
   },
   waitingText: {
     fontSize: 14,
-    color: '#fff',
+    fontFamily: fonts.medium,
+    color: colors.onSurface,
     textAlign: 'center',
-    fontWeight: '500',
-    paddingVertical: 16,
+    paddingVertical: spacing.lg,
   },
   battleOverBox: {
     alignItems: 'center',
   },
   battleOverTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 24,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.xl,
   },
   continueButtonContainer: {
-    borderRadius: 8,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   continueButton: {
-    padding: 16,
+    padding: spacing.lg,
     paddingHorizontal: 48,
     alignItems: 'center',
   },
   continueButtonText: {
-    color: '#fff',
+    color: colors.onSurface,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   rewardsSummary: {
     alignItems: 'center',
-    marginBottom: 20,
-    gap: 8,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
   rewardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   rewardText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   levelUpBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginTop: 4,
+    gap: spacing.sm,
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    marginTop: spacing.xs,
   },
   levelUpText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontFamily: fonts.bold,
+    color: colors.success,
   },
 })

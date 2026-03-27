@@ -4,6 +4,7 @@ import { ThemedText } from '@/components'
 import { Ionicons } from '@expo/vector-icons'
 import { Panel } from './Panel'
 import { LinearGradient } from 'expo-linear-gradient'
+import { colors, fonts, spacing, radii } from '@/themes'
 
 interface QuestReward {
   type: 'coins' | 'gems' | 'exp' | 'item'
@@ -49,7 +50,7 @@ export const QuestPopup: React.FC<QuestPopupProps> = ({
           <View style={styles.header}>
             <ThemedText style={styles.title}>{title}</ThemedText>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#fff" />
+              <Ionicons name="close" size={24} color={colors.onSurface} />
             </TouchableOpacity>
           </View>
 
@@ -93,7 +94,7 @@ export const QuestPopup: React.FC<QuestPopupProps> = ({
             style={styles.claimButton}
           >
             <LinearGradient
-              colors={isComplete ? ['#FFA500', '#FF6B00'] : ['#555', '#333']}
+              colors={isComplete ? [colors.primaryContainer, colors.primary] : [colors.surfaceContainerHighest, colors.surfaceContainerHigh]}
               style={styles.claimGradient}
             >
               <ThemedText style={styles.claimText}>
@@ -119,46 +120,46 @@ const getRewardIcon = (type: QuestReward['type']): keyof typeof Ionicons.glyphMa
 
 const getRewardColor = (type: QuestReward['type']): string => {
   switch (type) {
-    case 'coins': return '#FFD700'
-    case 'gems': return '#00BFFF'
-    case 'exp': return '#9C27B0'
-    case 'item': return '#4CAF50'
-    default: return '#FFD700'
+    case 'coins': return colors.secondaryContainer
+    case 'gems': return colors.primary
+    case 'exp': return colors.tertiary
+    case 'item': return colors.success
+    default: return colors.secondaryContainer
   }
 }
 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(10, 14, 26, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   popup: {
     width: '100%',
     maxWidth: 400,
-    padding: 24,
+    padding: spacing['2xl'],
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     flex: 1,
   },
   closeButton: {
-    padding: 4,
+    padding: spacing.xs,
   },
   rewardsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    gap: spacing.md,
+    marginBottom: spacing.xl,
     justifyContent: 'center',
   },
   rewardItem: {
@@ -169,42 +170,43 @@ const styles = StyleSheet.create({
     height: 80,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   rewardAmount: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   progressContainer: {
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   progressText: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 8,
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.sm,
   },
   progressBar: {
     height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
+    backgroundColor: colors.surfaceContainerHighest,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.primary,
   },
   claimButton: {
-    borderRadius: 8,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   claimGradient: {
-    paddingVertical: 16,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
   },
   claimText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onPrimary,
   },
 })

@@ -1,56 +1,92 @@
 import React from 'react'
-import { StyleSheet, View, ViewStyle } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
+import { StyleSheet, View, ViewStyle, Platform } from 'react-native'
+import { BlurView } from 'expo-blur'
+import { colors, radii, spacing } from '@/themes'
+
+type PanelVariant = 'glass' | 'solid' | 'dark' | 'transparent'
 
 interface PanelProps {
   children: React.ReactNode
   style?: ViewStyle
-  variant?: 'dark' | 'light' | 'transparent'
-  gradient?: boolean
+  /** @default 'glass' */
+  variant?: PanelVariant
+  /** Use native blur (slower but true frosted glass). Defaults to false for perf. */
+  nativeBlur?: boolean
+  /** Remove default padding. Useful when children handle their own padding. */
+  flush?: boolean
 }
 
 /**
- * Panel component - Reusable container with dark semi-transparent background
- * Used throughout the app for cards, menus, and content containers
+ * Panel — Frosted glass card matching the Stitch .glass-panel style.
+ *
+ * Variants:
+ *   glass       → rgba(255,255,255,0.12) + subtle border (default)
+ *   solid       → surfaceContainerHigh opaque
+ *   dark        → surfaceContainer opaque (legacy compat + currency pills)
+ *   transparent → no background, just border
  */
-export const Panel: React.FC<PanelProps> = ({ 
-  children, 
-  style, 
-  variant = 'dark',
-  gradient = false 
+export const Panel: React.FC<PanelProps> = ({
+  children,
+  style,
+  variant = 'glass',
+  nativeBlur = false,
+  flush = false,
 }) => {
-  if (gradient) {
+  const paddingStyle = flush ? undefined : styles.padding
+
+  if (nativeBlur && variant === 'glass') {
     return (
-      <LinearGradient
-        colors={['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)']}
-        style={[styles.panel, styles[variant], style]}
-      >
+      <BlurView intensity={40} tint="dark" style={[styles.base, styles.glass, paddingStyle, style]}>
         {children}
-      </LinearGradient>
+      </BlurView>
     )
   }
 
   return (
-    <View style={[styles.panel, styles[variant], style]}>
+    <View style={[styles.base, variantStyles[variant], paddingStyle, style]}>
       {children}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  panel: {
-    borderRadius: 12,
-    padding: 16,
+  base: {
+    borderRadius: radii.DEFAULT,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+  },
+  padding: {
+    padding: spacing.lg,
+  },
+  glass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(255, 255, 255, 0.1)',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 1,
+        shadowRadius: 0,
+      },
+    }),
+  },
+})
+
+const variantStyles = StyleSheet.create({
+  glass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  solid: {
+    backgroundColor: colors.surfaceContainerHigh,
+    borderColor: colors.outlineVariant,
   },
   dark: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  light: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: colors.surfaceContainer,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   transparent: {
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 })

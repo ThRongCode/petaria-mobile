@@ -11,6 +11,9 @@ import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 interface EmptyStateProps {
   icon: string
@@ -29,7 +32,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   buttonText,
   buttonIcon,
   onButtonPress,
-  buttonColors = ['#FFD700', '#FFA000'],
+  buttonColors = [colors.secondaryContainer, colors.warning],
 }) => {
   return (
     <View style={styles.container}>
@@ -46,7 +49,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              {buttonIcon && <Ionicons name={buttonIcon} size={20} color="#fff" />}
+              {buttonIcon && <Ionicons name={buttonIcon} size={20} color={colors.onSurface} />}
               <ThemedText style={styles.buttonText}>{buttonText}</ThemedText>
             </LinearGradient>
           </TouchableOpacity>
@@ -59,45 +62,46 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 32,
+    padding: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
   panel: {
-    padding: 32,
+    padding: spacing.xl,
     alignItems: 'center',
     width: '100%',
   },
   icon: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
   },
   message: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   button: {
-    borderRadius: 8,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   gradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 32,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xl,
     paddingVertical: 14,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
 })

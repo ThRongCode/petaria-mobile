@@ -8,7 +8,7 @@ import React from 'react'
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
 import { EmblemBadge } from './EmblemBadge'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing } from '@/themes'
 import { SvgIcons } from '@/assets/images/gui-icons-components'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
@@ -54,7 +54,7 @@ export const EmblemsSection: React.FC<EmblemsSectionProps> = ({
             onPress={onAddPress}
             activeOpacity={0.7}
           >
-            <Ionicons name="add" size={36} color={colors.placeholder} />
+            <Ionicons name="add" size={36} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -68,25 +68,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.gray,
-    marginBottom: metrics.medium,
-    paddingHorizontal: metrics.medium,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
     textAlign: 'center',
   },
   scrollContent: {
-    paddingHorizontal: metrics.medium,
-    paddingVertical: metrics.small,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   addButton: {
     width: 90,
     height: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.backgroundPrimary,
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 45,
     borderWidth: 2,
-    borderColor: colors.disabled,
+    borderColor: colors.outlineVariant,
     borderStyle: 'dashed',
   },
 })

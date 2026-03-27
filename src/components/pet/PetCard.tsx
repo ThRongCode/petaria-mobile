@@ -9,7 +9,7 @@ import { View, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
 import { TypeBadge } from './TypeBadge'
 import { Pet, formatPetId, getPrimaryTypeColor } from './types'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, radii, spacing } from '@/themes'
 
 interface PetCardProps {
   pet: Pet
@@ -57,42 +57,43 @@ export const PetCard: React.FC<PetCardProps> = ({ pet, onPress }) => {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: metrics.borderRadiusLarge,
-    padding: metrics.medium,
-    marginBottom: metrics.medium,
+    borderRadius: radii.DEFAULT,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
     minHeight: 120,
     position: 'relative',
     overflow: 'hidden',
-    // Shadow for elevation
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: metrics.small,
+    marginBottom: spacing.sm,
   },
   name: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: '#FFFFFF',
     flex: 1,
-    marginRight: metrics.small,
+    marginRight: spacing.sm,
   },
   id: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: 'rgba(255, 255, 255, 0.7)',
   },
   typesContainer: {
     flexDirection: 'row',
-    gap: metrics.tiny,
+    gap: spacing.xs,
     flexWrap: 'wrap',
-    marginBottom: metrics.small,
+    marginBottom: spacing.sm,
     zIndex: 2,
   },
   sprite: {
@@ -110,6 +111,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
 })

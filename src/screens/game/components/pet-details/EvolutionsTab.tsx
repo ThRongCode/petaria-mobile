@@ -6,6 +6,9 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pet } from '@/stores/types/game'
 import { getPokemonImage } from '@/assets/images'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 // Evolution types for API response
 export interface EvolutionPath {
@@ -123,7 +126,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
                     <Ionicons 
                       name={levelMet ? "checkmark-circle" : "close-circle"} 
                       size={18} 
-                      color={levelMet ? "#4CAF50" : "#FF5722"} 
+                      color={levelMet ? colors.success : colors.error} 
                     />
                     <ThemedText style={[styles.requirementText, levelMet && styles.requirementTextMet]}>
                       Level {evolution.levelRequired} {levelMet ? '✓' : `(Current: ${pet.level})`}
@@ -135,7 +138,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
                       <Ionicons 
                         name={evolution.hasItem ? "checkmark-circle" : "close-circle"} 
                         size={18} 
-                        color={evolution.hasItem ? "#4CAF50" : "#FF5722"} 
+                        color={evolution.hasItem ? colors.success : colors.error} 
                       />
                       <ThemedText style={[styles.requirementText, evolution.hasItem && styles.requirementTextMet]}>
                         {evolution.itemRequired.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -154,7 +157,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
                   disabled={!canEvolve}
                 >
                   <LinearGradient
-                    colors={canEvolve ? ['#FFD700', '#FFA000'] : ['#555', '#333']}
+                    colors={canEvolve ? [colors.secondaryContainer, colors.warning] : [colors.surfaceContainerHighest, colors.surfaceContainerHigh]}
                     style={styles.evolveButtonGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -162,7 +165,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
                     <Ionicons 
                       name="sparkles" 
                       size={18} 
-                      color={canEvolve ? '#000' : '#888'} 
+                      color={canEvolve ? colors.surfaceContainerLowest : colors.onSurfaceVariant} 
                     />
                     <ThemedText style={[styles.evolveButtonText, !canEvolve && styles.evolveButtonTextDisabled]}>
                       {canEvolve ? 'Evolve Now!' : 'Requirements Not Met'}
@@ -178,7 +181,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
       {/* No Evolutions Available */}
       {!isFullyEvolved && (!evolutionOptions?.availableEvolutions || evolutionOptions.availableEvolutions.length === 0) && (
         <View style={styles.noEvolutionContainer}>
-          <Ionicons name="help-circle-outline" size={48} color="rgba(255,255,255,0.3)" />
+          <Ionicons name="help-circle-outline" size={48} color={colors.onSurfaceVariant} />
           <ThemedText style={styles.noEvolutionText}>
             No evolution data available for this species.
           </ThemedText>
@@ -190,104 +193,105 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
 
 const styles = StyleSheet.create({
   tabPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.lg,
   },
   evolutionStatusCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerHigh,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.outlineVariant,
   },
   evolutionStageIndicator: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   stageDot: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.surfaceContainerHighest,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: colors.outline,
   },
   stageDotFilled: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: colors.success,
+    borderColor: colors.success,
   },
   stageDotCurrent: {
-    borderColor: '#FFD700',
-    shadowColor: '#FFD700',
+    borderColor: colors.secondaryContainer,
+    shadowColor: colors.secondaryContainer,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
   },
   evolutionStageText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   fullyEvolvedBadge: {
-    backgroundColor: 'rgba(255,215,0,0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginTop: 8,
+    backgroundColor: 'rgba(255, 219, 60, 0.15)',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    marginTop: spacing.sm,
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: colors.secondaryContainer,
   },
   fullyEvolvedText: {
-    color: '#FFD700',
-    fontWeight: 'bold',
+    color: colors.secondaryContainer,
+    fontFamily: fonts.bold,
     fontSize: 14,
   },
   evolutionSection: {
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   evolutionSectionTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 12,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   evolutionFromCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 12,
-    borderRadius: 12,
-    gap: 12,
+    backgroundColor: colors.surfaceContainerHigh,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    gap: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.outlineVariant,
   },
   evolutionFromName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
   },
   evolutionCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.outlineVariant,
   },
   evolutionCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 12,
+    marginBottom: spacing.md,
+    gap: spacing.md,
   },
   evolutionThumb: {
     width: 60,
@@ -298,42 +302,44 @@ const styles = StyleSheet.create({
   },
   evolutionName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   evolutionDescription: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 4,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginTop: spacing.xs,
   },
   requirementsList: {
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   requirementRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255,82,34,0.1)',
-    padding: 8,
-    borderRadius: 8,
+    gap: spacing.sm,
+    backgroundColor: 'rgba(239, 83, 80, 0.1)',
+    padding: spacing.sm,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,82,34,0.3)',
+    borderColor: 'rgba(239, 83, 80, 0.3)',
   },
   requirementMet: {
-    backgroundColor: 'rgba(76,175,80,0.1)',
-    borderColor: 'rgba(76,175,80,0.3)',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderColor: 'rgba(76, 175, 80, 0.3)',
   },
   requirementText: {
     fontSize: 13,
-    color: '#FF5722',
+    fontFamily: fonts.regular,
+    color: colors.error,
     flex: 1,
   },
   requirementTextMet: {
-    color: '#4CAF50',
+    color: colors.success,
   },
   evolveButton: {
-    borderRadius: 8,
+    borderRadius: radii.md,
     overflow: 'hidden',
   },
   evolveButtonDisabled: {
@@ -343,25 +349,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    gap: 8,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
   },
   evolveButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontFamily: fonts.bold,
+    color: colors.surfaceContainerLowest,
   },
   evolveButtonTextDisabled: {
-    color: '#888',
+    color: colors.onSurfaceVariant,
   },
   noEvolutionContainer: {
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
   noEvolutionText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: spacing.md,
   },
 })

@@ -19,6 +19,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import type { Opponent, Move } from '@/stores/types/game'
 import { battleApi } from '@/services/api'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 // Backend opponent type (matches Prisma schema with relations)
 interface BackendOpponent {
@@ -108,15 +111,15 @@ export const BattleSelectionScreen: React.FC = () => {
   const getDifficultyColor = (difficulty?: string) => {
     switch (difficulty?.toLowerCase()) {
       case 'easy':
-        return '#4CAF50'
+        return colors.success
       case 'medium':
-        return '#FFA726'
+        return colors.warning
       case 'hard':
-        return '#F44336'
+        return colors.error
       case 'legendary':
         return '#9C27B0'
       default:
-        return '#9E9E9E'
+        return colors.onSurfaceVariant
     }
   }
 
@@ -209,7 +212,7 @@ export const BattleSelectionScreen: React.FC = () => {
               {opponent.description}
             </ThemedText>
             <View style={styles.pokemonRow}>
-              <Ionicons name="paw" size={14} color="rgba(255, 255, 255, 0.6)" />
+              <Ionicons name="paw" size={14} color={colors.onSurfaceVariant} />
               <ThemedText style={styles.pokemonName}>
                 {opponent.pets?.length || 0} Pokemon
               </ThemedText>
@@ -217,7 +220,7 @@ export const BattleSelectionScreen: React.FC = () => {
 
             {/* Level */}
             <View style={styles.levelContainer}>
-              <Ionicons name="trending-up" size={14} color="#FFD700" />
+              <Ionicons name="trending-up" size={14} color={colors.secondaryContainer} />
               <ThemedText style={styles.levelText}>Lv.{opponent.level}</ThemedText>
             </View>
 
@@ -244,13 +247,13 @@ export const BattleSelectionScreen: React.FC = () => {
             onPress={() => handleOpponentSelect(opponent)}
           >
             <LinearGradient
-              colors={['rgba(244, 67, 54, 0.3)', 'rgba(198, 40, 40, 0.5)']}
+              colors={['rgba(68, 216, 241, 0.25)', 'rgba(0, 188, 212, 0.4)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.battleGradient}
             >
               <View style={styles.battleButtonBorder}>
-                <Ionicons name="flash" size={16} color="#EF5350" />
+                <Ionicons name="flash" size={16} color={colors.primary} />
                 <ThemedText style={styles.battleButtonText}>Challenge</ThemedText>
               </View>
             </LinearGradient>
@@ -269,7 +272,7 @@ export const BattleSelectionScreen: React.FC = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
+          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
           style={styles.gradientOverlay}
         />
       </ImageBackground>
@@ -292,7 +295,7 @@ export const BattleSelectionScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#FFD700" />
+            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
           </TouchableOpacity>
           <Panel variant="transparent" style={styles.headerPanel}>
             <ThemedText style={styles.headerTitle}>{battleName || 'Select Opponent'}</ThemedText>
@@ -339,7 +342,7 @@ export const BattleSelectionScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   background: {
     position: 'absolute',
@@ -355,61 +358,62 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    marginBottom: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    marginBottom: spacing.lg,
   },
   backButton: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   headerPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   gridRow: {
-    gap: 12,
-    paddingHorizontal: 16,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   gridContent: {
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
   },
   opponentCard: {
     flex: 1,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   opponentPanel: {
-    padding: 12,
+    padding: spacing.md,
     position: 'relative',
   },
   difficultyBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    top: spacing.sm,
+    right: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
     zIndex: 10,
   },
   difficultyText: {
     fontSize: 9,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   opponentImageContainer: {
     width: '100%',
     height: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   opponentImage: {
     width: 80,
@@ -420,63 +424,65 @@ const styles = StyleSheet.create({
   },
   opponentName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
     textAlign: 'center',
   },
   pokemonRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   pokemonName: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   levelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    marginTop: 4,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   levelText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#FFD700',
+    fontFamily: fonts.semiBold,
+    color: colors.secondaryContainer,
   },
   rewardsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 8,
-    paddingTop: 8,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: colors.outlineVariant,
   },
   rewardItem: {
     alignItems: 'center',
   },
   rewardValue: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontFamily: fonts.bold,
+    color: colors.success,
   },
   rewardLabel: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   battleButton: {
-    marginTop: 12,
-    borderRadius: 10,
+    marginTop: spacing.md,
+    borderRadius: radii.sm,
     overflow: 'hidden',
   },
   battleGradient: {
     padding: 2,
   },
   battleButtonBorder: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(10, 14, 26, 0.6)',
+    borderRadius: radii.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -485,38 +491,39 @@ const styles = StyleSheet.create({
   },
   battleButtonText: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#EF5350',
+    fontFamily: fonts.bold,
+    color: colors.primary,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   loadingText: {
-    marginTop: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: spacing.md,
+    color: colors.onSurfaceVariant,
   },
   errorText: {
-    color: '#FF5252',
+    color: colors.error,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   retryButton: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: colors.secondaryContainer,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.md,
+    borderRadius: radii.sm,
   },
   retryButtonText: {
-    color: '#000',
-    fontWeight: 'bold',
+    color: colors.onSecondary,
+    fontFamily: fonts.bold,
   },
   opponentDescription: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
 })

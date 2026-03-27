@@ -2,22 +2,19 @@ import React from 'react'
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { ThemedText } from '@/components'
-import { SvgIcons } from '@/assets/images/gui-icons-components'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { LinearGradient } from 'expo-linear-gradient'
+import { colors, fonts, radii } from '@/themes'
 
 /**
- * CustomTabBar - Modern bottom navigation with elevated center home button
- * Features a circular home button in the center with special styling
+ * CustomTabBar — Bottom navigation matching Stitch design.
+ * Deep navy bg, teal glow on active Home button, muted inactive icons.
  */
 export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets()
 
-  // Only show these 5 main tabs in the specified order
   const allowedTabs = ['hunt', 'battle', 'index', 'pets', 'profile']
-  
-  // Split routes into left (before home), center (home), right (after home)
+
   const visibleRoutes = state.routes.filter((route) => {
     const { options } = descriptors[route.key]
     return allowedTabs.includes(route.name) && options.tabBarButton !== null
@@ -29,12 +26,12 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
   const rightRoutes = visibleRoutes.slice(homeIndex + 1)
 
   const getIconForRoute = (routeName: string, focused: boolean) => {
-    const color = focused ? '#FFD700' : '#9E9E9E'
-    const size = 26
+    const color = focused ? colors.primary : colors.onSurfaceVariant
+    const size = 22
 
     switch (routeName) {
       case 'index':
-        return <Ionicons name="home" size={28} color="#FFFFFF" />
+        return <Ionicons name="home" size={22} color={focused ? colors.primary : colors.onSurfaceVariant} />
       case 'hunt':
         return <Ionicons name="map" size={size} color={color} />
       case 'battle':
@@ -52,7 +49,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
     switch (routeName) {
       case 'index': return 'Home'
       case 'hunt': return 'Hunt'
-      case 'battle': return 'Events'
+      case 'battle': return 'Battle'
       case 'pets': return 'Pets'
       case 'profile': return 'Profile'
       default: return routeName
@@ -92,11 +89,12 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
         onLongPress={onLongPress}
         style={styles.tab}
       >
-        <View style={styles.tabContent}>
+        <View style={[styles.tabContent, isFocused && styles.tabContentFocused]}>
           {getIconForRoute(route.name, isFocused)}
           <ThemedText style={[
             styles.label,
-            { color: isFocused ? '#FFD700' : '#9E9E9E' }
+            { color: isFocused ? colors.primary : colors.onSurfaceVariant },
+            isFocused && styles.labelFocused,
           ]}>
             {getLabelForRoute(route.name)}
           </ThemedText>
@@ -141,46 +139,21 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
         style={styles.homeTabContainer}
       >
         <View style={styles.homeButton}>
-          <LinearGradient
-            colors={['#9C27B0', '#5E35B1', '#3F51B5']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.homeButtonInner}
-          >
-            {getIconForRoute(homeRoute.name, isFocused)}
-          </LinearGradient>
+          {getIconForRoute(homeRoute.name, isFocused)}
+          <ThemedText style={styles.homeLabel}>Home</ThemedText>
         </View>
       </TouchableOpacity>
     )
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <View style={styles.tabBar}>
-        {/* Left side tabs - with spacing */}
-        {leftRoutes.map((route, index) => (
-          <React.Fragment key={route.key}>
-            {renderTab(route)}
-            {index < leftRoutes.length - 1 && <View style={styles.tabSpacer} />}
-          </React.Fragment>
-        ))}
-
-        {/* Spacer before home */}
+        {leftRoutes.map(route => renderTab(route))}
         <View style={styles.flexSpacer} />
-
-        {/* Center home button */}
         {renderHomeTab()}
-
-        {/* Spacer after home */}
         <View style={styles.flexSpacer} />
-
-        {/* Right side tabs - with spacing */}
-        {rightRoutes.map((route, index) => (
-          <React.Fragment key={route.key}>
-            {renderTab(route)}
-            {index < rightRoutes.length - 1 && <View style={styles.tabSpacer} />}
-          </React.Fragment>
-        ))}
+        {rightRoutes.map(route => renderTab(route))}
       </View>
     </View>
   )
@@ -188,32 +161,27 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    height: 65,
+    backgroundColor: `${colors.surfaceContainerLowest}E6`, // 90% opacity
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 215, 0, 0.3)',
-    paddingHorizontal: 12,
-    alignItems: 'center',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
+        shadowColor: colors.primaryContainer,
+        shadowOffset: { width: 0, height: -8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 32,
       },
       android: {
         elevation: 16,
       },
     }),
   },
-  sideContainer: {
-    flex: 1,
+  tabBar: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    height: 60,
+    paddingHorizontal: 12,
     alignItems: 'center',
   },
   tab: {
@@ -225,51 +193,55 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radii.DEFAULT,
+  },
+  tabContentFocused: {
+    // No extra bg — just color change
   },
   label: {
-    fontSize: 10,
+    fontSize: 8,
     marginTop: 2,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  tabSpacer: {
-    width: 16,
+  labelFocused: {
+    color: colors.primary,
   },
   flexSpacer: {
     flex: 1,
   },
   homeTabContainer: {
-    width: 70,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -28,
   },
   homeButton: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#FFD700',
-    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    backgroundColor: `${colors.primary}1A`, // 10% opacity
+    borderRadius: radii.DEFAULT,
+    paddingHorizontal: 20,
+    paddingVertical: 6,
     ...Platform.select({
       ios: {
-        shadowColor: '#9C27B0',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
       },
       android: {
-        elevation: 10,
+        elevation: 4,
       },
     }),
   },
-  homeButtonInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+  homeLabel: {
+    fontSize: 8,
+    marginTop: 2,
+    fontFamily: fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: colors.primary,
   },
 })

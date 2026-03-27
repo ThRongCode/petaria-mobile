@@ -7,7 +7,7 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing } from '@/themes'
 
 export type PetDetailTab = 'about' | 'stats' | 'moves' | 'evolutions'
 
@@ -27,7 +27,7 @@ const TABS: { key: PetDetailTab; label: string }[] = [
 export const PetDetailsTabs: React.FC<PetDetailsTabsProps> = ({ 
   activeTab, 
   onTabChange,
-  tabColor = colors.black
+  tabColor = colors.primary
 }) => {
   return (
     <View style={styles.container}>
@@ -61,22 +61,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingHorizontal: metrics.medium,
-    backgroundColor: colors.white,
+    borderBottomColor: colors.outlineVariant,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surfaceContainer,
   },
   tab: {
-    paddingVertical: metrics.medium,
-    paddingHorizontal: metrics.small,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm,
     position: 'relative',
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: colors.placeholder,
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
   },
   activeTabText: {
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   activeIndicator: {
     position: 'absolute',

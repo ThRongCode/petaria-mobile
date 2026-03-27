@@ -21,6 +21,9 @@ import { apiClient } from '@/services/api'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import type { Pet, Item } from '@/stores/types/game'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii } from '@/themes/metrics'
 
 /**
  * ItemUseScreen - Select a Pokemon to use an item on
@@ -138,7 +141,7 @@ export const ItemUseScreen: React.FC = () => {
                     styles.hpBarInner,
                     {
                       width: `${(pet.stats.hp / 200) * 100}%`,
-                      backgroundColor: pet.stats.hp > 100 ? '#4CAF50' : '#FFA726',
+                      backgroundColor: pet.stats.hp > 100 ? colors.success : colors.warning,
                     },
                   ]}
                 />
@@ -184,7 +187,7 @@ export const ItemUseScreen: React.FC = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
+          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
           style={styles.gradientOverlay}
         />
       </ImageBackground>
@@ -207,7 +210,7 @@ export const ItemUseScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#FFD700" />
+            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
           </TouchableOpacity>
           <Panel variant="transparent" style={styles.headerPanel}>
             <View style={styles.headerRow}>
@@ -271,7 +274,7 @@ export const ItemUseScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.surfaceContainerLowest,
   },
   background: {
     position: 'absolute',
@@ -287,19 +290,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
   },
   backButton: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   headerPanel: {
-    padding: 16,
+    padding: spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   itemImage: {
     width: 60,
@@ -310,35 +313,36 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 4,
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   gridRow: {
-    gap: 12,
-    paddingHorizontal: 16,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   gridContent: {
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   petCard: {
     flex: 1,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   petPanel: {
-    padding: 12,
+    padding: spacing.md,
   },
   petImageContainer: {
     width: '100%',
     height: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     position: 'relative',
   },
   petImage: {
@@ -347,32 +351,33 @@ const styles = StyleSheet.create({
   },
   levelBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    top: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: 'rgba(10, 14, 26, 0.7)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: colors.secondaryContainer,
   },
   levelText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: fonts.bold,
+    color: colors.secondaryContainer,
   },
   petInfo: {
-    gap: 4,
+    gap: spacing.xs,
   },
   petName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   petSpecies: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 4,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
   },
   hpBarContainer: {
     flexDirection: 'row',
@@ -381,13 +386,14 @@ const styles = StyleSheet.create({
   },
   hpLabel: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     width: 20,
   },
   hpBarOuter: {
     flex: 1,
     height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -397,25 +403,25 @@ const styles = StyleSheet.create({
   },
   hpValue: {
     fontSize: 10,
-    color: '#fff',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurface,
     width: 30,
     textAlign: 'right',
   },
   statsPreview: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   statMini: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   statMiniText: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
   },
   loadingContainer: {
     flex: 1,
@@ -423,36 +429,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: spacing.md,
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
   emptyContainer: {
-    padding: 32,
+    padding: spacing['3xl'],
   },
   emptyPanel: {
-    padding: 32,
+    padding: spacing['3xl'],
     alignItems: 'center',
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
   errorText: {
     fontSize: 16,
-    color: '#fff',
+    fontFamily: fonts.regular,
+    color: colors.onSurface,
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: spacing['4xl'],
   },
 })

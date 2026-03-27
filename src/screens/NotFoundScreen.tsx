@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native'
 
 import { ThemedText, ThemedView } from '@/components'
 import { getString } from '@/locale/I18nConfig'
-import { metrics } from '@/themes'
+import { spacing } from '@/themes/metrics'
 import { RouteKeys } from '@/routes/RouteKeys'
 
 export const NotFoundScreen: React.FC = () => (
@@ -24,10 +24,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: metrics.medium,
+    padding: spacing.xl,
   },
   link: {
-    marginTop: metrics.small,
-    paddingVertical: metrics.small,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.lg,
   },
 })

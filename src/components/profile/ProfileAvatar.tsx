@@ -7,7 +7,7 @@
 import React from 'react'
 import { View, Image, StyleSheet } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
-import { colors, metrics } from '@/themes'
+import { colors, fonts, spacing, radii } from '@/themes'
 import Svg, { Circle } from 'react-native-svg'
 import Ionicons from '@expo/vector-icons/Ionicons'
 
@@ -40,7 +40,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={size / 2 - 6}
-          stroke="rgba(255, 255, 255, 0.3)"
+          stroke="rgba(255, 255, 255, 0.15)"
           strokeWidth="4"
           fill="none"
         />
@@ -49,7 +49,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={size / 2 - 6}
-          stroke="#00E5B8"
+          stroke={colors.primary}
           strokeWidth="6"
           fill="none"
           strokeDasharray={circumference}
@@ -71,7 +71,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 
       {/* Verified Badge */}
       <View style={styles.verifiedBadge}>
-        <Ionicons name="checkmark-circle" size={28} color="#00E5B8" />
+        <Ionicons name="checkmark-circle" size={28} color={colors.primary} />
       </View>
 
       {/* Level Badge */}
@@ -96,9 +96,9 @@ const styles = StyleSheet.create({
   avatarContainer: {
     borderRadius: 100,
     overflow: 'hidden',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainer,
     borderWidth: 4,
-    borderColor: colors.white,
+    borderColor: colors.surfaceContainerLowest,
   },
   avatar: {
     width: '100%',
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 5,
     right: 0,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLowest,
     borderRadius: 20,
     padding: 2,
   },
@@ -116,16 +116,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: -10,
-    backgroundColor: '#7B61FF',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.primaryContainer,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
     borderWidth: 2,
-    borderColor: colors.white,
+    borderColor: colors.surfaceContainerLowest,
   },
   levelText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: colors.white,
+    fontFamily: fonts.bold,
+    color: colors.onPrimaryContainer,
   },
 })

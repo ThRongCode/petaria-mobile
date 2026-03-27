@@ -7,24 +7,24 @@
 import React from 'react'
 import { View, Image, StyleSheet, TouchableOpacity, ViewStyle, TextStyle, ImageStyle } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
-import { colors, metrics, fontSizes } from '@/themes'
+import { colors, metrics, fonts, fontSizes, spacing, radii } from '@/themes'
 import { SvgIcons } from '../assets/images/gui-icons-components'
 import { GuiIcons } from '@/assets/images'
 
 // Rarity colors
 export const RARITY_COLORS = {
-  Common: '#9E9E9E',
-  Rare: '#2196F3',
-  Epic: '#9C27B0',
-  Legendary: '#FF9800',
+  Common: colors.rarityColors.common,
+  Rare: colors.rarityColors.rare,
+  Epic: colors.rarityColors.epic,
+  Legendary: colors.rarityColors.legendary,
 }
 
 // Rarity gradients
 export const RARITY_GRADIENTS = {
-  Common: ['#BDBDBD', '#9E9E9E'],
-  Rare: ['#64B5F6', '#2196F3'],
-  Epic: ['#BA68C8', '#9C27B0'],
-  Legendary: ['#FFB74D', '#FF9800'],
+  Common: [colors.rarityColors.common, '#7A7A5C'],
+  Rare: [colors.rarityColors.rare, '#4A78C8'],
+  Epic: [colors.rarityColors.epic, '#7A2E7A'],
+  Legendary: [colors.rarityColors.legendary, '#D4A800'],
 }
 
 interface CurrencyDisplayProps {
@@ -36,11 +36,11 @@ interface CurrencyDisplayProps {
 export const CurrencyDisplay: React.FC<CurrencyDisplayProps> = ({ coins, gems, style }) => (
   <View style={[styles.currencyContainer, style]}>
     <View style={styles.currencyItem}>
-      <Image source={GuiIcons.wallet} style={[styles.currencyIcon, { tintColor: '#FFD700' }]} />
+      <Image source={GuiIcons.wallet} style={[styles.currencyIcon, { tintColor: colors.secondaryContainer }]} />
       <ThemedText style={styles.currencyText}>{coins.toLocaleString()}</ThemedText>
     </View>
     <View style={styles.currencyItem}>
-      <Image source={GuiIcons.starsStack} style={[styles.currencyIcon, { tintColor: '#00BCD4' }]} />
+      <Image source={GuiIcons.starsStack} style={[styles.currencyIcon, { tintColor: colors.primary }]} />
       <ThemedText style={styles.currencyText}>{gems}</ThemedText>
     </View>
   </View>
@@ -194,16 +194,16 @@ const styles = StyleSheet.create({
   currencyContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: spacing.lg,
   },
   currencyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    gap: spacing.xs,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
   },
   currencyIcon: {
     width: 20,
@@ -211,15 +211,15 @@ const styles = StyleSheet.create({
   },
   currencyText: {
     fontSize: fontSizes.body,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   rarityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
   },
   rarityIcon: {
     width: 14,
@@ -227,11 +227,11 @@ const styles = StyleSheet.create({
   },
   rarityText: {
     fontSize: fontSizes.small,
-    fontWeight: '700',
-    color: '#FFF',
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
   },
   statBarContainer: {
-    gap: 4,
+    gap: spacing.xs,
   },
   statBarHeader: {
     flexDirection: 'row',
@@ -240,15 +240,15 @@ const styles = StyleSheet.create({
   },
   statBarLabel: {
     fontSize: fontSizes.small,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   statBarValue: {
     fontSize: fontSizes.small,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   statBarTrack: {
     height: 10,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: colors.surfaceContainerHighest,
     borderRadius: 5,
     overflow: 'hidden',
   },
@@ -257,42 +257,44 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   spriteContainer: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: radii.md,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
+    padding: spacing.sm,
   },
   spriteImage: {
     // Image size set dynamically
   },
   gameCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radii.DEFAULT,
+    padding: spacing.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   iconButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    padding: spacing.sm,
+    borderRadius: radii.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   iconButtonImage: {
     // Size set dynamically
   },
   levelBadge: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: colors.primaryContainer,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
   },
   levelText: {
     fontSize: fontSizes.small,
-    fontWeight: '700',
-    color: '#FFF',
+    fontFamily: fonts.bold,
+    color: colors.onPrimaryContainer,
   },
 })
