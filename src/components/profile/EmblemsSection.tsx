@@ -83,10 +83,10 @@ const styles = StyleSheet.create({
     height: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.glass.subtle,
     borderRadius: 45,
     borderWidth: 2,
-    borderColor: colors.outlineVariant,
+    borderColor: colors.glass.innerGlow,
     borderStyle: 'dashed',
   },
 })

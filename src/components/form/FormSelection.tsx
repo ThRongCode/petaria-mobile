@@ -1,7 +1,7 @@
 import { ISelectionProps } from '@/constants/interface/selection'
 import React from 'react'
 import { Control, Controller, Path } from 'react-hook-form'
-import { Selection } from '@/components'
+import { Selection } from '@/components/Selection'
 
 interface IProps<T extends object, Q extends object> extends ISelectionProps<Q> {
   control: Control<T>

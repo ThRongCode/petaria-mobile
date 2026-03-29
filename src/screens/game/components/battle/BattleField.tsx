@@ -1,12 +1,18 @@
+/**
+ * BattleField — "Lapis Glassworks" glass battle display
+ *
+ * Two-column Pokémon display with glass info badges and animated HP bars.
+ */
+
 import React from 'react'
 import { StyleSheet, View, Image, Animated } from 'react-native'
 import { ThemedText } from '@/components'
-import { Panel } from '@/components/ui'
+import { LinearGradient } from 'expo-linear-gradient'
 import { getPokemonImage } from '@/assets/images'
 import { getHpColor } from './battleUtils'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
 
 interface BattlePetInfo {
   name: string
@@ -29,32 +35,35 @@ interface PokemonDisplayProps {
   showHpNumbers?: boolean
 }
 
-function PokemonDisplay({ pet, hpAnim, hpPercentage, showHpNumbers = false }: PokemonDisplayProps): React.ReactElement {
+function PokemonDisplay({ pet, hpAnim, hpPercentage, showHpNumbers = false }: PokemonDisplayProps) {
+  const hpColor = getHpColor(hpPercentage)
   return (
-    <View style={styles.pokemonColumn}>
+    <View style={styles.column}>
       <Image
         source={getPokemonImage(pet.species) as any}
-        style={styles.pokemonSprite}
+        style={styles.sprite}
         resizeMode="contain"
       />
-      <Panel variant="dark" style={styles.infoBadge}>
-        <View style={styles.infoBadgeHeader}>
-          <ThemedText style={styles.badgeName}>{pet.name}</ThemedText>
+      <View style={styles.badge}>
+        {/* Name + Level */}
+        <View style={styles.badgeHeader}>
+          <ThemedText style={styles.badgeName} numberOfLines={1}>{pet.name}</ThemedText>
           <ThemedText style={styles.badgeLevel}>Lv.{pet.level}</ThemedText>
         </View>
-        <View style={styles.hpBarContainer}>
+        {/* HP bar */}
+        <View style={styles.hpRow}>
           <ThemedText style={styles.hpLabel}>HP</ThemedText>
-          <View style={styles.hpBarOuter}>
+          <View style={styles.hpTrack}>
             <Animated.View
               style={[
-                styles.hpBarInner,
+                styles.hpFill,
                 {
                   width: hpAnim.interpolate({
                     inputRange: [0, 100],
-                    outputRange: ['0%', '100%']
+                    outputRange: ['0%', '100%'],
                   }),
-                  backgroundColor: getHpColor(hpPercentage)
-                }
+                  backgroundColor: hpColor,
+                },
               ]}
             />
           </View>
@@ -64,7 +73,7 @@ function PokemonDisplay({ pet, hpAnim, hpPercentage, showHpNumbers = false }: Po
             {pet.currentHp} / {pet.temporaryStats.maxHp}
           </ThemedText>
         )}
-      </Panel>
+      </View>
     </View>
   )
 }
@@ -85,90 +94,88 @@ export const BattleField: React.FC<BattleFieldProps> = ({
   opponentHpAnim,
   playerHpPercentage,
   opponentHpPercentage,
-}) => {
-  return (
-    <View style={styles.battleFieldArea}>
-      <View style={styles.pokemonRow}>
-        <PokemonDisplay
-          pet={playerPet}
-          hpAnim={playerHpAnim}
-          hpPercentage={playerHpPercentage}
-          showHpNumbers
-        />
-        <PokemonDisplay
-          pet={opponentPet}
-          hpAnim={opponentHpAnim}
-          hpPercentage={opponentHpPercentage}
-        />
-      </View>
+}) => (
+  <View style={styles.arena}>
+    {/* VS divider */}
+    <View style={styles.vsContainer}>
+      <ThemedText style={styles.vsText}>⚔️</ThemedText>
     </View>
-  )
-}
+    <View style={styles.row}>
+      <PokemonDisplay pet={playerPet} hpAnim={playerHpAnim} hpPercentage={playerHpPercentage} showHpNumbers />
+      <PokemonDisplay pet={opponentPet} hpAnim={opponentHpAnim} hpPercentage={opponentHpPercentage} />
+    </View>
+  </View>
+)
 
 const styles = StyleSheet.create({
-  battleFieldArea: {
-    paddingTop: 40,
+  arena: {
+    paddingTop: 30,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
+    position: 'relative',
   },
-  pokemonRow: {
+  vsContainer: {
+    position: 'absolute',
+    top: 20,
+    alignSelf: 'center',
+    zIndex: 10,
+    left: '50%',
+    marginLeft: -16,
+  },
+  vsText: { fontSize: 28 },
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    gap: spacing.lg,
+    gap: spacing.md,
   },
-  pokemonColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  pokemonSprite: {
-    width: 130,
-    height: 130,
-    marginBottom: spacing.lg,
-  },
-  infoBadge: {
+  column: { flex: 1, alignItems: 'center' },
+  sprite: { width: 120, height: 120, marginBottom: spacing.md },
+
+  // ── Badge ──────────────────────────────────────
+  badge: {
     width: '100%',
-    maxWidth: 180,
+    maxWidth: 170,
+    backgroundColor: colors.glass.darkFill,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    borderRadius: radii.lg,
     padding: spacing.md,
   },
-  infoBadgeHeader: {
+  badgeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
   badgeName: {
-    fontSize: 14,
+    fontSize: fontSizes.span,
     fontFamily: fonts.bold,
     color: colors.onSurface,
+    flex: 1,
   },
   badgeLevel: {
-    fontSize: 12,
+    fontSize: fontSizes.small,
     fontFamily: fonts.semiBold,
     color: colors.onSurfaceVariant,
   },
-  hpBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  hpRow: { flexDirection: 'row', alignItems: 'center' },
   hpLabel: {
-    fontSize: 11,
+    fontSize: fontSizes.xs,
     fontFamily: fonts.bold,
-    color: colors.onSurface,
+    color: colors.onSurfaceVariant,
     marginRight: spacing.sm,
   },
-  hpBarOuter: {
+  hpTrack: {
     flex: 1,
-    height: 8,
+    height: 7,
     backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 4,
     overflow: 'hidden',
   },
-  hpBarInner: {
-    height: '100%',
-  },
+  hpFill: { height: '100%', borderRadius: 4 },
   hpNumbers: {
-    fontSize: 11,
+    fontSize: fontSizes.xs,
     fontFamily: fonts.semiBold,
     color: colors.onSurface,
     textAlign: 'right',

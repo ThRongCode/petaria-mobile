@@ -1,7 +1,7 @@
 import { TranslationKey } from '../../locale/I18nConfig'
 import { Control, Path } from 'react-hook-form'
 import { TextInputProps } from 'rn-base-component'
-import { IDatePickerProps } from '@/components'
+import { IDatePickerProps } from '@/components/DatePicker'
 import { IOptions, ISelectionProps } from './selection'
 import { ValueOf } from '../../../custom-types'
 

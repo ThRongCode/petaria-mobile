@@ -12,6 +12,7 @@ import { STORAGE_KEYS } from '@/services/api/config'
 import { getUserInfo } from '@/stores/selectors'
 
 export const RootScreen: React.FC = () => {
+  console.log('🔍 [DEBUG] RootScreen rendering...')
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const userInfo = useSelector(getUserInfo)
@@ -24,7 +25,8 @@ export const RootScreen: React.FC = () => {
     try {
       // Check if we have a stored auth token
       const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)
-      
+      console.log('🔍 [DEBUG] Auth token:', !!token, 'userInfo:', !!userInfo?.id)
+
       // Check if user is logged in (token exists and userInfo in Redux)
       if (token && userInfo?.id) {
         setIsAuthenticated(true)
@@ -32,9 +34,10 @@ export const RootScreen: React.FC = () => {
         setIsAuthenticated(false)
       }
     } catch (error) {
-      console.error('Auth check error:', error)
+      console.error('❌ Auth check error:', error)
       setIsAuthenticated(false)
     } finally {
+      console.log('🔍 [DEBUG] Auth check complete, setting isLoading=false')
       setIsLoading(false)
     }
   }

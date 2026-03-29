@@ -43,7 +43,7 @@ export const EmblemBadge: React.FC<EmblemBadgeProps> = ({
         />
         <Polygon
           points="50 10, 87 28, 87 72, 50 90, 13 72, 13 28"
-          fill={colors.surfaceContainerHigh}
+          fill="#1B1F2C"
         />
       </Svg>
 

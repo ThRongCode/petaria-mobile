@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, TouchableOpacity, ViewStyle, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { ThemedText } from '@/components'
+import { ThemedText } from '@/components/ThemedText'
 import { Panel } from './Panel'
 import { colors, fonts, spacing, radii } from '@/themes'
 

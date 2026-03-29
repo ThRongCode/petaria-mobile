@@ -1,29 +1,42 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { ThemedText } from '@/components'
+import { ScreenContainer } from '@/components/ScreenContainer'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
 
 /**
  * AuctionScreen — Placeholder (feature disabled)
  * The auction tab is hidden via `href: null` in AppNavigation.
  */
 export const AuctionScreen: React.FC = () => (
-  <View style={styles.container}>
-    <ThemedText style={styles.text}>Auction coming soon</ThemedText>
-  </View>
+  <ScreenContainer>
+    <View style={styles.center}>
+      <ThemedText style={styles.emoji}>🏛️</ThemedText>
+      <ThemedText style={styles.title}>Auction House</ThemedText>
+      <ThemedText style={styles.subtitle}>Coming soon...</ThemedText>
+    </View>
+  </ScreenContainer>
 )
 
 const styles = StyleSheet.create({
-  container: {
+  center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceContainerLowest,
+    padding: spacing.xl,
   },
-  text: {
-    color: colors.onSurfaceVariant,
-    fontSize: 16,
+  emoji: { fontSize: 56, marginBottom: spacing.lg },
+  title: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
+  },
+  subtitle: {
+    fontSize: fontSizes.body,
     fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
 })

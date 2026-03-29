@@ -1,124 +1,225 @@
 /**
- * DirectionControls Component
- * Single Responsibility: Provide directional movement controls
+ * DirectionControls — "Lapis Glassworks" D-pad + Explorer
+ *
+ * Central explorer circle with glowing rings, "Scouting..." status badge,
+ * glass D-pad with gold chevron arrows and center sensor icon.
+ * Design ref: desgin/hunting_session_exploration/code.html
  */
 
 import React from 'react'
-import { StyleSheet, View, TouchableOpacity } from 'react-native'
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native'
 import { ThemedText } from '@/components'
-import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 import { Direction } from '../types'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
 
 interface DirectionControlsProps {
   onMove: (direction: Direction) => void
   disabled?: boolean
+  isMoving?: boolean
+}
+
+interface DirectionButtonProps {
+  direction: Direction
+  iconName: keyof typeof Ionicons.glyphMap
+  label: string
+  isMoving: boolean
+  isDisabled: boolean
+  onPress: () => void
+}
+
+const DPAD_SIZE = 80
+
+function DirectionButton({ iconName, label, isMoving, isDisabled, onPress }: DirectionButtonProps) {
+  return (
+    <TouchableOpacity
+      style={[styles.dpadButton, isDisabled && styles.disabledButton]}
+      onPress={onPress}
+      disabled={isDisabled}
+      activeOpacity={0.7}
+    >
+      <View style={styles.dpadInner}>
+        {isMoving ? (
+          <ActivityIndicator size="small" color={colors.secondaryContainer} />
+        ) : (
+          <Ionicons name={iconName} size={28} color={colors.secondaryContainer} />
+        )}
+        <ThemedText style={styles.dpadLabel}>{label}</ThemedText>
+      </View>
+    </TouchableOpacity>
+  )
 }
 
 export const DirectionControls: React.FC<DirectionControlsProps> = ({
   onMove,
   disabled = false,
+  isMoving = false,
 }) => {
-  const renderButton = (direction: Direction, label: string, icon: string) => (
-    <TouchableOpacity
-      style={[styles.directionButton, disabled && styles.disabledButton]}
-      onPress={() => onMove(direction)}
-      disabled={disabled}
-    >
-      <LinearGradient
-        colors={disabled ? ['rgba(100,100,100,0.3)', 'rgba(50,50,50,0.3)'] : ['rgba(255,219,60,0.2)', 'rgba(255,219,60,0.1)']}
-        style={styles.buttonGradient}
-      >
-        <ThemedText style={styles.directionIcon}>{icon}</ThemedText>
-        <ThemedText style={[styles.directionLabel, disabled && styles.disabledText]}>
-          {label}
-        </ThemedText>
-      </LinearGradient>
-    </TouchableOpacity>
-  )
-
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.title}>Choose a direction to explore</ThemedText>
-
-      <View style={styles.controlsGrid}>
-        {/* Up */}
-        <View style={styles.topRow}>
-          {renderButton('up', 'Up', '↑')}
+      {/* ── Exploration Status ──────────────────────── */}
+      <View style={styles.explorationArea}>
+        <View style={styles.statusBadge}>
+          <View style={styles.statusDot} />
+          <ThemedText style={styles.statusText}>
+            {isMoving ? 'MOVING...' : 'SCOUTING...'}
+          </ThemedText>
         </View>
 
-        {/* Left and Right */}
-        <View style={styles.middleRow}>
-          {renderButton('left', 'Left', '←')}
-          {renderButton('right', 'Right', '→')}
+        <ThemedText style={styles.explorationHint}>
+          Explore the tall grass to find rare creatures.
+        </ThemedText>
+      </View>
+
+      {/* ── D-Pad ────────────────────────────────────── */}
+      <View style={styles.dpad}>
+        {/* Up */}
+        <View style={styles.dpadRow}>
+          <DirectionButton
+            direction="up"
+            iconName="chevron-up"
+            label="Up"
+            isMoving={isMoving}
+            isDisabled={disabled}
+            onPress={() => onMove('up')}
+          />
+        </View>
+
+        {/* Left – Center – Right */}
+        <View style={styles.dpadRow}>
+          <DirectionButton
+            direction="left"
+            iconName="chevron-back"
+            label="Left"
+            isMoving={isMoving}
+            isDisabled={disabled}
+            onPress={() => onMove('left')}
+          />
+          <View style={styles.dpadCenter}>
+            <Ionicons name="radio-outline" size={20} color="rgba(68, 216, 241, 0.35)" />
+          </View>
+          <DirectionButton
+            direction="right"
+            iconName="chevron-forward"
+            label="Right"
+            isMoving={isMoving}
+            isDisabled={disabled}
+            onPress={() => onMove('right')}
+          />
         </View>
 
         {/* Down */}
-        <View style={styles.bottomRow}>
-          {renderButton('down', 'Down', '↓')}
+        <View style={styles.dpadRow}>
+          <DirectionButton
+            direction="down"
+            iconName="chevron-down"
+            label="Down"
+            isMoving={isMoving}
+            isDisabled={disabled}
+            onPress={() => onMove('down')}
+          />
         </View>
       </View>
     </View>
   )
 }
 
+/* ═══════════════════════════════════════════════════ */
+
 const styles = StyleSheet.create({
-  container: {
+  container: { alignItems: 'center' },
+
+  /* ── Exploration Area ───────────────────────────── */
+  explorationArea: {
     alignItems: 'center',
-    paddingVertical: spacing.lg,
+    justifyContent: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
   },
-  title: {
-    fontSize: 16,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing.lg,
-    textAlign: 'center',
-  },
-  controlsGrid: {
+
+  /* ── Status Badge ───────────────────────────────── */
+  statusBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    backgroundColor: 'rgba(53, 57, 70, 0.6)',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
   },
-  topRow: {
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  statusText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  explorationHint: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+
+  /* ── D-Pad ──────────────────────────────────────── */
+  dpad: {
     alignItems: 'center',
+    marginBottom: spacing.lg,
   },
-  middleRow: {
+  dpadRow: {
     flexDirection: 'row',
-    gap: 60,
-  },
-  bottomRow: {
     alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: spacing.xs,
   },
-  directionButton: {
-    width: 80,
-    height: 80,
-    borderRadius: radii.lg,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 219, 60, 0.3)',
+  dpadButton: {
+    width: DPAD_SIZE,
+    height: DPAD_SIZE,
   },
-  disabledButton: {
-    opacity: 0.5,
-    borderColor: 'rgba(100, 100, 100, 0.3)',
-  },
-  buttonGradient: {
+  dpadInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    borderRadius: radii.DEFAULT,
+    gap: 2,
   },
-  directionIcon: {
-    fontSize: 24,
+  dpadLabel: {
+    fontSize: 9,
     fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  directionLabel: {
-    fontSize: 12,
-    fontFamily: fonts.semiBold,
-    color: colors.secondaryContainer,
+  dpadCenter: {
+    width: DPAD_SIZE,
+    height: DPAD_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    borderRadius: radii.DEFAULT,
   },
-  disabledText: {
-    color: 'rgba(100, 100, 100, 0.8)',
-  },
+  disabledButton: { opacity: 0.3 },
 })

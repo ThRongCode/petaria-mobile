@@ -1,16 +1,22 @@
+/**
+ * Item Use Screen — "Lapis Glassworks" redesign
+ *
+ * Select a Pokemon to use an item on.
+ * Design ref: desgin/item_use/code.html
+ */
+
 import React, { useState } from 'react'
 import {
   StyleSheet,
   View,
-  ScrollView,
-  ImageBackground,
   TouchableOpacity,
   Image,
   FlatList,
   ActivityIndicator,
 } from 'react-native'
-import { TopBar, Panel, CustomAlert } from '@/components/ui'
+import { CustomAlert } from '@/components/ui'
 import { ThemedText } from '@/components'
+import { ScreenContainer } from '@/components/ScreenContainer'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
@@ -21,16 +27,16 @@ import { apiClient } from '@/services/api'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import type { Pet, Item } from '@/stores/types/game'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
+import { gradientPrimary } from '@/themes/styles'
 
-/**
- * ItemUseScreen - Select a Pokemon to use an item on
- */
 export const ItemUseScreen: React.FC = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
+  const insets = useSafeAreaInsets()
   const dispatch = useAppDispatch()
   const profile = useSelector(getUserProfile)
   const pets = useSelector(getAllPets) as Pet[]
@@ -42,7 +48,6 @@ export const ItemUseScreen: React.FC = () => {
     buttons: Array<{ text: string; style?: 'default' | 'cancel' | 'destructive'; onPress?: () => void }>
   }>({ title: '', message: '', buttons: [] })
 
-  // Parse item from params
   const item: Item | null = params.item ? JSON.parse(params.item as string) : null
 
   const showCustomAlert = (
@@ -56,210 +61,163 @@ export const ItemUseScreen: React.FC = () => {
 
   const handleUsePet = async (pet: Pet) => {
     if (!item) return
-
-    showCustomAlert(
-      'Confirm Use',
-      `Use ${item.name} on ${pet.name}?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Use Item',
-          style: 'default',
-          onPress: async () => {
-            setUsing(true)
-            try {
-              const response = await apiClient.useItemOnPet(item.id, pet.id)
-              if (response.success && response.data) {
-                // Reload user data to get updated inventory and pet stats
-                dispatch(gameActions.loadUserData())
-                
-                showCustomAlert(
-                  'Success!',
-                  response.data.message,
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => router.back(),
-                    },
-                  ]
-                )
-              }
-            } catch (error: any) {
-              showCustomAlert(
-                'Error',
-                error.message || 'Failed to use item',
-                [{ text: 'OK' }]
-              )
-            } finally {
-              setUsing(false)
+    showCustomAlert('Confirm Use', `Use ${item.name} on ${pet.name}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Use Item',
+        style: 'default',
+        onPress: async () => {
+          setUsing(true)
+          try {
+            const response = await apiClient.useItemOnPet(item.id, pet.id)
+            if (response.success && response.data) {
+              dispatch(gameActions.loadUserData())
+              showCustomAlert('Success!', response.data.message, [
+                { text: 'OK', onPress: () => router.back() },
+              ])
             }
-          },
+          } catch (error: any) {
+            showCustomAlert('Error', error.message || 'Failed to use item', [{ text: 'OK' }])
+          } finally {
+            setUsing(false)
+          }
         },
-      ]
-    )
+      },
+    ])
   }
 
   const renderPetCard = ({ item: pet }: { item: Pet }) => {
+    const hpPercent = pet.stats.maxHp ? (pet.stats.hp / pet.stats.maxHp) * 100 : 50
+    const hpColor = hpPercent > 50 ? colors.primary : hpPercent > 25 ? colors.secondaryFixed : colors.error
+
     return (
       <TouchableOpacity
         style={styles.petCard}
         onPress={() => handleUsePet(pet)}
         disabled={using}
+        activeOpacity={0.8}
       >
-        <Panel variant="dark" style={styles.petPanel}>
-          {/* Pet Image */}
-          <View style={styles.petImageContainer}>
+        <View style={styles.petCardInner}>
+          {/* Pet image + level */}
+          <View style={styles.petImageWrap}>
             <Image
               source={getPokemonImage(pet.species) as any}
               style={styles.petImage}
               resizeMode="contain"
             />
-            {/* Level Badge */}
-            <View style={styles.levelBadge}>
-              <ThemedText style={styles.levelText}>Lv.{pet.level}</ThemedText>
+            <View style={styles.petLevelBadge}>
+              <ThemedText style={styles.petLevelText}>LV. {pet.level}</ThemedText>
             </View>
           </View>
 
-          {/* Pet Info */}
+          {/* Info */}
           <View style={styles.petInfo}>
-            <ThemedText style={styles.petName} numberOfLines={1}>
-              {pet.name}
-            </ThemedText>
-            <ThemedText style={styles.petSpecies} numberOfLines={1}>
-              {pet.species}
-            </ThemedText>
+            <ThemedText style={styles.petName} numberOfLines={1}>{pet.name}</ThemedText>
+            <ThemedText style={styles.petSpecies}>{pet.species}</ThemedText>
 
             {/* HP Bar */}
-            <View style={styles.hpBarContainer}>
-              <ThemedText style={styles.hpLabel}>HP</ThemedText>
-              <View style={styles.hpBarOuter}>
-                <View
-                  style={[
-                    styles.hpBarInner,
-                    {
-                      width: `${(pet.stats.hp / 200) * 100}%`,
-                      backgroundColor: pet.stats.hp > 100 ? colors.success : colors.warning,
-                    },
-                  ]}
-                />
+            <View style={styles.hpSection}>
+              <View style={styles.hpLabelRow}>
+                <ThemedText style={styles.hpLabel}>HP STATUS</ThemedText>
+                <ThemedText style={styles.hpValue}>
+                  <ThemedText style={[styles.hpCurrent, { color: hpColor }]}>{pet.stats.hp}</ThemedText>
+                  {' / '}{pet.stats.maxHp || 100}
+                </ThemedText>
               </View>
-              <ThemedText style={styles.hpValue}>{pet.stats.hp}</ThemedText>
-            </View>
-
-            {/* Stats Preview */}
-            <View style={styles.statsPreview}>
-              <View style={styles.statMini}>
-                <Ionicons name="flash" size={12} color="#FFA726" />
-                <ThemedText style={styles.statMiniText}>{pet.stats.attack}</ThemedText>
-              </View>
-              <View style={styles.statMini}>
-                <Ionicons name="shield" size={12} color="#2196F3" />
-                <ThemedText style={styles.statMiniText}>{pet.stats.defense}</ThemedText>
-              </View>
-              <View style={styles.statMini}>
-                <Ionicons name="speedometer" size={12} color="#9C27B0" />
-                <ThemedText style={styles.statMiniText}>{pet.stats.speed}</ThemedText>
+              <View style={styles.hpTrack}>
+                <View style={[styles.hpFill, { width: `${Math.min(hpPercent, 100)}%`, backgroundColor: hpColor }]} />
               </View>
             </View>
           </View>
-        </Panel>
+
+          {/* Use button */}
+          <TouchableOpacity onPress={() => handleUsePet(pet)} disabled={using}>
+            <LinearGradient
+              colors={[...gradientPrimary]}
+              style={styles.useBtn}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <ThemedText style={styles.useBtnText}>Use</ThemedText>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
     )
   }
 
   if (!item) {
     return (
-      <View style={styles.container}>
-        <ThemedText style={styles.errorText}>No item selected</ThemedText>
-      </View>
+      <ScreenContainer>
+        <View style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>No item selected</ThemedText>
+        </View>
+      </ScreenContainer>
     )
   }
 
   return (
-    <View style={styles.container}>
-      {/* Background */}
-      <ImageBackground
-        source={require('@/assets/images/background/mobile_background.png')}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
-          style={styles.gradientOverlay}
-        />
-      </ImageBackground>
-
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Top Bar */}
-        <TopBar
-          username={profile.username}
-          coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 0}
-          pokeballs={profile.currency?.pokeballs || 0}
-          
-          
-          battleTickets={profile.battleTickets}
-          huntTickets={profile.huntTickets}
-          onSettingsPress={() => router.push('/profile')}
-        />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-          <Panel variant="transparent" style={styles.headerPanel}>
-            <View style={styles.headerRow}>
-              <Image
-                source={getItemImage(item.id || item.name)}
-                style={styles.itemImage}
-                resizeMode="contain"
-              />
-              <View style={styles.headerInfo}>
-                <ThemedText style={styles.headerTitle}>{item.name}</ThemedText>
-                <ThemedText style={styles.headerSubtitle}>
-                  Select a Pokemon to use this item on
-                </ThemedText>
-              </View>
-            </View>
-          </Panel>
+    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color={colors.primary} />
+        </TouchableOpacity>
+        <View style={styles.headerTitleBlock}>
+          <ThemedText style={styles.headerTitle}>Use Item</ThemedText>
         </View>
-
-        {/* Pokemon Grid */}
-        {using ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FFD700" />
-            <ThemedText style={styles.loadingText}>Using item...</ThemedText>
-          </View>
-        ) : (
-          <FlatList
-            data={pets}
-            renderItem={renderPetCard}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={styles.gridRow}
-            contentContainerStyle={styles.gridContent}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={() => (
-              <View style={styles.emptyContainer}>
-                <Panel variant="dark" style={styles.emptyPanel}>
-                  <ThemedText style={styles.emptyIcon}>🎒</ThemedText>
-                  <ThemedText style={styles.emptyTitle}>No Pokemon</ThemedText>
-                  <ThemedText style={styles.emptyText}>
-                    You need Pokemon to use items on!
-                  </ThemedText>
-                </Panel>
-              </View>
-            )}
-          />
-        )}
       </View>
 
-      {/* Alert */}
+      {/* Item info card */}
+      <View style={styles.itemCard}>
+        <View style={styles.itemCardGlow} />
+        <View style={styles.itemImageWrap}>
+          <Image
+            source={getItemImage(item.id || item.name)}
+            style={styles.itemImage}
+            resizeMode="contain"
+          />
+        </View>
+        <View style={styles.itemInfo}>
+          <View style={styles.itemTypeBadge}>
+            <ThemedText style={styles.itemTypeText}>{item.type || 'Item'}</ThemedText>
+          </View>
+          <ThemedText style={styles.itemName}>{item.name}</ThemedText>
+          <ThemedText style={styles.itemDesc} numberOfLines={2}>
+            {item.description}
+          </ThemedText>
+        </View>
+      </View>
+
+      {/* Pet label */}
+      <View style={styles.selectLabel}>
+        <Ionicons name="paw" size={18} color={colors.primary} />
+        <ThemedText style={styles.selectLabelText}>Select Target Pokémon</ThemedText>
+      </View>
+
+      {/* Pokemon List */}
+      {using ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <ThemedText style={styles.loadingText}>Using item...</ThemedText>
+        </View>
+      ) : (
+        <FlatList
+          data={pets}
+          renderItem={renderPetCard}
+          keyExtractor={p => p.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyWrap}>
+              <ThemedText style={styles.emptyIcon}>🎒</ThemedText>
+              <ThemedText style={styles.emptyTitle}>No Pokemon</ThemedText>
+              <ThemedText style={styles.emptyText}>You need Pokemon to use items on!</ThemedText>
+            </View>
+          }
+        />
+      )}
+
       <CustomAlert
         visible={showAlert}
         title={alertConfig.title}
@@ -267,201 +225,183 @@ export const ItemUseScreen: React.FC = () => {
         buttons={alertConfig.buttons}
         onDismiss={() => setShowAlert(false)}
       />
-    </View>
+    </ScreenContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
-  },
-  background: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  content: {
-    flex: 1,
-  },
+  // ── Header ────────────────────────────────────────────────
   header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  backButton: {
-    marginBottom: spacing.md,
-  },
-  headerPanel: {
-    padding: spacing.lg,
-  },
-  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-  },
-  itemImage: {
-    width: 60,
-    height: 60,
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
-    marginBottom: spacing.xs,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-  },
-  gridRow: {
-    gap: spacing.md,
     paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
-  gridContent: {
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  petCard: {
-    flex: 1,
-    marginBottom: spacing.md,
-  },
-  petPanel: {
-    padding: spacing.md,
-  },
-  petImageContainer: {
-    width: '100%',
-    height: 100,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
-    position: 'relative',
   },
-  petImage: {
-    width: 80,
-    height: 80,
-  },
-  levelBadge: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    backgroundColor: 'rgba(10, 14, 26, 0.7)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.secondaryContainer,
-  },
-  levelText: {
-    fontSize: 12,
+  headerTitleBlock: { flex: 1 },
+  headerTitle: {
+    fontSize: fontSizes.title,
     fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
+    color: colors.primary,
+    letterSpacing: -0.3,
   },
-  petInfo: {
-    gap: spacing.xs,
-  },
-  petName: {
-    fontSize: 16,
-    fontFamily: fonts.bold,
-    color: colors.onSurface,
-  },
-  petSpecies: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  hpBarContainer: {
+
+  // ── Item Card ─────────────────────────────────────────────
+  itemCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  hpLabel: {
-    fontSize: 10,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    width: 20,
-  },
-  hpBarOuter: {
-    flex: 1,
-    height: 6,
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: 3,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlow,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    gap: spacing.lg,
     overflow: 'hidden',
   },
-  hpBarInner: {
-    height: '100%',
-    borderRadius: 3,
+  itemCardGlow: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(68,216,241,0.10)',
   },
-  hpValue: {
-    fontSize: 10,
-    fontFamily: fonts.semiBold,
-    color: colors.onSurface,
-    width: 30,
-    textAlign: 'right',
-  },
-  statsPreview: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  statMini: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  statMiniText: {
-    fontSize: 11,
-    fontFamily: fonts.semiBold,
-    color: colors.onSurfaceVariant,
-  },
-  loadingContainer: {
-    flex: 1,
+  itemImageWrap: {
+    width: 72,
+    height: 72,
+    backgroundColor: 'rgba(68,216,241,0.10)',
+    borderRadius: radii.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: 14,
+  itemImage: { width: 56, height: 56 },
+  itemInfo: { flex: 1, gap: spacing.xs },
+  itemTypeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,219,60,0.10)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+  },
+  itemTypeText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    color: colors.secondaryFixed,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  itemName: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.extraBold,
+    color: colors.primary,
+    letterSpacing: -0.3,
+  },
+  itemDesc: {
+    fontSize: fontSizes.small,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
+    lineHeight: 18,
   },
-  emptyContainer: {
-    padding: spacing['3xl'],
-  },
-  emptyPanel: {
-    padding: spacing['3xl'],
+
+  // ── Select Label ──────────────────────────────────────────
+  selectLabel: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.md,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: spacing.lg,
-  },
-  emptyTitle: {
-    fontSize: 20,
+  selectLabelText: {
+    fontSize: fontSizes.large,
     fontFamily: fonts.bold,
     color: colors.onSurface,
-    marginBottom: spacing.sm,
   },
-  emptyText: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
+
+  // ── Pet Card ──────────────────────────────────────────────
+  listContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'] },
+  petCard: { marginBottom: spacing.md },
+  petCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: spacing.md,
   },
-  errorText: {
-    fontSize: 16,
-    fontFamily: fonts.regular,
-    color: colors.onSurface,
-    textAlign: 'center',
-    marginTop: spacing['4xl'],
+  petImageWrap: {
+    width: 64,
+    height: 64,
+    position: 'relative',
   },
+  petImage: { width: 64, height: 64 },
+  petLevelBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    backgroundColor: colors.surfaceContainerHighest,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+  },
+  petLevelText: { fontSize: fontSizes.xs, fontFamily: fonts.extraBold, color: colors.primary },
+  petInfo: { flex: 1, gap: 2 },
+  petName: { fontSize: fontSizes.large, fontFamily: fonts.bold, color: colors.onSurface, letterSpacing: -0.3 },
+  petSpecies: { fontSize: fontSizes.xs, fontFamily: fonts.bold, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 1 },
+  hpSection: { marginTop: spacing.xs, gap: 4 },
+  hpLabelRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  hpLabel: { fontSize: fontSizes.xs, fontFamily: fonts.extraBold, color: colors.onSurfaceVariant, letterSpacing: 1, textTransform: 'uppercase' },
+  hpValue: { fontSize: fontSizes.xs, fontFamily: fonts.bold, color: colors.onSurfaceVariant },
+  hpCurrent: { fontFamily: fonts.bold },
+  hpTrack: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: radii.full,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  hpFill: { height: '100%', borderRadius: radii.full },
+
+  useBtn: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    shadowColor: 'rgba(68,216,241,0.3)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+  },
+  useBtnText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.extraBold,
+    color: colors.onPrimary,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+
+  // ── States ────────────────────────────────────────────────
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText: { fontSize: fontSizes.body, fontFamily: fonts.regular, color: colors.onSurface, textAlign: 'center', marginTop: spacing['4xl'] },
+  loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: spacing.md, fontSize: fontSizes.span, fontFamily: fonts.regular, color: colors.onSurfaceVariant },
+  emptyWrap: { padding: spacing['3xl'], alignItems: 'center' },
+  emptyIcon: { fontSize: 64, marginBottom: spacing.lg },
+  emptyTitle: { fontSize: fontSizes.title, fontFamily: fonts.bold, color: colors.onSurface, marginBottom: spacing.sm },
+  emptyText: { fontSize: fontSizes.span, fontFamily: fonts.regular, color: colors.onSurfaceVariant, textAlign: 'center' },
 })

@@ -1,19 +1,18 @@
 /**
- * EmptyState Component
- * 
- * Generic empty state component for lists
- * Extracted from PetsScreen for reusability
+ * EmptyState — "Lapis Glassworks" glass empty state card
+ *
+ * Generic empty state with glass panel, centered icon, and optional CTA.
  */
 
 import React from 'react'
 import { StyleSheet, View, TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/components'
-import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
+import { gradientPrimary } from '@/themes/styles'
 
 interface EmptyStateProps {
   icon: string
@@ -32,32 +31,33 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   buttonText,
   buttonIcon,
   onButtonPress,
-  buttonColors = [colors.secondaryContainer, colors.warning],
-}) => {
-  return (
-    <View style={styles.container}>
-      <Panel variant="dark" style={styles.panel}>
-        <ThemedText style={styles.icon}>{icon}</ThemedText>
-        <ThemedText style={styles.title}>{title}</ThemedText>
-        <ThemedText style={styles.message}>{message}</ThemedText>
-        
-        {buttonText && onButtonPress && (
-          <TouchableOpacity style={styles.button} onPress={onButtonPress}>
-            <LinearGradient
-              colors={buttonColors}
-              style={styles.gradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              {buttonIcon && <Ionicons name={buttonIcon} size={20} color={colors.onSurface} />}
-              <ThemedText style={styles.buttonText}>{buttonText}</ThemedText>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      </Panel>
+  buttonColors = [...gradientPrimary] as [string, string],
+}) => (
+  <View style={styles.container}>
+    <View style={styles.card}>
+      {/* Decorative glow */}
+      <View style={styles.glowDot} />
+
+      <ThemedText style={styles.icon}>{icon}</ThemedText>
+      <ThemedText style={styles.title}>{title}</ThemedText>
+      <ThemedText style={styles.message}>{message}</ThemedText>
+
+      {buttonText && onButtonPress && (
+        <TouchableOpacity style={styles.button} onPress={onButtonPress} activeOpacity={0.8}>
+          <LinearGradient
+            colors={buttonColors}
+            style={styles.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {buttonIcon && <Ionicons name={buttonIcon} size={18} color={colors.onPrimary} />}
+            <ThemedText style={styles.buttonText}>{buttonText}</ThemedText>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
     </View>
-  )
-}
+  </View>
+)
 
 const styles = StyleSheet.create({
   container: {
@@ -66,42 +66,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  panel: {
-    padding: spacing.xl,
+  card: {
+    backgroundColor: colors.glass.darkFill,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    borderRadius: radii.xl,
+    padding: spacing['3xl'],
     alignItems: 'center',
     width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  icon: {
-    fontSize: 64,
-    marginBottom: spacing.lg,
+  glowDot: {
+    position: 'absolute',
+    top: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(68, 216, 241, 0.06)',
   },
+  icon: { fontSize: 56, marginBottom: spacing.lg },
   title: {
-    fontSize: 20,
+    fontSize: fontSizes.title,
     fontFamily: fonts.bold,
     color: colors.onSurface,
     marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   message: {
-    fontSize: 14,
+    fontSize: fontSizes.span,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
     textAlign: 'center',
+    lineHeight: 20,
     marginBottom: spacing.xl,
   },
-  button: {
-    borderRadius: radii.md,
-    overflow: 'hidden',
-  },
+  button: { borderRadius: radii.md, overflow: 'hidden' },
   gradient: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing['2xl'],
     paddingVertical: 14,
+    borderRadius: radii.md,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: fontSizes.body,
     fontFamily: fonts.bold,
-    color: colors.onSurface,
+    color: colors.onPrimary,
   },
 })

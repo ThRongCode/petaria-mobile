@@ -7,7 +7,7 @@ import {
   Image,
   ScrollView,
 } from 'react-native'
-import { ThemedText } from '@/components'
+import { ThemedText } from '@/components/ThemedText'
 import { Panel } from './Panel'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'

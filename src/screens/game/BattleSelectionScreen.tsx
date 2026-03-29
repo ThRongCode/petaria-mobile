@@ -1,16 +1,15 @@
+/**
+ * Battle Selection Screen — "Lapis Glassworks" redesign
+ *
+ * Select opponent for a specific battle type.
+ * Design ref: desgin/battle_selection_immersive/code.html
+ */
+
 import React, { useState, useEffect } from 'react'
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  ImageBackground,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  Alert,
-} from 'react-native'
-import { TopBar, Panel, LoadingContainer } from '@/components/ui'
+import { StyleSheet, View, TouchableOpacity, Image, FlatList } from 'react-native'
 import { ThemedText } from '@/components'
+import { LoadingContainer } from '@/components/ui'
+import { ScreenContainer } from '@/components/ScreenContainer'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
@@ -19,9 +18,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import type { Opponent, Move } from '@/stores/types/game'
 import { battleApi } from '@/services/api'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
+import { gradientPrimary } from '@/themes/styles'
 
 // Backend opponent type (matches Prisma schema with relations)
 interface BackendOpponent {
@@ -70,15 +71,21 @@ interface BackendOpponent {
   }>
 }
 
-/**
- * BattleSelectionScreen - Select opponent for specific battle type
- * Reuses opponent selection UI with battle type context
- */
+const DIFFICULTY_STYLE: Record<string, { color: string; glow: string }> = {
+  easy: { color: colors.success, glow: 'rgba(76,175,80,0.2)' },
+  normal: { color: colors.primary, glow: 'rgba(68,216,241,0.2)' },
+  medium: { color: colors.warning, glow: 'rgba(255,183,77,0.2)' },
+  hard: { color: colors.secondaryFixed, glow: 'rgba(255,225,109,0.2)' },
+  expert: { color: colors.error, glow: 'rgba(255,180,171,0.2)' },
+  legendary: { color: '#9C27B0', glow: 'rgba(156,39,176,0.2)' },
+}
+
 export const BattleSelectionScreen: React.FC = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
+  const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
-  
+
   const [opponents, setOpponents] = useState<BackendOpponent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -86,45 +93,26 @@ export const BattleSelectionScreen: React.FC = () => {
   const battleType = params.battleType as string
   const battleName = params.battleName as string
 
-  // Load opponents from API
   useEffect(() => {
     const loadOpponents = async () => {
-      console.log('⚔️ Loading opponents from API...')
       setIsLoading(true)
       setError(null)
-      
       try {
         const result = await battleApi.listOpponents()
-        console.log('✅ Loaded opponents:', result.data.length)
         setOpponents(result.data)
-      } catch (error) {
-        console.error('❌ Error loading opponents:', error)
-        setError(error instanceof Error ? error.message : 'Failed to load opponents')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load opponents')
       } finally {
         setIsLoading(false)
       }
     }
-
     loadOpponents()
   }, [])
 
-  const getDifficultyColor = (difficulty?: string) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'easy':
-        return colors.success
-      case 'medium':
-        return colors.warning
-      case 'hard':
-        return colors.error
-      case 'legendary':
-        return '#9C27B0'
-      default:
-        return colors.onSurfaceVariant
-    }
-  }
+  const getDiffStyle = (difficulty?: string) =>
+    DIFFICULTY_STYLE[difficulty?.toLowerCase() || ''] || DIFFICULTY_STYLE.normal
 
   const handleOpponentSelect = (opponent: BackendOpponent) => {
-    // Transform backend opponent moves structure: moves[].move -> moves[]
     const transformedMoves: Move[] = opponent.moves?.map(opponentMove => ({
       id: opponentMove.move.id,
       name: opponentMove.move.name,
@@ -140,10 +128,9 @@ export const BattleSelectionScreen: React.FC = () => {
         healing: opponentMove.move.effectHealing,
         statusEffect: opponentMove.move.effectStatusEffect as any,
         statBoost: opponentMove.move.effectStatBoost,
-      }
+      },
     })) || []
 
-    // Transform backend opponent to frontend Opponent type
     const transformedOpponent: Opponent = {
       id: opponent.id,
       name: opponent.name,
@@ -167,363 +154,261 @@ export const BattleSelectionScreen: React.FC = () => {
       unlockLevel: opponent.unlockLevel,
     }
 
-    // Navigate to Pokemon selection screen
     router.push({
       pathname: '/pokemon-selection' as any,
-      params: {
-        opponent: JSON.stringify(transformedOpponent),
-        battleType: battleType,
-      },
+      params: { opponent: JSON.stringify(transformedOpponent), battleType },
     })
   }
 
   const renderOpponentCard = ({ item: opponent }: { item: BackendOpponent }) => {
+    const diff = getDiffStyle(opponent.difficulty)
+
     return (
       <TouchableOpacity
         style={styles.opponentCard}
         onPress={() => handleOpponentSelect(opponent)}
+        activeOpacity={0.8}
       >
-        <Panel variant="dark" style={styles.opponentPanel}>
-          {/* Difficulty Badge */}
-          <View
-            style={[
-              styles.difficultyBadge,
-              { backgroundColor: getDifficultyColor(opponent.difficulty) },
-            ]}
-          >
-            <ThemedText style={styles.difficultyText}>
+        <View style={styles.cardInner}>
+          {/* Difficulty badge */}
+          <View style={[styles.diffBadge, { backgroundColor: diff.glow, borderColor: diff.color + '50' }]}>
+            <ThemedText style={[styles.diffText, { color: diff.color }]}>
               {opponent.difficulty?.toUpperCase()}
             </ThemedText>
           </View>
 
-          {/* Opponent Image */}
-          <View style={styles.opponentImageContainer}>
-            <Image
-              source={opponent.species ? getPokemonImage(opponent.species) : { uri: opponent.imageUrl }}
-              style={styles.opponentImage}
-              resizeMode="contain"
-            />
+          {/* Opponent Name + Level */}
+          <ThemedText style={styles.opponentName}>{opponent.name}</ThemedText>
+          <View style={styles.levelRow}>
+            <Ionicons name="paw" size={14} color={colors.primary} />
+            <ThemedText style={styles.levelText}>Lv. {opponent.level} Pokémon</ThemedText>
           </View>
 
-          {/* Opponent Info */}
-          <View style={styles.opponentInfo}>
-            <ThemedText style={styles.opponentName}>{opponent.name}</ThemedText>
-            <ThemedText style={styles.opponentDescription} numberOfLines={2}>
+          {/* Description */}
+          {opponent.description ? (
+            <ThemedText style={styles.opponentDesc} numberOfLines={2}>
               {opponent.description}
             </ThemedText>
-            <View style={styles.pokemonRow}>
-              <Ionicons name="paw" size={14} color={colors.onSurfaceVariant} />
-              <ThemedText style={styles.pokemonName}>
-                {opponent.pets?.length || 0} Pokemon
-              </ThemedText>
-            </View>
+          ) : null}
 
-            {/* Level */}
-            <View style={styles.levelContainer}>
-              <Ionicons name="trending-up" size={14} color={colors.secondaryContainer} />
-              <ThemedText style={styles.levelText}>Lv.{opponent.level}</ThemedText>
+          {/* Rewards row */}
+          <View style={styles.rewardsRow}>
+            <View style={styles.rewardChip}>
+              <ThemedText style={styles.rewardVal}>{opponent.rewardXp || opponent.xpReward || 0}</ThemedText>
+              <ThemedText style={styles.rewardLabel}>XP</ThemedText>
             </View>
-
-            {/* Rewards */}
-            <View style={styles.rewardsContainer}>
-              <View style={styles.rewardItem}>
-                <ThemedText style={styles.rewardValue}>
-                  {opponent.xpReward || opponent.rewardXp || 0}
-                </ThemedText>
-                <ThemedText style={styles.rewardLabel}>XP</ThemedText>
-              </View>
-              <View style={styles.rewardItem}>
-                <ThemedText style={styles.rewardValue}>
-                  {opponent.coinReward || opponent.rewardCoins || 0}
-                </ThemedText>
-                <ThemedText style={styles.rewardLabel}>💰</ThemedText>
-              </View>
+            <View style={styles.rewardChip}>
+              <ThemedText style={styles.rewardVal}>{opponent.rewardCoins || opponent.coinReward || 0}</ThemedText>
+              <ThemedText style={styles.rewardLabel}>💰</ThemedText>
             </View>
           </View>
 
-          {/* Battle Button */}
-          <TouchableOpacity
-            style={styles.battleButton}
-            onPress={() => handleOpponentSelect(opponent)}
-          >
+          {/* Challenge button */}
+          <TouchableOpacity onPress={() => handleOpponentSelect(opponent)}>
             <LinearGradient
-              colors={['rgba(68, 216, 241, 0.25)', 'rgba(0, 188, 212, 0.4)']}
+              colors={[...gradientPrimary]}
+              style={styles.challengeBtn}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.battleGradient}
             >
-              <View style={styles.battleButtonBorder}>
-                <Ionicons name="flash" size={16} color={colors.primary} />
-                <ThemedText style={styles.battleButtonText}>Challenge</ThemedText>
-              </View>
+              <ThemedText style={styles.challengeBtnText}>Challenge</ThemedText>
+              <Ionicons name="flash" size={16} color={colors.onPrimary} />
             </LinearGradient>
           </TouchableOpacity>
-        </Panel>
+        </View>
       </TouchableOpacity>
     )
   }
 
   return (
-    <View style={styles.container}>
-      {/* Background */}
-      <ImageBackground
-        source={require('@/assets/images/background/mobile_background.png')}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
-          style={styles.gradientOverlay}
-        />
-      </ImageBackground>
-
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Top Bar */}
-        <TopBar
-          username={profile.username}
-          coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 0}
-          pokeballs={profile.currency?.pokeballs || 0}
-          
-          
-          battleTickets={profile.battleTickets}
-          huntTickets={profile.huntTickets}
-          onSettingsPress={() => router.push('/profile')}
-        />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-          <Panel variant="transparent" style={styles.headerPanel}>
-            <ThemedText style={styles.headerTitle}>{battleName || 'Select Opponent'}</ThemedText>
-            <ThemedText style={styles.headerSubtitle}>
-              Choose your opponent and prove your strength!
-            </ThemedText>
-          </Panel>
-        </View>
-
-        {/* Loading/Error States */}
-        {isLoading ? (
-          <LoadingContainer message="Loading opponents..." />
-        ) : error ? (
-          <View style={styles.centerContainer}>
-            <ThemedText style={styles.errorText}>❌ {error}</ThemedText>
-            <TouchableOpacity 
-              style={styles.retryButton} 
-              onPress={() => {
-                setIsLoading(true)
-                setError(null)
-                // Re-trigger useEffect by refreshing
-              }}
-            >
-              <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          /* Opponents Grid */
-          <FlatList
-            data={opponents}
-            renderItem={renderOpponentCard}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={styles.gridRow}
-            contentContainerStyle={styles.gridContent}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
+    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerTitle}>
+          {battleName || 'Battle Selection'}
+        </ThemedText>
+        <View style={{ width: 40 }} />
       </View>
-    </View>
+
+      {isLoading ? (
+        <LoadingContainer message="Loading opponents..." />
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>❌ {error}</ThemedText>
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={() => {
+              setIsLoading(true)
+              setError(null)
+              battleApi.listOpponents()
+                .then(r => setOpponents(r.data))
+                .catch(e => setError(e.message))
+                .finally(() => setIsLoading(false))
+            }}
+          >
+            <ThemedText style={styles.retryBtnText}>Retry</ThemedText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={opponents}
+          renderItem={renderOpponentCard}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </ScreenContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
-  },
-  background: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  content: {
-    flex: 1,
-  },
+  // ── Header ────────────────────────────────────────────────
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    marginBottom: spacing.lg,
+    paddingBottom: spacing.md,
   },
-  backButton: {
-    marginBottom: spacing.md,
-  },
-  headerPanel: {
-    padding: spacing.lg,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 24,
-    fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
-    marginBottom: spacing.xs,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-  },
-  gridRow: {
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  gridContent: {
-    paddingBottom: spacing.xl,
-  },
-  opponentCard: {
-    flex: 1,
-    marginBottom: spacing.md,
-  },
-  opponentPanel: {
-    padding: spacing.md,
-    position: 'relative',
-  },
-  difficultyBadge: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-    zIndex: 10,
-  },
-  difficultyText: {
-    fontSize: 9,
+    fontSize: fontSizes.title,
     fontFamily: fonts.bold,
     color: colors.onSurface,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+    flex: 1,
   },
-  opponentImageContainer: {
-    width: '100%',
-    height: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
+
+  // ── List ──────────────────────────────────────────────────
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing['3xl'],
   },
-  opponentImage: {
-    width: 80,
-    height: 80,
+
+  // ── Opponent Card ─────────────────────────────────────────
+  opponentCard: {
+    marginBottom: spacing.lg,
   },
-  opponentInfo: {
-    gap: 6,
+  cardInner: {
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlow,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  diffBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    borderWidth: 1,
+  },
+  diffText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   opponentName: {
-    fontSize: 16,
+    fontSize: fontSizes.heading,
     fontFamily: fonts.bold,
     color: colors.onSurface,
-    textAlign: 'center',
+    letterSpacing: -0.3,
   },
-  pokemonRow: {
+  levelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: spacing.xs,
-  },
-  pokemonName: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-  },
-  levelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
   },
   levelText: {
-    fontSize: 13,
-    fontFamily: fonts.semiBold,
-    color: colors.secondaryContainer,
-  },
-  rewardsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
-  },
-  rewardItem: {
-    alignItems: 'center',
-  },
-  rewardValue: {
-    fontSize: 14,
-    fontFamily: fonts.bold,
-    color: colors.success,
-  },
-  rewardLabel: {
-    fontSize: 10,
+    fontSize: fontSizes.span,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
   },
-  battleButton: {
-    marginTop: spacing.md,
-    borderRadius: radii.sm,
-    overflow: 'hidden',
+  opponentDesc: {
+    fontSize: fontSizes.small,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
   },
-  battleGradient: {
-    padding: 2,
+  rewardsRow: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginTop: spacing.xs,
   },
-  battleButtonBorder: {
-    backgroundColor: 'rgba(10, 14, 26, 0.6)',
-    borderRadius: radii.sm,
+  rewardChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rewardVal: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+  },
+  rewardLabel: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+  },
+  challengeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radii.xl,
+    marginTop: spacing.sm,
+    shadowColor: 'rgba(68,216,241,0.3)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
   },
-  battleButtonText: {
-    fontSize: 13,
+  challengeBtnText: {
+    fontSize: fontSizes.span,
     fontFamily: fonts.bold,
-    color: colors.primary,
+    color: colors.onPrimary,
+    letterSpacing: 0.5,
   },
-  centerContainer: {
+
+  // ── Error ─────────────────────────────────────────────────
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
   },
-  loadingText: {
-    marginTop: spacing.md,
-    color: colors.onSurfaceVariant,
-  },
   errorText: {
     color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.lg,
+    fontFamily: fonts.regular,
+    fontSize: fontSizes.body,
   },
-  retryButton: {
+  retryBtn: {
     backgroundColor: colors.secondaryContainer,
     paddingHorizontal: spacing['2xl'],
     paddingVertical: spacing.md,
-    borderRadius: radii.sm,
+    borderRadius: radii.xl,
   },
-  retryButtonText: {
+  retryBtnText: {
     color: colors.onSecondary,
     fontFamily: fonts.bold,
-  },
-  opponentDescription: {
-    fontSize: 11,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
+    fontSize: fontSizes.span,
   },
 })

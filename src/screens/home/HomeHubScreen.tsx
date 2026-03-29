@@ -1,489 +1,480 @@
 import React, { useState } from 'react'
-import { 
-  StyleSheet, 
-  View, 
-  ScrollView, 
-  ImageBackground,
+import {
+  StyleSheet,
+  View,
+  ScrollView,
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
-  Alert
+  Alert,
 } from 'react-native'
-import { TopBar, Panel, QuestPopup } from '@/components/ui'
-import { ThemedText } from '@/components'
+import { Panel } from '@/components/ui'
+import { ScreenContainer, ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector, useDispatch } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers'
 import { apiClient } from '@/services/api/client'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, fonts, spacing, radii } from '@/themes'
+import {
+  colors,
+  fonts,
+  spacing,
+  radii,
+  fontSizes,
+  glowHero,
+} from '@/themes'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const HERO_SIZE = SCREEN_WIDTH * 0.38
+const ICON_BOX = 56
+
+// ─── Nav grid item definition ────────────────────────────────────────────────
+interface NavItem {
+  key: string
+  icon: keyof typeof Ionicons.glyphMap
+  label: string
+  subtitle: string
+  tintColor: string
+  tintBg: string
+  route: string
+  badge?: boolean
+  isHealing?: boolean
+}
 
 /**
- * HomeHubScreen - Main dashboard/home screen
- * Central hub with quick access to all game features
- * Displays quests, events, and navigation
+ * HomeHubScreen — Immersive main hub.
+ *
+ * Layout (top → bottom):
+ *   1. Fixed background image + gradient overlay
+ *   2. Compact TopAppBar (avatar / brand / gems / notifications)
+ *   3. Hero section (strongest pet in circular glass frame)
+ *   4. 2×3 Bento nav grid (Hunt, Battle, Healing, Shop, Quests, Events)
+ *   5. Trainer Logs (recent activity feed)
  */
 export const HomeHubScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useDispatch()
+  const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
-  const [questPopupVisible, setQuestPopupVisible] = useState(false)
   const [healingLoading, setHealingLoading] = useState(false)
-  const [lastHealTime, setLastHealTime] = useState<number | null>(null)
 
+  // ── Healing handler (preserved from original) ───────────────────────────
   const handleHealAllPets = async () => {
     const HEAL_COST = 200
-
-    // Show confirmation popup
     Alert.alert(
       'Healing Center',
-      `Heal all your Pokemon to full HP for ${HEAL_COST} coins?\n\nYour current balance: ${profile.currency?.coins || 0} coins`,
+      `Heal all your Pokémon to full HP for ${HEAL_COST} coins?\n\nBalance: ${profile.currency?.coins || 0} coins`,
       [
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Heal for 200 coins',
-          style: 'default',
+          text: `Heal (${HEAL_COST} coins)`,
           onPress: async () => {
             try {
               setHealingLoading(true)
               const response = await apiClient.healAllPets()
-              
               if (response.success && response.data) {
                 const { healedCount, coinCost, coinsRemaining, message } = response.data
-                setLastHealTime(Date.now())
-                
-                // Update coins in Redux store (only if coins were spent)
                 if (coinCost > 0) {
                   dispatch(gameActions.updateProfile({
-                    currency: { ...profile.currency, coins: coinsRemaining }
+                    currency: { ...profile.currency, coins: coinsRemaining },
                   }))
                 }
-                
-                // Reload all user data (pets HP, inventory, etc)
                 dispatch(gameActions.loadUserData())
-                
-                // Show appropriate message based on whether healing was needed
-                if (healedCount === 0) {
-                  Alert.alert(
-                    'All Healthy! 💚',
-                    message || 'All Pokemon are already at full health',
-                    [{ text: 'OK', style: 'default' }]
-                  )
-                } else {
-                  Alert.alert(
-                    'Healing Complete!',
-                    `Successfully healed ${healedCount} Pokemon to full HP! ✨\n\nCoins spent: ${coinCost}\nRemaining: ${coinsRemaining}`,
-                    [{ text: 'Great!', style: 'default' }]
-                  )
-                }
+                Alert.alert(
+                  healedCount === 0 ? 'All Healthy! 💚' : 'Healing Complete!',
+                  healedCount === 0
+                    ? message || 'All Pokémon are already at full health'
+                    : `Healed ${healedCount} Pokémon! ✨\nCoins: ${coinCost} spent, ${coinsRemaining} left`,
+                  [{ text: 'OK' }],
+                )
               } else {
-                throw new Error(response.error?.message || 'Failed to heal Pokemon')
+                throw new Error(response.error?.message || 'Failed to heal')
               }
-            } catch (error) {
-              console.error('Failed to heal Pokemon:', error)
-              const errorMessage = error instanceof Error ? error.message : 'Unable to heal your Pokemon at this time'
-              Alert.alert(
-                'Healing Failed',
-                errorMessage,
-                [{ text: 'OK', style: 'cancel' }]
-              )
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Unable to heal right now'
+              Alert.alert('Healing Failed', msg, [{ text: 'OK' }])
             } finally {
               setHealingLoading(false)
             }
           },
         },
-      ]
+      ],
     )
   }
 
-  const canHealToday = () => {
-    if (!lastHealTime) return true
-    const now = Date.now()
-    const timeSinceLastHeal = now - lastHealTime
-    const oneDay = 24 * 60 * 60 * 1000
-    return timeSinceLastHeal >= oneDay
+  // ── Nav grid items ──────────────────────────────────────────────────────
+  const navItems: NavItem[] = [
+    {
+      key: 'hunt',
+      icon: 'compass',
+      label: 'Hunt Pokémon',
+      subtitle: 'Wild Grounds',
+      tintColor: colors.primary,
+      tintBg: 'rgba(68, 216, 241, 0.15)',
+      route: '/(app)/hunt',
+    },
+    {
+      key: 'battle',
+      icon: 'trophy',
+      label: 'Battle Arena',
+      subtitle: 'Global Rank',
+      tintColor: colors.secondaryFixed,
+      tintBg: 'rgba(255, 219, 60, 0.15)',
+      route: '/(app)/battle',
+    },
+    {
+      key: 'heal',
+      icon: 'medkit',
+      label: 'Healing Center',
+      subtitle: 'Restore All',
+      tintColor: colors.error,
+      tintBg: 'rgba(255, 180, 171, 0.15)',
+      route: '',
+      isHealing: true,
+    },
+    {
+      key: 'shop',
+      icon: 'bag-handle',
+      label: 'Item Shop',
+      subtitle: 'Daily Deals',
+      tintColor: colors.tertiary,
+      tintBg: 'rgba(0, 218, 243, 0.15)',
+      route: '/shop',
+    },
+    {
+      key: 'quests',
+      icon: 'clipboard',
+      label: 'Daily Quests',
+      subtitle: '3 Pending',
+      tintColor: colors.tertiary,
+      tintBg: 'rgba(0, 218, 243, 0.15)',
+      route: '/quests',
+      badge: true,
+    },
+    {
+      key: 'events',
+      icon: 'people',
+      label: 'Special Events',
+      subtitle: 'Time Limited',
+      tintColor: colors.primaryFixed,
+      tintBg: 'rgba(161, 239, 255, 0.15)',
+      route: '/events',
+    },
+  ]
+
+  const handleNavPress = (item: NavItem) => {
+    if (item.isHealing) {
+      handleHealAllPets()
+    } else {
+      router.push(item.route as any)
+    }
   }
 
   return (
-    <View style={styles.container}>
-      {/* Background with gradient overlay */}
-      {/* Background */}
-      <ImageBackground
-        source={require('@/assets/images/background/mobile_background.png')}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.6)', 'rgba(0, 0, 0, 0.8)']}
-          style={styles.gradientOverlay}
-        />
-      </ImageBackground>
-
-      {/* Content */}
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+    <ScreenContainer
+      backgroundImage={require('@/assets/images/background/mobile_background.png')}
+      backgroundOverlay
+    >
+      <ScrollView
+        style={s.scrollView}
+        contentContainerStyle={[s.scrollContent, { paddingTop: insets.top }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Bar */}
-        <TopBar
-          username={profile.username}
-          coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 0}
-          pokeballs={profile.currency?.pokeballs || 0}
-          
-          
-          battleTickets={profile.battleTickets}
-          huntTickets={profile.huntTickets}
-          onSettingsPress={() => router.push('/(app)/profile')}
-        />
-
-        {/* Main Content Area */}
-        <View style={styles.mainContent}>
-          {/* Healing Center Section */}
-          <Panel variant="dark" style={styles.healingCenterPanel}>
-            <View style={styles.healingHeader}>
-              <View style={styles.healingTitleRow}>
-                <Ionicons name="heart" size={28} color="#FF6B9D" />
-                <ThemedText style={styles.healingTitle}>Healing Center</ThemedText>
+        {/* ════════════ TOP APP BAR ════════════ */}
+        <View style={s.topBar}>
+          {/* Left: Avatar + Brand */}
+          <View style={s.topBarLeft}>
+            <TouchableOpacity
+              onPress={() => router.push('/(app)/profile')}
+              style={s.avatarWrap}
+            >
+              <View style={s.avatarHolder}>
+                <Ionicons name="person" size={22} color={colors.primaryFixedDim} />
               </View>
-              {lastHealTime && (
-                <ThemedText style={styles.healingTimeText}>
-                  Last healed: {new Date(lastHealTime).toLocaleTimeString()}
-                </ThemedText>
-              )}
-            </View>
-            
-            <ThemedText style={styles.healingDescription}>
-              Restore all your Pokemon to full health!
-            </ThemedText>
-
-            <TouchableOpacity
-              style={[
-                styles.healButton,
-                healingLoading && styles.healButtonDisabled
-              ]}
-              onPress={handleHealAllPets}
-              disabled={healingLoading}
-            >
-              <LinearGradient
-                colors={
-                  healingLoading
-                    ? ['rgba(100,100,100,0.3)', 'rgba(60,60,60,0.3)']
-                    : ['rgba(255,107,157,0.4)', 'rgba(147,51,234,0.4)']
-                }
-                style={styles.healButtonGradient}
-              >
-                {healingLoading ? (
-                  <ActivityIndicator color={colors.onSurface} size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="heart-circle" size={24} color="#FFD700" />
-                    <ThemedText style={styles.healButtonText}>
-                      Heal All Pokemon (200 coins)
-                    </ThemedText>
-                  </>
-                )}
-              </LinearGradient>
             </TouchableOpacity>
-          </Panel>
-
-          {/* Quick Actions - Featured Buttons */}
-          <View style={styles.quickActionsContainer}>
-            <TouchableOpacity
-              style={styles.featureCard}
-              onPress={() => router.push('/(app)/hunt')}
-            >
-              <LinearGradient
-                colors={['#2E7D32', '#1B5E20']}
-                style={styles.featureGradient}
-              >
-                <ThemedText style={styles.featureTitle}>🌲 Hunt Pokemon</ThemedText>
-                <ThemedText style={styles.featureSubtitle}>
-                  Catch wild Pokemon in various regions
-                </ThemedText>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.featureCard}
-              onPress={() => router.push('/(app)/battle')}
-            >
-              <LinearGradient
-                colors={['#C62828', '#8E0000']}
-                style={styles.featureGradient}
-              >
-                <ThemedText style={styles.featureTitle}>⚔️ Battle Arena</ThemedText>
-                <ThemedText style={styles.featureSubtitle}>
-                  Challenge trainers and test your skills
-                </ThemedText>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.featureCard}
-              onPress={() => router.push('/shop')}
-            >
-              <LinearGradient
-                colors={[colors.secondaryContainer, '#FF8F00']}
-                style={styles.featureGradient}
-              >
-                <ThemedText style={styles.featureTitle}>🛒 Item Shop</ThemedText>
-                <ThemedText style={styles.featureSubtitle}>
-                  Purchase items and supplies
-                </ThemedText>
-              </LinearGradient>
-            </TouchableOpacity>
+            <ThemedText style={s.brandText}>VnPeteria</ThemedText>
           </View>
 
-          {/* Daily Quest Banner */}
-          <TouchableOpacity 
-            onPress={() => router.push('/quests')}
-            style={styles.questBanner}
-          >
-            <Panel variant="dark" style={styles.questPanel}>
-              <View style={styles.questContent}>
-                <View style={styles.questTextContent}>
-                  <ThemedText style={styles.questTitle}>
-                    📋 Daily Quests
-                  </ThemedText>
-                  <ThemedText style={styles.questDescription}>
-                    Complete quests to earn rewards!
-                  </ThemedText>
-                </View>
-                <View style={styles.questArrow}>
-                  <Ionicons name="chevron-forward" size={24} color={colors.secondaryContainer} />
-                </View>
-              </View>
+          {/* Right: Gems + Notifications */}
+          <View style={s.topBarRight}>
+            <Panel variant="glass" intensity="subtle" flush style={s.gemsPill}>
+              <ThemedText style={s.gemsText}>
+                {profile.currency?.gems || 0}
+              </ThemedText>
+              <Ionicons name="diamond" size={14} color={colors.secondaryFixed} />
             </Panel>
-          </TouchableOpacity>
-
-          {/* Events Banner */}
-          <TouchableOpacity 
-            onPress={() => router.push('/events')}
-            style={styles.questBanner}
-          >
-            <LinearGradient
-              colors={[colors.primaryContainer, colors.primary]}
-              style={styles.eventsBannerGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+            <TouchableOpacity
+              style={s.notifBtn}
+              onPress={() => router.push('/settings')}
             >
-              <View style={styles.questContent}>
-                <View style={styles.questTextContent}>
-                  <ThemedText style={styles.questTitle}>
-                    🎉 Special Events
-                  </ThemedText>
-                  <ThemedText style={[styles.questDescription, { color: 'rgba(255,255,255,0.9)' }]}>
-                    Time-limited hunts with rare Pokémon!
-                  </ThemedText>
-                </View>
-                <View style={styles.questArrow}>
-                  <Ionicons name="chevron-forward" size={24} color={colors.onPrimary} />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+              <Ionicons name="notifications-outline" size={22} color={colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </ScrollView>
 
-      {/* Quest Popup */}
-      <QuestPopup
-        visible={questPopupVisible}
-        title="Daily Quest: Catch 3 Pokemon"
-        progress={0}
-        maxProgress={3}
-        rewards={[
-          { type: 'coins', amount: 5000 },
-          { type: 'exp', amount: 100 },
-        ]}
-        onClaim={() => {
-          setQuestPopupVisible(false)
-          // TODO: Claim rewards logic
-        }}
-        onClose={() => setQuestPopupVisible(false)}
-      />
-    </View>
+        {/* ════════════ HERO SECTION ════════════ */}
+        <View style={s.heroSection}>
+          {/* Avatar Container */}
+          <View style={s.heroAvatarContainer}>
+            {/* Circular Grey Avatar (matches Profile screen) */}
+            <View style={[s.heroAvatarCircle, glowHero]}>
+              <Ionicons name="person" size={48} color={colors.onSurfaceVariant} />
+            </View>
+            {/* Level Badge */}
+            <View style={s.heroLevelBadge}>
+              <ThemedText style={s.heroLevelBadgeText}>
+                Lv.{profile.level || 1}
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Trainer Info Below */}
+          <View style={s.heroInfo}>
+            <ThemedText style={s.heroName}>
+              {profile.username || 'Trainer'}
+            </ThemedText>
+            <View style={s.heroMeta}>
+              <ThemedText style={s.heroLevel}>
+                {profile.xp || 0} / {profile.xpToNext || 1000} XP
+              </ThemedText>
+              <View style={s.xpBarTrack}>
+                <View style={[s.xpBarFill, { width: `${Math.min(((profile.xp || 0) / (profile.xpToNext || 1000)) * 100, 100)}%` as any }]} />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* ════════════ BENTO NAV GRID ════════════ */}
+        <View style={s.bentoGrid}>
+          {navItems.map((item) => (
+            <TouchableOpacity
+              key={item.key}
+              style={s.bentoCard}
+              onPress={() => handleNavPress(item)}
+              activeOpacity={0.7}
+              disabled={item.isHealing && healingLoading}
+            >
+              <Panel variant="glass" intensity="default" flush style={s.bentoCardInner}>
+                {/* Badge dot */}
+                {item.badge && <View style={s.badgeDot} />}
+
+                {/* Icon container */}
+                <View style={[s.iconBox, { backgroundColor: item.tintBg }]}>
+                  {item.isHealing && healingLoading ? (
+                    <ActivityIndicator size="small" color={item.tintColor} />
+                  ) : (
+                    <Ionicons name={item.icon} size={28} color={item.tintColor} />
+                  )}
+                </View>
+
+                {/* Labels */}
+                <ThemedText style={s.bentoLabel}>{item.label}</ThemedText>
+                <ThemedText style={s.bentoSub}>{item.subtitle}</ThemedText>
+              </Panel>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Bottom spacing for tab bar */}
+        <View style={{ height: spacing['5xl'] }} />
+      </ScrollView>
+    </ScreenContainer>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
-  },
-  background: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
+// ═══════════════════════════════════════════════════════════════════════════
+// STYLES
+// ═══════════════════════════════════════════════════════════════════════════
+const s = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
     paddingBottom: spacing['4xl'],
   },
-  mainContent: {
-    flex: 1,
+
+  // ── Top App Bar ────────────────────────────────────────────
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    gap: spacing.lg,
+    paddingVertical: spacing.md,
   },
-  // Healing Center
-  healingCenterPanel: {
-    padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 107, 157, 0.2)',
-  },
-  healingHeader: {
-    marginBottom: spacing.md,
-  },
-  healingTitleRow: {
+  topBarLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    marginBottom: spacing.sm,
   },
-  healingTitle: {
-    fontSize: 20,
-    fontFamily: fonts.bold,
-    color: '#FF6B9D',
-  },
-  healingTimeText: {
-    fontSize: 11,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    fontStyle: 'italic',
-  },
-  healingDescription: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing.lg,
-    lineHeight: 20,
-  },
-  healButton: {
-    borderRadius: radii.md,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-  },
-  healButtonDisabled: {
-    borderColor: colors.outlineVariant,
-    opacity: 0.6,
-  },
-  healButtonGradient: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing['2xl'],
-    flexDirection: 'row',
+  avatarWrap: {},
+  avatarHolder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(68, 216, 241, 0.30)',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.md,
+    backgroundColor: colors.surfaceContainerHigh,
   },
-  healButtonText: {
-    fontSize: 16,
-    fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
+  brandText: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.extraBold,
+    color: colors.primary,
+    letterSpacing: -0.5,
   },
-  healButtonTextDisabled: {
-    color: colors.onSurfaceVariant,
-  },
-  cooldownText: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: spacing.md,
-    fontStyle: 'italic',
-  },
-  quickActionsContainer: {
-    gap: spacing.md,
-  },
-  featureCard: {
-    borderRadius: radii.DEFAULT,
-    overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  featureGradient: {
-    padding: spacing.xl,
-  },
-  featureTitle: {
-    fontSize: 20,
-    fontFamily: fonts.bold,
-    color: colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  featureSubtitle: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  questBanner: {
-    marginVertical: spacing.sm,
-    borderRadius: radii.md,
-    overflow: 'hidden',
-  },
-  questPanel: {
-    padding: spacing.lg,
-  },
-  questContent: {
+  topBarRight: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  gemsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.full,
+  },
+  gemsText: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.bold,
+    color: colors.secondaryFixed,
+  },
+  notifBtn: {
+    padding: spacing.sm,
+    borderRadius: radii.full,
+  },
+
+  // ── Hero Section ───────────────────────────────────────────
+  heroSection: {
+    alignItems: 'center',
+    paddingVertical: spacing['3xl'],
+  },
+  heroAvatarContainer: {
+    position: 'relative',
+  },
+  heroAvatarCircle: {
+    width: HERO_SIZE,
+    height: HERO_SIZE,
+    borderRadius: HERO_SIZE / 2,
+    borderWidth: 4,
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceContainerHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroLevelBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: colors.secondaryContainer,
+    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    minWidth: 48,
     alignItems: 'center',
   },
-  questTextContent: {
-    flex: 1,
-  },
-  questArrow: {
-    marginLeft: spacing.md,
-  },
-  questTitle: {
-    fontSize: 16,
+  heroLevelBadgeText: {
+    fontSize: fontSizes.small,
     fontFamily: fonts.bold,
+    color: colors.onSecondary,
+  },
+  heroInfo: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  heroName: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.extraBold,
     color: colors.onSurface,
-    marginBottom: spacing.xs,
+    letterSpacing: -0.3,
+    textAlign: 'center',
   },
-  questDescription: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  questProgress: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-  },
-  questReward: {
+  heroMeta: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.md,
   },
-  rewardText: {
-    fontSize: 18,
+  heroLevel: {
+    fontSize: fontSizes.xs,
     fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
+    color: colors.primary,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
-  rewardIcon: {
-    fontSize: 24,
+  xpBarTrack: {
+    width: 96,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceVariant,
+    overflow: 'hidden',
   },
-  eventsBannerGradient: {
-    padding: spacing.lg,
-    borderRadius: radii.md,
+  xpBarFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+    // Glow on XP bar
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
   },
+
+  // ── Bento Nav Grid ─────────────────────────────────────────
+  bentoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+  },
+  bentoCard: {
+    width: (SCREEN_WIDTH - spacing.lg * 2 - spacing.md) / 2,
+  },
+  bentoCardInner: {
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
+    borderRadius: radii.lg,
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.error,
+    borderWidth: 3,
+    borderColor: colors.surfaceContainerLowest,
+    zIndex: 10,
+  },
+  iconBox: {
+    width: ICON_BOX,
+    height: ICON_BOX,
+    borderRadius: radii.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bentoLabel: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  bentoSub: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
+
+
 })

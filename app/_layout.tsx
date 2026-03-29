@@ -44,19 +44,24 @@ const AppNavigationTheme = {
 }
 
 function RootLayoutContent() {
+  console.log('🔍 [DEBUG] RootLayoutContent rendering...')
   const showGlobalIndicator = useSelector(getLoadingIndicator)
-  const [loaded] = useFonts(fontAssets)
+  const [loaded, error] = useFonts(fontAssets)
+
+  console.log('🔍 [DEBUG] Fonts loaded:', loaded, 'Font error:', error)
 
   // Handle session expiration globally
   useSessionExpiration()
 
   useEffect(() => {
     if (loaded) {
+      console.log('🔍 [DEBUG] Fonts loaded, hiding splash screen')
       SplashScreen.hideAsync()
     }
   }, [loaded])
 
   if (!loaded) {
+    console.log('🔍 [DEBUG] Fonts not loaded yet, returning null')
     return null
   }
 
@@ -81,6 +86,7 @@ function RootLayoutContent() {
 }
 
 export default function RootLayout() {
+  console.log('🔍 [DEBUG] RootLayout rendering... persistor:', !!persistor)
   return (
     <GestureHandlerRootView style={styles.flex}>
       <Provider store={store}>

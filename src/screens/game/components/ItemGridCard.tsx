@@ -1,145 +1,153 @@
 /**
- * ItemGridCard Component
- * 
- * Grid card for displaying an item in the inventory view
- * Extracted from PetsScreen for better maintainability
+ * ItemGridCard — "Lapis Glassworks" glass item card
+ *
+ * Grid card for displaying an item in the inventory view.
+ * Uses glass panel, rarity gradient accent bar, quantity badge.
  */
 
 import React from 'react'
 import { StyleSheet, View, TouchableOpacity, Image } from 'react-native'
 import { ThemedText } from '@/components'
-import { Panel } from '@/components/ui'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { getItemImage } from '@/assets/images'
 import type { Item } from '@/stores/types/game'
-import { colors, rarityColors } from '@/themes/colors'
+import { colors, rarityColors, rarityGradients } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
 
 interface ItemGridCardProps {
   item: Item & { quantity?: number }
   onPress: (item: Item) => void
 }
 
-const getRarityColor = (rarity: string): string => {
-  return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
-}
+const getRarityColor = (rarity: string): string =>
+  rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
+
+const getRarityGradient = (rarity: string): readonly [string, string] =>
+  rarityGradients[rarity.toLowerCase() as keyof typeof rarityGradients] ?? rarityGradients.common
 
 export const ItemGridCard: React.FC<ItemGridCardProps> = ({ item, onPress }) => {
   const rarityColor = getRarityColor(item.rarity)
+  const gradient = getRarityGradient(item.rarity)
 
   return (
-    <TouchableOpacity style={styles.container} onPress={() => onPress(item)}>
-      <Panel variant="dark" style={styles.panel}>
-        {/* Rarity Indicator */}
-        <View style={[styles.rarityIndicator, { backgroundColor: rarityColor }]} />
+    <TouchableOpacity style={styles.container} onPress={() => onPress(item)} activeOpacity={0.7}>
+      <View style={styles.card}>
+        {/* Rarity accent bar */}
+        <LinearGradient
+          colors={[...gradient] as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.rarityBar}
+        />
 
-        {/* Item Image */}
+        {/* Image */}
         <View style={styles.imageContainer}>
-          <Image source={getItemImage(item.id || item.name)} style={styles.image} resizeMode="contain" />
-          {/* Quantity Badge */}
-          {item.quantity && item.quantity > 1 && (
+          <Image
+            source={getItemImage(item.id || item.name)}
+            style={styles.image}
+            resizeMode="contain"
+          />
+          {/* Quantity */}
+          {item.quantity != null && item.quantity > 1 && (
             <View style={styles.quantityBadge}>
               <ThemedText style={styles.quantityText}>x{item.quantity}</ThemedText>
             </View>
           )}
         </View>
 
-        {/* Item Info */}
+        {/* Info */}
         <View style={styles.info}>
-          <ThemedText style={styles.name} numberOfLines={1}>
-            {item.name}
-          </ThemedText>
+          <ThemedText style={styles.name} numberOfLines={1}>{item.name}</ThemedText>
           <ThemedText style={styles.type}>{item.type}</ThemedText>
-          <View style={[styles.rarityBadge, { backgroundColor: `${rarityColor}30` }]}>
+
+          <View style={[styles.rarityBadge, { backgroundColor: `${rarityColor}25` }]}>
             <ThemedText style={[styles.rarityText, { color: rarityColor }]}>
               {item.rarity}
             </ThemedText>
           </View>
 
           {/* Price */}
-          <View style={styles.priceContainer}>
-            {item.price.coins && item.price.coins > 0 && (
-              <View style={styles.priceTag}>
-                <Ionicons name="cash" size={12} color={colors.secondaryContainer} />
+          <View style={styles.priceRow}>
+            {item.price.coins != null && item.price.coins > 0 && (
+              <View style={styles.priceChip}>
+                <Ionicons name="cash" size={11} color={colors.secondaryContainer} />
                 <ThemedText style={styles.priceValue}>{item.price.coins}</ThemedText>
               </View>
             )}
-            {item.price.gems && item.price.gems > 0 && (
-              <View style={styles.priceTag}>
-                <Ionicons name="diamond" size={12} color={colors.info} />
+            {item.price.gems != null && item.price.gems > 0 && (
+              <View style={styles.priceChip}>
+                <Ionicons name="diamond" size={11} color={colors.primary} />
                 <ThemedText style={styles.priceValue}>{item.price.gems}</ThemedText>
               </View>
             )}
           </View>
         </View>
-      </Panel>
+      </View>
     </TouchableOpacity>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginBottom: spacing.md,
-  },
-  panel: {
+  container: { flex: 1, marginBottom: spacing.md },
+  card: {
+    backgroundColor: colors.glass.darkFill,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    borderRadius: radii.lg,
     padding: spacing.md,
+    overflow: 'hidden',
     position: 'relative',
   },
-  rarityIndicator: {
+
+  rarityBar: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 3,
-    borderTopLeftRadius: radii.md,
-    borderTopRightRadius: radii.md,
+    borderTopLeftRadius: radii.lg,
+    borderTopRightRadius: radii.lg,
   },
+
   imageContainer: {
     width: '100%',
-    height: 100,
+    height: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.glass.subtle,
     borderRadius: radii.md,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
     position: 'relative',
   },
-  image: {
-    width: 70,
-    height: 70,
-  },
-  imagePlaceholder: {
-    width: 70,
-    height: 70,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  image: { width: 60, height: 60 },
   quantityBadge: {
     position: 'absolute',
     bottom: spacing.xs,
     right: spacing.xs,
-    backgroundColor: 'rgba(10, 14, 26, 0.8)',
-    borderRadius: radii.md,
+    backgroundColor: 'rgba(10, 14, 26, 0.85)',
+    borderRadius: radii.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
   },
   quantityText: {
-    fontSize: 11,
+    fontSize: fontSizes.xs,
     fontFamily: fonts.bold,
     color: colors.onSurface,
   },
-  info: {
-    gap: spacing.xs,
-  },
+
+  info: { gap: spacing.xs },
   name: {
-    fontSize: 14,
+    fontSize: fontSizes.span,
     fontFamily: fonts.bold,
     color: colors.onSurface,
   },
   type: {
-    fontSize: 11,
+    fontSize: fontSizes.xs,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
   },
@@ -148,28 +156,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radii.sm,
-    marginTop: spacing.xs,
   },
   rarityText: {
-    fontSize: 10,
+    fontSize: fontSizes.micro,
     fontFamily: fonts.bold,
+    textTransform: 'capitalize',
   },
-  priceContainer: {
+
+  priceRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
-  priceTag: {
+  priceChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.surfaceContainerHigh,
+    gap: 3,
+    backgroundColor: colors.glass.subtle,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radii.sm,
   },
   priceValue: {
-    fontSize: 12,
+    fontSize: fontSizes.xs,
     fontFamily: fonts.semiBold,
     color: colors.secondaryContainer,
   },

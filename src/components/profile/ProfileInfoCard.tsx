@@ -54,7 +54,9 @@ const styles = StyleSheet.create({
     // Removed marginBottom since it's now in a card
   },
   bioContainer: {
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.glass.darkFill,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
     paddingHorizontal: spacing['2xl'],
     paddingVertical: spacing.lg,
     borderRadius: radii['2xl'],
@@ -67,7 +69,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   friendIdContainer: {
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.glass.darkFill,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
     paddingHorizontal: spacing['2xl'],
     paddingVertical: spacing.lg,
     borderRadius: radii['2xl'],
@@ -95,7 +99,9 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceContainer,
+    backgroundColor: colors.glass.subtle,
     borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
   },
 })

@@ -1,17 +1,24 @@
+/**
+ * Shop Screen — "Lapis Glassworks" redesign
+ *
+ * Item shop where users can purchase items.
+ * Design ref: desgin/item_shop/code.html
+ */
+
 import React, { useState, useEffect } from 'react'
 import {
   StyleSheet,
   View,
   ScrollView,
-  ImageBackground,
   TouchableOpacity,
   FlatList,
   Alert,
   ActivityIndicator,
   Image,
 } from 'react-native'
-import { TopBar, Panel, ItemDetailDialog } from '@/components/ui'
+import { ItemDetailDialog } from '@/components/ui'
 import { ThemedText } from '@/components'
+import { ScreenContainer } from '@/components/ScreenContainer'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector, useDispatch } from 'react-redux'
@@ -21,42 +28,58 @@ import { Ionicons } from '@expo/vector-icons'
 import { itemApi } from '@/services/api'
 import { getItemImage } from '@/assets/images'
 import type { Item } from '@/stores/types/game'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { colors } from '@/themes/colors'
+import { fonts } from '@/themes/fonts'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
+import { gradientPrimary } from '@/themes/styles'
 
-/**
- * ShopScreen - Item shop where users can purchase items
- */
+const CATEGORIES = [
+  { id: 'all' as const, label: 'All', icon: 'apps' },
+  { id: 'pokeball' as const, label: 'Pokéballs', icon: 'baseball' },
+  { id: 'consumable' as const, label: 'Consumables', icon: 'flask' },
+  { id: 'boost' as const, label: 'Stat Boosts', icon: 'trending-up' },
+  { id: 'evolution' as const, label: 'Evolution', icon: 'sparkles' },
+] as const
+
+type CategoryId = typeof CATEGORIES[number]['id']
+
+const RARITY_COLORS: Record<string, string> = {
+  Common: '#9E9E9E',
+  Uncommon: '#4CAF50',
+  Rare: '#2196F3',
+  Epic: '#9C27B0',
+  Legendary: '#FFD700',
+}
+
+const RARITY_GRADIENT: Record<string, readonly [string, string]> = {
+  Common: ['#9E9E9E', '#757575'] as const,
+  Uncommon: ['#4CAF50', '#388E3C'] as const,
+  Rare: ['#2196F3', '#1976D2'] as const,
+  Epic: ['#A335EE', '#7B1FA2'] as const,
+  Legendary: ['#FFD700', '#FFA500'] as const,
+}
+
 export default function ShopScreen() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
   const inventory = useSelector(getUserInventory)
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [showItemDialog, setShowItemDialog] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'consumable' | 'boost' | 'evolution' | 'pokeball'>('all')
+  const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all')
 
-  const categories = [
-    { id: 'all' as const, label: 'All Items', icon: 'apps' },
-    { id: 'pokeball' as const, label: 'Pokeballs', icon: 'baseball' },
-    { id: 'consumable' as const, label: 'Consumables', icon: 'flask' },
-    { id: 'boost' as const, label: 'Stat Boosts', icon: 'trending-up' },
-    { id: 'evolution' as const, label: 'Evolution', icon: 'sparkles' },
-  ]
-
-  useEffect(() => {
-    loadShopItems()
-  }, [])
+  useEffect(() => { loadShopItems() }, [])
 
   const loadShopItems = async () => {
     setLoading(true)
     try {
       const response = await itemApi.getCatalog()
-      if (response.success && response.data) {
-        setItems(response.data)
-      }
+      if (response.success && response.data) setItems(response.data)
     } catch (error) {
-      console.error('Failed to load shop items:', error)
       Alert.alert('Error', 'Failed to load shop items')
     } finally {
       setLoading(false)
@@ -65,51 +88,33 @@ export default function ShopScreen() {
 
   const handleBuyItem = async (item: Item) => {
     if (!item) return
-
-    // Check if user has enough currency
     const cost = item.price.coins || item.price.gems || 0
     const currency = item.price.coins ? 'coins' : 'gems'
     const userBalance = item.price.coins ? profile.currency.coins : profile.currency.gems
 
     if (userBalance < cost) {
-      Alert.alert(
-        'Insufficient Funds',
-        `You need ${cost} ${currency} to purchase ${item.name}. You have ${userBalance} ${currency}.`
-      )
+      Alert.alert('Insufficient Funds', `You need ${cost} ${currency}. You have ${userBalance}.`)
       return
     }
 
-    Alert.alert(
-      'Purchase Item',
-      `Buy ${item.name} for ${cost} ${currency}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Buy',
-          onPress: async () => {
-            try {
-              const response = await itemApi.buyItem(item.id, 1)
-              if (response.success) {
-                Alert.alert('Success', `You purchased ${item.name}!`)
-                // Reload user data to update inventory and currency
-                dispatch(gameActions.loadUserData())
-                setShowItemDialog(false)
-              } else {
-                Alert.alert('Error', 'Failed to purchase item')
-              }
-            } catch (error) {
-              console.error('Error buying item:', error)
-              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to purchase item')
+    Alert.alert('Purchase Item', `Buy ${item.name} for ${cost} ${currency}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Buy',
+        onPress: async () => {
+          try {
+            const response = await itemApi.buyItem(item.id, 1)
+            if (response.success) {
+              Alert.alert('Success', `You purchased ${item.name}!`)
+              dispatch(gameActions.loadUserData())
+              setShowItemDialog(false)
             }
+          } catch (err) {
+            Alert.alert('Error', err instanceof Error ? err.message : 'Failed to purchase item')
           }
-        }
-      ]
-    )
-  }
-
-  const handleItemPress = (item: Item) => {
-    setSelectedItem(item)
-    setShowItemDialog(true)
+        },
+      },
+    ])
   }
 
   const filteredItems = items.filter(item => {
@@ -121,328 +126,252 @@ export default function ShopScreen() {
     return true
   })
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'Common': return '#9E9E9E'
-      case 'Rare': return '#2196F3'
-      case 'Epic': return '#9C27B0'
-      case 'Legendary': return '#FFD700'
-      default: return '#9E9E9E'
-    }
-  }
-
   const renderItemCard = ({ item }: { item: Item }) => {
-    const userOwns = (inventory.items[item.id] || 0) > 0
     const quantity = inventory.items[item.id] || 0
+    const rarityColor = RARITY_COLORS[item.rarity] || RARITY_COLORS.Common
+    const rarityGrad = RARITY_GRADIENT[item.rarity] || RARITY_GRADIENT.Common
 
     return (
       <TouchableOpacity
         style={styles.itemCard}
-        onPress={() => handleItemPress(item)}
+        onPress={() => { setSelectedItem(item); setShowItemDialog(true) }}
         activeOpacity={0.8}
       >
-        <LinearGradient
-          colors={['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.02)']}
-          style={styles.itemGradient}
-        >
-          <Panel variant="dark" style={styles.itemPanel}>
-            {/* Rarity Indicator */}
-            <View style={[styles.rarityBar, { backgroundColor: getRarityColor(item.rarity) }]} />
-            
-            {/* Item Image */}
-            <View style={styles.itemImageContainer}>
-              <View style={[styles.itemImageBorder, { borderColor: getRarityColor(item.rarity) }]}>
-                <Image source={getItemImage(item.id || item.name)} style={styles.itemImage} resizeMode="contain" />
-              </View>
-              
-              {/* Owned Badge */}
-              {userOwns && (
-                <View style={styles.ownedBadge}>
-                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-                  <ThemedText style={styles.ownedText}>{quantity}</ThemedText>
-                </View>
-              )}
-            </View>
+        <View style={styles.cardInner}>
+          {/* Rarity bar */}
+          <LinearGradient colors={[...rarityGrad]} style={styles.rarityBar} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
 
-            {/* Item Info */}
-            <View style={styles.itemInfo}>
-              <ThemedText style={styles.itemName} numberOfLines={1}>
-                {item.name}
-              </ThemedText>
-              <ThemedText style={[styles.itemRarity, { color: getRarityColor(item.rarity) }]}>
-                {item.rarity}
-              </ThemedText>
-              <ThemedText style={styles.itemDescription} numberOfLines={2}>
-                {item.description}
-              </ThemedText>
-
-              {/* Price */}
-              <View style={styles.priceContainer}>
-                {item.price.coins && (
-                  <View style={styles.priceRow}>
-                    <ThemedText style={styles.priceIcon}>💰</ThemedText>
-                    <ThemedText style={styles.priceAmount}>{item.price.coins}</ThemedText>
-                  </View>
-                )}
-                {item.price.gems && (
-                  <View style={styles.priceRow}>
-                    <ThemedText style={styles.priceIcon}>💎</ThemedText>
-                    <ThemedText style={styles.priceAmount}>{item.price.gems}</ThemedText>
-                  </View>
-                )}
-              </View>
+          {/* Image */}
+          <View style={styles.itemImageWrap}>
+            <View style={[styles.itemImageBorder, { borderColor: rarityColor + '60' }]}>
+              <Image source={getItemImage(item.id || item.name)} style={styles.itemImage} resizeMode="contain" />
             </View>
-          </Panel>
-        </LinearGradient>
+            {quantity > 0 && (
+              <View style={styles.ownedBadge}>
+                <ThemedText style={styles.ownedText}>Owned: {quantity}</ThemedText>
+              </View>
+            )}
+          </View>
+
+          {/* Info */}
+          <ThemedText style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
+          <ThemedText style={[styles.itemRarity, { color: rarityColor }]}>
+            {item.rarity?.toUpperCase()}
+          </ThemedText>
+          <ThemedText style={styles.itemDesc} numberOfLines={2}>
+            {item.description}
+          </ThemedText>
+
+          {/* Price button */}
+          {item.price.gems ? (
+            <LinearGradient
+              colors={[...gradientPrimary]}
+              style={styles.priceBtn}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <ThemedText style={styles.priceBtnText}>{item.price.gems}</ThemedText>
+              <Ionicons name="diamond" size={12} color={colors.onPrimary} />
+            </LinearGradient>
+          ) : (
+            <View style={styles.priceBtnCoins}>
+              <ThemedText style={styles.priceBtnCoinsText}>{item.price.coins}</ThemedText>
+              <Ionicons name="cash" size={12} color={colors.onSurface} />
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
     )
   }
 
   return (
-    <View style={styles.container}>
-      {/* Background */}
-      <ImageBackground
-        source={require('@/assets/images/background/mobile_background.png')}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}
-          style={styles.gradientOverlay}
-        />
-      </ImageBackground>
-
-      {/* Content */}
-      <ScrollView 
+    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Bar */}
-        <TopBar
-          username={profile.username}
-          coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 0}
-          pokeballs={profile.currency?.pokeballs || 0}
-          battleTickets={profile.battleTickets}
-          huntTickets={profile.huntTickets}
-          onSettingsPress={() => router.push('/profile')}
-        />
-
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back-outline" size={22} color={colors.primary} />
           </TouchableOpacity>
-          <Panel variant="transparent" style={styles.headerPanel}>
-            <ThemedText style={styles.headerTitle}>🛒 Item Shop</ThemedText>
-            <ThemedText style={styles.headerSubtitle}>
-              Purchase items to help your Pokémon
-            </ThemedText>
-          </Panel>
+          <View style={styles.headerInfo}>
+            <ThemedText style={styles.headerTitle}>Item Shop</ThemedText>
+            <ThemedText style={styles.headerSubtitle}>Gear up for the next Hunt</ThemedText>
+          </View>
+          <View style={styles.currencyPill}>
+            <ThemedText style={styles.currencyGold}>{profile.currency?.coins || 0} 🪙</ThemedText>
+            <ThemedText style={styles.currencyCyan}>{profile.currency?.gems || 0} 💎</ThemedText>
+          </View>
         </View>
 
-        {/* Category Filters */}
-        <View style={styles.filtersContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.filters}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.filterChip,
-                    selectedCategory === category.id && styles.filterChipActive
-                  ]}
-                  onPress={() => setSelectedCategory(category.id)}
-                >
-                  <Ionicons
-                    name={category.icon as any}
-                    size={18}
-                    color={selectedCategory === category.id ? '#4CAF50' : 'rgba(255, 255, 255, 0.6)'}
-                  />
-                  <ThemedText
-                    style={[
-                      styles.filterText,
-                      selectedCategory === category.id && styles.filterTextActive
-                    ]}
-                  >
-                    {category.label}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
+        {/* Category Chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipScroll}
+        >
+          {CATEGORIES.map(cat => {
+            const active = selectedCategory === cat.id
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setSelectedCategory(cat.id)}
+              >
+                <Ionicons
+                  name={cat.icon as any}
+                  size={16}
+                  color={active ? colors.onPrimary : colors.onSurfaceVariant}
+                />
+                <ThemedText style={[styles.chipText, active && styles.chipTextActive]}>
+                  {cat.label}
+                </ThemedText>
+              </TouchableOpacity>
+            )
+          })}
+        </ScrollView>
 
-        {/* Loading State */}
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4CAF50" />
+        {/* Loading */}
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="large" color={colors.primary} />
             <ThemedText style={styles.loadingText}>Loading shop...</ThemedText>
           </View>
-        )}
-
-        {/* Items Grid */}
-        {!loading && (
-          <View style={styles.itemsContainer}>
-            <FlatList
-              data={filteredItems}
-              renderItem={renderItemCard}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
-              columnWrapperStyle={styles.row}
-              scrollEnabled={false}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="cube-outline" size={64} color="rgba(255, 255, 255, 0.3)" />
-                  <ThemedText style={styles.emptyText}>No items available</ThemedText>
-                </View>
-              }
-            />
-          </View>
+        ) : (
+          <FlatList
+            data={filteredItems}
+            renderItem={renderItemCard}
+            keyExtractor={item => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.gridRow}
+            scrollEnabled={false}
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <Ionicons name="cube-outline" size={64} color="rgba(255,255,255,0.2)" />
+                <ThemedText style={styles.emptyText}>No items available</ThemedText>
+              </View>
+            }
+          />
         )}
       </ScrollView>
 
-      {/* Item Detail Dialog */}
       <ItemDetailDialog
         visible={showItemDialog}
         item={selectedItem}
-        onClose={() => {
-          setShowItemDialog(false)
-          setSelectedItem(null)
-        }}
+        onClose={() => { setShowItemDialog(false); setSelectedItem(null) }}
         onBuy={handleBuyItem}
         userInventory={inventory.items}
       />
-    </View>
+    </ScreenContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  background: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
+
+  // ── Header ────────────────────────────────────────────────
   header: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
-  backButton: {
-    position: 'absolute',
-    top: 10,
-    left: 20,
-    zIndex: 10,
+  backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  headerPanel: {
-    padding: 20,
-    alignItems: 'center',
-  },
+  headerInfo: { flex: 1 },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontSize: fontSizes.title,
+    fontFamily: fonts.extraBold,
+    color: colors.primary,
+    letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    color: colors.onSurfaceVariant,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
-  filtersContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+  currencyPill: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+    gap: 2,
   },
-  filters: {
-    flexDirection: 'row',
-    gap: 12,
+  currencyGold: { fontSize: fontSizes.small, fontFamily: fonts.bold, color: colors.secondaryFixed },
+  currencyCyan: { fontSize: fontSizes.small, fontFamily: fonts.bold, color: colors.primary },
+
+  // ── Chips ─────────────────────────────────────────────────
+  chipScroll: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
   },
-  filterChip: {
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.full,
+    backgroundColor: colors.glass.default,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: colors.glass.innerGlowSubtle,
   },
-  filterChipActive: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    borderColor: '#4CAF50',
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: 'rgba(68,216,241,0.3)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
   },
-  filterText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '600',
+  chipText: {
+    fontSize: fontSizes.small,
+    fontFamily: fonts.bold,
+    color: colors.onSurfaceVariant,
   },
-  filterTextActive: {
-    color: '#4CAF50',
+  chipTextActive: { color: colors.onPrimary },
+
+  // ── Grid ──────────────────────────────────────────────────
+  gridRow: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+    marginBottom: spacing.md,
   },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  itemsContainer: {
-    paddingHorizontal: 10,
-  },
-  row: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    marginBottom: 16,
-  },
-  itemCard: {
-    width: '48%',
-    marginBottom: 4,
-  },
-  itemGradient: {
-    borderRadius: 16,
-  },
-  itemPanel: {
-    padding: 12,
-    borderRadius: 16,
+
+  // ── Item Card ─────────────────────────────────────────────
+  itemCard: { flex: 1 },
+  cardInner: {
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlow,
+    borderRadius: radii.xl,
     overflow: 'hidden',
-  },
-  rarityBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-  },
-  itemImageContainer: {
+    padding: spacing.md,
+    paddingTop: 0,
     alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 8,
+    gap: 4,
+  },
+  rarityBar: { width: '100%', height: 6, marginBottom: spacing.md },
+  itemImageWrap: {
     position: 'relative',
+    marginBottom: spacing.sm,
   },
   itemImageBorder: {
     width: 80,
@@ -451,79 +380,89 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
-  itemImage: {
-    width: 60,
-    height: 60,
-  },
-  itemImagePlaceholder: {
-    width: 60,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  itemImage: { width: 56, height: 56 },
   ownedBadge: {
     position: 'absolute',
     top: -4,
-    right: -4,
-    backgroundColor: 'rgba(76, 175, 80, 0.9)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    right: -8,
+    backgroundColor: 'rgba(53,57,70,0.80)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: 'rgba(68,216,241,0.20)',
   },
   ownedText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  itemInfo: {
-    gap: 4,
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.extraBold,
+    color: colors.primary,
   },
   itemName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: fontSizes.body,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+    textAlign: 'center',
   },
   itemRarity: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 9,
+    fontFamily: fonts.extraBold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  itemDescription: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    lineHeight: 16,
-    marginBottom: 8,
+  itemDesc: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: 14,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
-  priceContainer: {
+  priceBtn: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  priceIcon: {
-    fontSize: 14,
-  },
-  priceAmount: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFD700',
-  },
-  emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    gap: 4,
+    width: '100%',
+    paddingVertical: spacing.sm,
+    borderRadius: radii.lg,
+    shadowColor: 'rgba(0,188,212,0.3)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
   },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.4)',
+  priceBtnText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.extraBold,
+    color: colors.onPrimary,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
+  priceBtnCoins: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    width: '100%',
+    paddingVertical: spacing.sm,
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+  },
+  priceBtnCoinsText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.extraBold,
+    color: colors.onSurface,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+
+  // ── States ────────────────────────────────────────────────
+  loadingWrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  loadingText: { marginTop: spacing.md, fontSize: fontSizes.span, color: colors.onSurfaceVariant, fontFamily: fonts.regular },
+  emptyWrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  emptyText: { marginTop: spacing.md, fontSize: fontSizes.body, color: 'rgba(255,255,255,0.4)', fontFamily: fonts.regular },
 })

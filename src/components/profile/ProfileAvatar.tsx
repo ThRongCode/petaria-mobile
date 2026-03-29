@@ -96,8 +96,8 @@ const styles = StyleSheet.create({
   avatarContainer: {
     borderRadius: 100,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceContainer,
-    borderWidth: 4,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderWidth: 3,
     borderColor: colors.surfaceContainerLowest,
   },
   avatar: {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import { ThemedText } from '@/components'
+import { ThemedText } from '@/components/ThemedText'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, fonts, radii } from '@/themes'
@@ -138,9 +138,14 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
         onLongPress={onLongPress}
         style={styles.homeTabContainer}
       >
-        <View style={styles.homeButton}>
+        <View style={[styles.tabContent, isFocused && styles.homeButton]}>
           {getIconForRoute(homeRoute.name, isFocused)}
-          <ThemedText style={styles.homeLabel}>Home</ThemedText>
+          <ThemedText style={[
+            styles.label,
+            { color: isFocused ? colors.primary : colors.onSurfaceVariant },
+          ]}>
+            Home
+          </ThemedText>
         </View>
       </TouchableOpacity>
     )
@@ -150,9 +155,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <View style={styles.tabBar}>
         {leftRoutes.map(route => renderTab(route))}
-        <View style={styles.flexSpacer} />
         {renderHomeTab()}
-        <View style={styles.flexSpacer} />
         {rightRoutes.map(route => renderTab(route))}
       </View>
     </View>
@@ -185,7 +188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tab: {
-    width: 60,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 6,
@@ -201,19 +204,17 @@ const styles = StyleSheet.create({
     // No extra bg — just color change
   },
   label: {
-    fontSize: 8,
+    fontSize: 10,
     marginTop: 2,
     fontFamily: fonts.bold,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   labelFocused: {
     color: colors.primary,
   },
-  flexSpacer: {
-    flex: 1,
-  },
   homeTabContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: `${colors.primary}1A`, // 10% opacity
     borderRadius: radii.DEFAULT,
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     ...Platform.select({
       ios: {
@@ -237,11 +238,11 @@ const styles = StyleSheet.create({
     }),
   },
   homeLabel: {
-    fontSize: 8,
+    fontSize: 10,
     marginTop: 2,
     fontFamily: fonts.bold,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     color: colors.primary,
   },
 })

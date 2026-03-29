@@ -3,21 +3,24 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  ImageBackground,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native'
-import { TopBar, Panel } from '@/components/ui'
-import { ThemedText } from '@/components'
+import { ScreenContainer, ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { battleApi } from '@/services/api'
-import { colors } from '@/themes/colors'
-import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import {
+  colors,
+  fonts,
+  spacing,
+  radii,
+  fontSizes,
+} from '@/themes'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface BattleType {
   id: string
@@ -30,14 +33,27 @@ interface BattleType {
   endDate?: string
 }
 
+// Battle type color mapping
+const BATTLE_COLORS: Record<string, { label: string; accent: string; badge: string; badgeBg: string }> = {
+  event: { label: 'Special Event', accent: colors.secondaryContainer, badge: 'Difficulty: Elite', badgeBg: 'rgba(255, 219, 60, 0.2)' },
+  exp: { label: 'Leveling Zone', accent: '#A855F7', badge: 'Difficulty: Training', badgeBg: 'rgba(168, 85, 247, 0.2)' },
+  material: { label: 'Resource Hunt', accent: colors.primary, badge: 'Difficulty: Hard', badgeBg: 'rgba(68, 216, 241, 0.2)' },
+}
+
 /**
- * EventScreen - Main event hub with different battle types
- * Event Battles, EXP Battles, Material Battles
- * Battle types are loaded from the API
+ * EventScreen — Immersive Battle Hub
+ *
+ * Layout (matches battle_arena_immersive design):
+ *   1. Background + overlay
+ *   2. Hero heading "Battle Hub" + subtitle
+ *   3. Full-width battle mode cards with gradient overlay,
+ *      category label, title, difficulty badge, description,
+ *      full-width gradient CTA button
  */
 export const EventScreen: React.FC = () => {
   const router = useRouter()
   const profile = useSelector(getUserProfile)
+  const insets = useSafeAreaInsets()
   const [loading, setLoading] = useState(true)
   const [battleTypes, setBattleTypes] = useState<BattleType[]>([])
 
@@ -52,8 +68,8 @@ export const EventScreen: React.FC = () => {
       if (response.success && response.data) {
         setBattleTypes(response.data)
       }
-    } catch (error) {
-      console.error('Failed to load battle types:', error)
+    } catch {
+      // silent
     } finally {
       setLoading(false)
     }
@@ -62,340 +78,290 @@ export const EventScreen: React.FC = () => {
   const handleBattleTypeSelect = (battleType: BattleType) => {
     router.push({
       pathname: '/battle-selection' as any,
-      params: { 
+      params: {
         battleType: battleType.id,
         battleName: battleType.name,
       },
     })
   }
 
-  const renderBattleCard = (battleType: BattleType) => {
-    const gradientColors = battleType.available 
-      ? [...battleType.gradient.map(c => c + 'DD'), ...battleType.gradient.map(c => c + '66')] as [string, string, ...string[]]
-      : ['rgba(100, 100, 100, 0.3)', 'rgba(50, 50, 50, 0.3)'] as [string, string]
-    
+  const getBattleTheme = (battleType: BattleType) => {
+    const id = battleType.id.toLowerCase()
+    if (id.includes('event')) return BATTLE_COLORS.event
+    if (id.includes('exp')) return BATTLE_COLORS.exp
+    return BATTLE_COLORS.material
+  }
+
+  const renderBattleCard = (battleType: BattleType, index: number) => {
+    const theme = getBattleTheme(battleType)
+    const gradientColors = battleType.available
+      ? [battleType.gradient[0] || theme.accent, (battleType.gradient[1] || theme.accent) + '66']
+      : ['rgba(100, 100, 100, 0.3)', 'rgba(50, 50, 50, 0.3)']
+
     return (
       <TouchableOpacity
         key={battleType.id}
-        style={styles.battleCard}
+        style={s.battleCard}
         onPress={() => handleBattleTypeSelect(battleType)}
         disabled={!battleType.available}
+        activeOpacity={0.85}
       >
+        {/* Card background gradient */}
         <LinearGradient
-          colors={gradientColors}
+          colors={['rgba(15, 19, 31, 0.85)', 'rgba(15, 19, 31, 0.5)', 'transparent']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.battleGradient}
-        >
-          <View style={styles.battleContent}>
-            {/* Header */}
-            <View style={styles.battleHeader}>
-              <View style={styles.battleTitleRow}>
-                <Ionicons 
-                  name={battleType.icon as any} 
-                  size={28} 
-                  color={battleType.available ? colors.secondaryContainer : colors.outline} 
-                />
-                <View style={styles.battleTitleContainer}>
-                  <ThemedText style={styles.battleTitle}>
-                    {battleType.name}
-                  </ThemedText>
-                  {battleType.endDate && (
-                    <View style={styles.endDateBadge}>
-                      <Ionicons name="time" size={12} color="#FF5252" />
-                      <ThemedText style={styles.endDateText}>
-                        {battleType.endDate}
-                      </ThemedText>
-                    </View>
-                  )}
-                </View>
-              </View>
+          end={{ x: 1, y: 0 }}
+          style={s.battleOverlay}
+        />
+
+        <View style={s.battleContent}>
+          {/* Header Row */}
+          <View style={s.battleHeaderRow}>
+            <View style={s.battleTitleCol}>
+              <ThemedText style={[s.battleLabel, { color: theme.accent }]}>
+                {theme.label.toUpperCase()}
+              </ThemedText>
+              <ThemedText style={s.battleTitle}>{battleType.name}</ThemedText>
             </View>
-
-            {/* Description */}
-            <ThemedText style={styles.battleDescription}>
-              {battleType.description}
-            </ThemedText>
-
-            {/* Rewards */}
-            <View style={styles.rewardsSection}>
-              <ThemedText style={styles.rewardsTitle}>Rewards:</ThemedText>
-              <View style={styles.rewardsList}>
-                {battleType.rewards.map((reward, index) => (
-                  <View key={index} style={styles.rewardBadge}>
-                    <Ionicons name="gift" size={12} color="#4CAF50" />
-                    <ThemedText style={styles.rewardText}>{reward}</ThemedText>
-                  </View>
-                ))}
-              </View>
+            <View style={[s.diffBadge, { backgroundColor: theme.badgeBg, borderColor: theme.accent + '66' }]}>
+              <ThemedText style={[s.diffBadgeText, { color: theme.accent }]}>
+                {theme.badge.toUpperCase()}
+              </ThemedText>
             </View>
-
-            {/* Action Button */}
-            <View style={styles.actionButtonContainer}>
-              <LinearGradient
-                colors={
-                  battleType.available
-                    ? ['rgba(68, 216, 241, 0.25)', 'rgba(0, 188, 212, 0.4)']
-                    : ['rgba(158, 158, 158, 0.3)', 'rgba(97, 97, 97, 0.5)']
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.actionGradient}
-              >
-                <View style={styles.actionButtonBorder}>
-                  <ThemedText
-                    style={[
-                      styles.actionButtonText,
-                      !battleType.available && styles.actionButtonTextDisabled,
-                    ]}
-                  >
-                    {battleType.available ? 'Start Battle' : 'Coming Soon'}
-                  </ThemedText>
-                  {battleType.available && (
-                    <Ionicons name="arrow-forward" size={16} color="#66BB6A" />
-                  )}
-                </View>
-              </LinearGradient>
-            </View>
-
-            {/* Status Badge */}
-            {!battleType.available && (
-              <View style={styles.statusBadge}>
-                <ThemedText style={styles.statusText}>LOCKED</ThemedText>
-              </View>
-            )}
           </View>
-        </LinearGradient>
+
+          {/* Description */}
+          <ThemedText style={s.battleDesc}>{battleType.description}</ThemedText>
+
+          {/* Rewards Row */}
+          {battleType.rewards.length > 0 && (
+            <View style={s.rewardsRow}>
+              {battleType.rewards.slice(0, 3).map((reward, i) => (
+                <View key={i} style={s.rewardChip}>
+                  <Ionicons name="gift" size={12} color={colors.success} />
+                  <ThemedText style={s.rewardText}>{reward}</ThemedText>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* CTA Button */}
+          {battleType.available ? (
+            <TouchableOpacity
+              style={s.ctaBtn}
+              onPress={() => handleBattleTypeSelect(battleType)}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[theme.accent, theme.accent + '88']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={s.ctaGradient}
+              >
+                <ThemedText style={s.ctaText}>CHALLENGE</ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+          ) : (
+            <View style={s.lockedBtn}>
+              <ThemedText style={s.lockedText}>COMING SOON</ThemedText>
+            </View>
+          )}
+
+          {/* End date badge */}
+          {battleType.endDate && (
+            <View style={s.endDateBadge}>
+              <Ionicons name="time" size={12} color={colors.error} />
+              <ThemedText style={s.endDateText}>{battleType.endDate}</ThemedText>
+            </View>
+          )}
+        </View>
+
+        {/* Side accent glow */}
+        <View style={[s.sideGlow, { backgroundColor: theme.accent }]} />
       </TouchableOpacity>
     )
   }
 
   return (
-    <View style={styles.container}>
-      {/* Background */}
-      <ImageBackground
-        source={require('@/assets/images/background/mobile_background.png')}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['rgba(10, 14, 26, 0.4)', 'rgba(10, 14, 26, 0.85)']}
-          style={styles.gradientOverlay}
-        />
-      </ImageBackground>
-
-      {/* Content */}
+    <ScreenContainer
+      backgroundImage={require('@/assets/images/background/mobile_background.png')}
+      backgroundOverlay
+    >
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        style={s.scrollView}
+        contentContainerStyle={[s.scrollContent, { paddingTop: insets.top + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Bar */}
-        <TopBar
-          username={profile.username}
-          coins={profile.currency?.coins || 0}
-          gems={profile.currency?.gems || 0}
-          pokeballs={profile.currency?.pokeballs || 0}
-          
-          
-          battleTickets={profile.battleTickets}
-          huntTickets={profile.huntTickets}
-          onSettingsPress={() => router.push('/profile')}
-        />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <Panel variant="transparent" style={styles.headerPanel}>
-            <ThemedText style={styles.headerTitle}>⚔️ Events</ThemedText>
-            <ThemedText style={styles.headerSubtitle}>
-              Choose your battle type and challenge opponents!
-            </ThemedText>
-          </Panel>
-        </View>
-
-        {/* Battle Types */}
-        <View style={styles.battleTypesContainer}>
+        {/* ════════════ BATTLE CARDS ════════════ */}
+        <View style={s.battlesList}>
           {loading ? (
-            <View style={{ padding: 40, alignItems: 'center' }}>
-              <ActivityIndicator color={colors.secondaryContainer} size="large" />
-              <ThemedText style={{ color: 'rgba(255,255,255,0.6)', marginTop: 12 }}>
-                Loading battle types...
-              </ThemedText>
+            <View style={s.loadingBox}>
+              <ActivityIndicator color={colors.primary} size="large" />
+              <ThemedText style={s.loadingText}>Loading battle types...</ThemedText>
             </View>
           ) : (
-            battleTypes.map(renderBattleCard)
+            battleTypes.map((bt, i) => renderBattleCard(bt, i))
           )}
         </View>
+
+        <View style={{ height: spacing['5xl'] }} />
       </ScrollView>
-    </View>
+    </ScreenContainer>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
-  },
-  background: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: spacing.xl,
-  },
-  header: {
+// ═══════════════════════════════════════════════════════════════════════════
+const s = StyleSheet.create({
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: spacing['4xl'] },
+
+  // ── Battle Cards ───────────────────────────────────────────
+  battlesList: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  headerPanel: {
-    padding: spacing.lg,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
-    marginBottom: spacing.xs,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-  },
-  battleTypesContainer: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.lg,
+    gap: spacing['2xl'],
   },
   battleCard: {
-    borderRadius: radii.DEFAULT,
+    borderRadius: radii.xl,
     overflow: 'hidden',
-    marginBottom: spacing.xs,
-  },
-  battleGradient: {
-    padding: 3,
-  },
-  battleContent: {
-    backgroundColor: 'rgba(10, 14, 26, 0.7)',
-    borderRadius: 14,
-    padding: spacing.lg,
+    backgroundColor: 'rgba(15, 19, 31, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     position: 'relative',
   },
-  battleHeader: {
-    marginBottom: spacing.md,
+  battleOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
-  battleTitleRow: {
+  battleContent: {
+    padding: spacing['2xl'],
+    gap: spacing.lg,
+  },
+  battleHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  battleTitleContainer: {
-    flex: 1,
+  battleTitleCol: { flex: 1, gap: 4 },
+  battleLabel: {
+    fontSize: fontSizes.micro,
+    fontFamily: fonts.extraBold,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   battleTitle: {
-    fontSize: 20,
+    fontSize: fontSizes.title,
     fontFamily: fonts.bold,
     color: colors.onSurface,
-    marginBottom: spacing.xs,
   },
-  endDateBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: 'rgba(255, 82, 82, 0.15)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-    alignSelf: 'flex-start',
+  diffBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radii.full,
+    borderWidth: 1,
   },
-  endDateText: {
-    fontSize: 11,
-    color: colors.error,
-    fontFamily: fonts.semiBold,
-  },
-  battleDescription: {
-    fontSize: 13,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing.md,
-    lineHeight: 18,
-  },
-  rewardsSection: {
-    marginBottom: spacing.md,
-  },
-  rewardsTitle: {
-    fontSize: 12,
+  diffBadgeText: {
+    fontSize: fontSizes.micro,
     fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
-    marginBottom: 6,
+    letterSpacing: 1.5,
   },
-  rewardsList: {
+  battleDesc: {
+    fontSize: fontSizes.small,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.7)',
+    lineHeight: 20,
+  },
+  rewardsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: spacing.sm,
   },
-  rewardBadge: {
+  rewardChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 4,
     backgroundColor: 'rgba(35, 193, 107, 0.1)',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: 6,
+    borderRadius: radii.sm,
     borderWidth: 1,
     borderColor: 'rgba(35, 193, 107, 0.25)',
   },
   rewardText: {
-    fontSize: 11,
+    fontSize: fontSizes.xs,
     fontFamily: fonts.semiBold,
     color: colors.success,
   },
-  actionButtonContainer: {
-    borderRadius: radii.sm,
+  ctaBtn: {
+    borderRadius: radii.DEFAULT,
     overflow: 'hidden',
   },
-  actionGradient: {
-    padding: 2,
+  ctaGradient: {
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    borderRadius: radii.DEFAULT,
+    shadowColor: 'rgba(68, 216, 241, 0.3)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 6,
   },
-  actionButtonBorder: {
-    backgroundColor: 'rgba(10, 14, 26, 0.6)',
-    borderRadius: radii.sm,
+  ctaText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.extraBold,
+    color: colors.onPrimary,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+  lockedBtn: {
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    borderRadius: radii.DEFAULT,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  lockedText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.extraBold,
+    color: colors.outline,
+    letterSpacing: 3,
+  },
+  endDateBadge: {
+    position: 'absolute',
+    top: spacing.lg,
+    right: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: spacing.md,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontFamily: fonts.bold,
-    color: colors.primary,
-  },
-  actionButtonTextDisabled: {
-    color: colors.outline,
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: 'rgba(158, 158, 158, 0.2)',
-    paddingHorizontal: 10,
+    gap: 4,
+    backgroundColor: 'rgba(255, 82, 82, 0.15)',
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(158, 158, 158, 0.4)',
   },
-  statusText: {
-    fontSize: 10,
-    fontFamily: fonts.bold,
-    color: colors.outline,
+  endDateText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.semiBold,
+    color: colors.error,
+  },
+  sideGlow: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    opacity: 0.6,
+    borderTopLeftRadius: radii.xl,
+    borderBottomLeftRadius: radii.xl,
+  },
+
+  // ── Loading ────────────────────────────────────────────────
+  loadingBox: {
+    padding: spacing['4xl'],
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
+    fontSize: fontSizes.small,
+    fontFamily: fonts.regular,
+    color: colors.onSurfaceVariant,
   },
 })

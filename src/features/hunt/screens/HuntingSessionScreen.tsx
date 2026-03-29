@@ -1,26 +1,23 @@
 /**
- * HuntingSessionScreen (Refactored)
- * 
- * This is a clean, SOLID-compliant version of the hunting session screen.
- * It uses the modular hunt feature components and hooks.
- * 
- * To use this version, update the import in app/hunting-session.tsx:
- * - from: import { HuntingSessionScreen } from '@/screens/game'
- * - to:   import { HuntingSessionScreen } from '@/features/hunt/screens/HuntingSessionScreen'
+ * HuntingSessionScreen — "Lapis Glassworks" redesign
+ *
+ * Full-screen immersive hunting session with glass panels, explorer area,
+ * D-pad controls, and pause/exit.
+ * Design ref: desgin/hunting_session_exploration/code.html
  */
 
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, View, ImageBackground, Alert, ActivityIndicator } from 'react-native'
+import { StyleSheet, View, ScrollView, Alert } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSelector } from 'react-redux'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getUserCurrency, getUserProfile } from '@/stores/selectors'
-import { TopBar, CustomAlert } from '@/components/ui'
-import { ThemedText } from '@/components'
+import { CustomAlert, LoadingContainer } from '@/components/ui'
+import { ScreenContainer } from '@/components/ScreenContainer'
 import { colors } from '@/themes/colors'
-import { fonts } from '@/themes/fonts'
 import { spacing } from '@/themes/metrics'
 
-// Import from hunt feature module
+// Feature-module imports
 import {
   useHuntSession,
   useCapture,
@@ -35,6 +32,7 @@ import {
 export const HuntingSessionScreen: React.FC = () => {
   const params = useLocalSearchParams<{ sessionId?: string; regionName?: string; regionId?: string }>()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const currency = useSelector(getUserCurrency)
   const profile = useSelector(getUserProfile)
 
@@ -46,7 +44,7 @@ export const HuntingSessionScreen: React.FC = () => {
     buttons?: Array<{ text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }>
   }>({ title: '' })
 
-  // Use hunt session hook
+  // Hunt session hook
   const {
     session,
     movesLeft,
@@ -64,7 +62,7 @@ export const HuntingSessionScreen: React.FC = () => {
     incrementPetsFound,
   } = useHuntSession({ params })
 
-  // Use capture hook
+  // Capture hook
   const {
     isCapturing,
     captureState,
@@ -90,24 +88,21 @@ export const HuntingSessionScreen: React.FC = () => {
   // Handle movement
   const handleMove = useCallback(async (direction: Direction) => {
     const encounter = await makeMove(direction)
-    
-    // Show dialog when nothing happens (no encounter found)
+
     if (!encounter) {
-      // Check if out of moves after this move
       if (movesLeft - 1 === 0) {
         setTimeout(() => {
           Alert.alert(
             'Out of Moves!',
             "You've used all your moves. Time to complete the session.",
-            [{ text: 'Complete Session', onPress: completeSession }]
+            [{ text: 'Complete Session', onPress: completeSession }],
           )
         }, 300)
       } else {
-        // Show "nothing happened" dialog
         Alert.alert(
           '🔍 Nothing Here',
           'You searched the area but found nothing. Keep exploring!',
-          [{ text: 'Continue' }]
+          [{ text: 'Continue' }],
         )
       }
     }
@@ -116,21 +111,17 @@ export const HuntingSessionScreen: React.FC = () => {
   // Handle capture attempt
   const handleCapture = useCallback(async () => {
     if (!currentEncounter) return
-    
-    const success = await attemptCapture(currentEncounter)
-    // Result is handled by the hook
+    await attemptCapture(currentEncounter)
   }, [currentEncounter, attemptCapture])
 
   // Handle flee
   const handleFlee = useCallback(() => {
-    // Store encounter data before closing
     const encounterData = currentEncounter ? { ...currentEncounter } : null
-    
     setShowEncounter(false)
-    
+
     Alert.alert(
       'Run Away?',
-      'Are you sure you want to run away from this Pokemon?',
+      'Are you sure you want to run away from this Pokémon?',
       [
         {
           text: 'Cancel',
@@ -150,65 +141,51 @@ export const HuntingSessionScreen: React.FC = () => {
             resetCaptureAnimations()
           },
         },
-      ]
+      ],
     )
   }, [currentEncounter, setShowEncounter, setCurrentEncounter, resetCaptureAnimations])
 
   // Loading state
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.secondaryContainer} />
-        <ThemedText style={styles.loadingText}>Loading hunt session...</ThemedText>
-      </View>
+      <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+        <LoadingContainer message="Starting hunt session..." />
+      </ScreenContainer>
     )
   }
 
   return (
-    <ImageBackground
-      source={require('@/assets/images/background/mobile_background.png')}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      {/* Top Bar */}
-      <TopBar
-        username={profile?.username || 'Trainer'}
-        coins={currency?.coins || 0}
-        gems={currency?.gems || 0}
-        pokeballs={currency?.pokeballs || 0}
-        
-        
-        battleTickets={profile?.battleTickets}
-        huntTickets={profile?.huntTickets}
-        onSettingsPress={() => router.push('/profile')}
-      />
+    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header + Stats */}
+        <SessionHeader
+          session={session}
+          regionName={params.regionName}
+          movesLeft={movesLeft}
+          onComplete={completeSession}
+          onExit={exitSession}
+        />
 
-      {/* Session Header */}
-      <SessionHeader
-        session={session}
-        regionName={params.regionName}
-        movesLeft={movesLeft}
-        onComplete={completeSession}
-        onExit={exitSession}
-      />
+        <SessionStats rewards={sessionRewards} />
 
-      {/* Session Stats */}
-      <SessionStats rewards={sessionRewards} />
-
-      {/* Direction Controls */}
-      <View style={styles.controlsContainer}>
+        {/* Explorer + D-Pad + Exit */}
         <DirectionControls
           onMove={handleMove}
           disabled={isMoving || movesLeft <= 0}
+          isMoving={isMoving}
         />
-      </View>
 
-      {/* Session Actions */}
-      <SessionActions
-        movesLeft={movesLeft}
-        onComplete={completeSession}
-        onExit={exitSession}
-      />
+        {/* Session Actions (Pause/Complete) */}
+        <SessionActions
+          movesLeft={movesLeft}
+          onComplete={completeSession}
+          onExit={exitSession}
+        />
+      </ScrollView>
 
       {/* Encounter Modal */}
       <EncounterModal
@@ -233,30 +210,14 @@ export const HuntingSessionScreen: React.FC = () => {
         buttons={alertConfig.buttons}
         onDismiss={() => setShowAlert(false)}
       />
-    </ImageBackground>
+    </ScreenContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceContainerLowest,
-  },
-  loadingText: {
-    marginTop: spacing.lg,
-    fontFamily: fonts.medium,
-    color: colors.secondaryContainer,
-    fontSize: 16,
-  },
-  controlsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  container: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing['3xl'],
   },
 })

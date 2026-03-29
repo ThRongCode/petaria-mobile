@@ -1,9 +1,9 @@
 import React from 'react'
 import { Modal, View, StyleSheet, TouchableOpacity, Platform } from 'react-native'
-import { ThemedText } from '@/components'
+import { ThemedText } from '@/components/ThemedText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Panel } from './Panel'
-import { colors, fonts, radii } from '@/themes'
+import { colors, fonts, radii, spacing } from '@/themes'
 
 interface AlertButton {
   text: string
@@ -128,7 +128,13 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: colors.glass.innerGlow,
+    backgroundColor: colors.glass.darkFill,
+    shadowColor: 'rgba(0, 188, 212, 0.12)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    elevation: 8,
   },
   title: {
     fontSize: 20,
@@ -146,7 +152,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   buttonsContainer: {
-    gap: 12,
+    gap: spacing.md,
   },
   button: {
     width: '100%',

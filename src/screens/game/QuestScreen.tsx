@@ -1,23 +1,27 @@
 /**
- * Quest Screen
- * 
- * Shows daily quests with progress and claim functionality
+ * Quest Screen — "Lapis Glassworks" redesign
+ *
+ * Shows daily quests with progress and claim functionality.
+ * Design ref: desgin/quests_immersive/code.html
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ImageBackground, RefreshControl } from 'react-native'
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
-import { Panel, TopBar, LoadingContainer } from '@/components/ui'
+import { ScreenContainer } from '@/components/ScreenContainer'
+import { LoadingContainer } from '@/components/ui'
 import { useSelector, useDispatch } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers/game'
 import { questApi, Quest } from '@/services/api/questApi'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
+import { gradientGold, gradientPrimary } from '@/themes/styles'
 
 // Category icons and colors
 const CATEGORY_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -28,7 +32,6 @@ const CATEGORY_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; co
   shop: { icon: 'cart', color: colors.info },
 }
 
-// Difficulty colors
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: colors.success,
   normal: colors.info,
@@ -38,14 +41,14 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 export default function QuestScreen() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const insets = useSafeAreaInsets()
   const userProfile = useSelector(getUserProfile)
-  
+
   const [quests, setQuests] = useState<Quest[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [claimingId, setClaimingId] = useState<string | null>(null)
-  
-  // Fetch quests
+
   const fetchQuests = useCallback(async () => {
     try {
       const response = await questApi.getQuests()
@@ -60,46 +63,27 @@ export default function QuestScreen() {
       setRefreshing(false)
     }
   }, [])
-  
-  useEffect(() => {
-    fetchQuests()
-  }, [fetchQuests])
-  
-  // Handle refresh
+
+  useEffect(() => { fetchQuests() }, [fetchQuests])
+
   const onRefresh = useCallback(() => {
     setRefreshing(true)
     fetchQuests()
   }, [fetchQuests])
-  
-  // Handle claim reward
+
   const handleClaim = async (quest: Quest) => {
     setClaimingId(quest.id)
     try {
       const response = await questApi.claimReward(quest.id)
       if (response.success && response.data) {
-        // Build rewards message
         let rewardsMessage = 'You received:\n'
-        if (response.data.rewards.coins > 0) {
-          rewardsMessage += `💰 ${response.data.rewards.coins} Coins\n`
-        }
-        if (response.data.rewards.gems > 0) {
-          rewardsMessage += `💎 ${response.data.rewards.gems} Gems\n`
-        }
-        if (response.data.rewards.xp > 0) {
-          rewardsMessage += `⭐ ${response.data.rewards.xp} XP\n`
-        }
-        if (response.data.rewards.item) {
-          rewardsMessage += `🎁 ${response.data.rewards.item.quantity}x ${response.data.rewards.item.item.name}\n`
-        }
-        
-        // Add level up notification if applicable
-        if (response.data.user?.leveledUp) {
-          rewardsMessage += `\n🎉 LEVEL UP! You are now Lv.${response.data.user.newLevel}!`
-        }
-        
+        if (response.data.rewards.coins > 0) rewardsMessage += `💰 ${response.data.rewards.coins} Coins\n`
+        if (response.data.rewards.gems > 0) rewardsMessage += `💎 ${response.data.rewards.gems} Gems\n`
+        if (response.data.rewards.xp > 0) rewardsMessage += `⭐ ${response.data.rewards.xp} XP\n`
+        if (response.data.rewards.item) rewardsMessage += `🎁 ${response.data.rewards.item.quantity}x ${response.data.rewards.item.item.name}\n`
+        if (response.data.user?.leveledUp) rewardsMessage += `\n🎉 LEVEL UP! You are now Lv.${response.data.user.newLevel}!`
+
         Alert.alert('🎉 Rewards Claimed!', rewardsMessage, [{ text: 'Awesome!' }])
-        
-        // Refresh quests and user data
         fetchQuests()
         dispatch(gameActions.loadUserData())
       }
@@ -109,151 +93,142 @@ export default function QuestScreen() {
       setClaimingId(null)
     }
   }
-  
-  // Render quest card
+
   const renderQuestCard = (quest: Quest) => {
     const isComplete = quest.status === 'completed'
     const isClaimed = quest.status === 'claimed'
     const progressPercent = Math.min((quest.progress / quest.targetCount) * 100, 100)
     const categoryConfig = CATEGORY_CONFIG[quest.category] || { icon: 'help', color: '#888' }
-    
+
     return (
-      <Panel key={quest.id} variant="dark" style={styles.questCard}>
+      <View key={quest.id} style={styles.questCard}>
+        {/* Header */}
         <View style={styles.questHeader}>
-          <View style={[styles.categoryBadge, { backgroundColor: categoryConfig.color + '30' }]}>
+          <View style={[styles.categoryIcon, { backgroundColor: categoryConfig.color + '20' }]}>
             <Ionicons name={categoryConfig.icon} size={20} color={categoryConfig.color} />
           </View>
-          
           <View style={styles.questInfo}>
+            <ThemedText style={styles.questCategory}>
+              {quest.category.toUpperCase()} QUEST
+            </ThemedText>
             <ThemedText style={styles.questName}>{quest.name}</ThemedText>
-            <ThemedText style={styles.questDescription}>{quest.description}</ThemedText>
-          </View>
-          
-          <View style={[styles.difficultyBadge, { backgroundColor: DIFFICULTY_COLORS[quest.difficulty] + '30' }]}>
-            <ThemedText style={[styles.difficultyText, { color: DIFFICULTY_COLORS[quest.difficulty] }]}>
-              {quest.difficulty.toUpperCase()}
+            <ThemedText style={styles.questDescription} numberOfLines={2}>
+              {quest.description}
             </ThemedText>
           </View>
         </View>
-        
-        {/* Progress Bar */}
-        <View style={styles.progressSection}>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+
+        {/* Progress */}
+        {!isClaimed && (
+          <View style={styles.progressSection}>
+            <View style={styles.progressLabelRow}>
+              <View style={styles.progressBadge}>
+                <ThemedText style={styles.progressBadgeText}>
+                  {isComplete ? 'COMPLETE' : 'IN PROGRESS'}
+                </ThemedText>
+              </View>
+              <ThemedText style={styles.progressValue}>
+                {quest.progress}/{quest.targetCount} ({Math.round(progressPercent)}%)
+              </ThemedText>
+            </View>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${progressPercent}%` },
+                  isComplete && styles.progressFillComplete,
+                ]}
+              />
+            </View>
           </View>
-          <ThemedText style={styles.progressText}>
-            {quest.progress} / {quest.targetCount}
-          </ThemedText>
-        </View>
-        
-        {/* Rewards Row */}
-        <View style={styles.rewardsRow}>
+        )}
+
+        {/* Rewards + Action */}
+        <View style={styles.questFooter}>
           <View style={styles.rewardsList}>
             {quest.rewards.coins > 0 && (
-              <View style={styles.rewardItem}>
-                <Ionicons name="cash" size={16} color="#FFD700" />
-                <ThemedText style={styles.rewardText}>{quest.rewards.coins}</ThemedText>
+              <View style={styles.rewardChip}>
+                <ThemedText style={styles.rewardChipGold}>{quest.rewards.coins}</ThemedText>
+                <Ionicons name="cash" size={14} color={colors.secondaryFixed} />
               </View>
             )}
             {quest.rewards.gems > 0 && (
-              <View style={styles.rewardItem}>
-                <Ionicons name="diamond" size={16} color="#00BFFF" />
-                <ThemedText style={styles.rewardText}>{quest.rewards.gems}</ThemedText>
+              <View style={styles.rewardChip}>
+                <ThemedText style={styles.rewardChipCyan}>{quest.rewards.gems}</ThemedText>
+                <Ionicons name="diamond" size={14} color={colors.primary} />
               </View>
             )}
             {quest.rewards.xp > 0 && (
-              <View style={styles.rewardItem}>
-                <Ionicons name="star" size={16} color="#9C27B0" />
-                <ThemedText style={styles.rewardText}>{quest.rewards.xp} XP</ThemedText>
+              <View style={styles.rewardChip}>
+                <ThemedText style={styles.rewardChipCyan}>{quest.rewards.xp} XP</ThemedText>
               </View>
             )}
           </View>
-          
-          {/* Claim Button */}
+
           {isClaimed ? (
             <View style={styles.claimedBadge}>
-              <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
+              <Ionicons name="checkmark-circle" size={18} color={colors.success} />
               <ThemedText style={styles.claimedText}>Claimed</ThemedText>
             </View>
-          ) : (
+          ) : isComplete ? (
             <TouchableOpacity
-              onPress={() => isComplete && handleClaim(quest)}
-              disabled={!isComplete || claimingId === quest.id}
-              style={styles.claimButtonContainer}
+              onPress={() => handleClaim(quest)}
+              disabled={claimingId === quest.id}
             >
               <LinearGradient
-                colors={isComplete ? [colors.secondaryContainer, colors.warning] : [colors.surfaceContainerHighest, colors.surfaceContainerHigh]}
-                style={styles.claimButton}
+                colors={[...gradientGold]}
+                style={styles.claimBtn}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
                 {claimingId === quest.id ? (
-                  <ActivityIndicator size="small" color={colors.surfaceContainerLowest} />
+                  <ActivityIndicator size="small" color={colors.onSecondary} />
                 ) : (
-                  <>
-                    <Ionicons 
-                      name="gift" 
-                      size={16} 
-                      color={isComplete ? '#000' : '#888'} 
-                    />
-                    <ThemedText style={[styles.claimButtonText, !isComplete && styles.claimButtonTextDisabled]}>
-                      {isComplete ? 'Claim' : 'In Progress'}
-                    </ThemedText>
-                  </>
+                  <ThemedText style={styles.claimBtnText}>CLAIM</ThemedText>
                 )}
               </LinearGradient>
             </TouchableOpacity>
+          ) : (
+            <View style={styles.inProgressLabel}>
+              <ThemedText style={styles.inProgressText}>In Progress</ThemedText>
+            </View>
           )}
         </View>
-      </Panel>
+      </View>
     )
   }
-  
-  // Separate quests by status
+
   const activeQuests = quests.filter(q => q.status === 'active')
   const completedQuests = quests.filter(q => q.status === 'completed')
   const claimedQuests = quests.filter(q => q.status === 'claimed')
-  
+
   return (
-    <ImageBackground 
-      source={require('@/assets/images/background/mobile_background.png')}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <TopBar
-        username={userProfile?.username || 'Trainer'}
-        coins={userProfile?.currency?.coins || 0}
-        gems={userProfile?.currency?.gems || 0}
-        pokeballs={userProfile?.currency?.pokeballs || 0}
-        
-        
-        battleTickets={userProfile?.battleTickets}
-        huntTickets={userProfile?.huntTickets}
-        onSettingsPress={() => router.push('/profile')}
-      />
-      
-      <ScrollView 
+    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      <ScrollView
         style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.secondaryContainer}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={28} color="#fff" />
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={22} color={colors.primary} />
           </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Daily Quests</ThemedText>
-          <View style={styles.placeholder} />
+          <View style={styles.headerTitleBlock}>
+            <ThemedText style={styles.headerTitle}>Quest Log</ThemedText>
+            <ThemedText style={styles.headerSubtitle}>
+              Complete tasks to earn artifacts and ascend.
+            </ThemedText>
+          </View>
         </View>
-        
+
         {loading ? (
           <LoadingContainer message="Loading quests..." />
         ) : quests.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="clipboard-outline" size={64} color="rgba(255,255,255,0.3)" />
+            <Ionicons name="clipboard-outline" size={64} color="rgba(255,255,255,0.2)" />
             <ThemedText style={styles.emptyText}>No quests available</ThemedText>
             <ThemedText style={styles.emptySubtext}>Check back tomorrow!</ThemedText>
           </View>
@@ -263,103 +238,88 @@ export default function QuestScreen() {
             {completedQuests.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="gift" size={20} color={colors.secondaryContainer} />
-                  <ThemedText style={styles.sectionTitle}>Ready to Claim!</ThemedText>
+                  <Ionicons name="star" size={20} color={colors.secondaryFixed} />
+                  <ThemedText style={styles.sectionTitle}>READY TO CLAIM</ThemedText>
+                  <View style={styles.countBadge}>
+                    <ThemedText style={styles.countBadgeText}>
+                      {completedQuests.length} PENDING
+                    </ThemedText>
+                  </View>
                 </View>
                 {completedQuests.map(renderQuestCard)}
               </View>
             )}
-            
-            {/* Active Quests */}
+
+            {/* In Progress */}
             {activeQuests.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="time" size={20} color={colors.info} />
-                  <ThemedText style={styles.sectionTitle}>In Progress</ThemedText>
+                  <Ionicons name="time" size={20} color={colors.primary} />
+                  <ThemedText style={styles.sectionTitle}>IN PROGRESS</ThemedText>
                 </View>
                 {activeQuests.map(renderQuestCard)}
               </View>
             )}
-            
-            {/* Claimed Quests */}
+
+            {/* Claimed */}
             {claimedQuests.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                  <ThemedText style={styles.sectionTitle}>Completed</ThemedText>
+                  <ThemedText style={styles.sectionTitle}>COMPLETED</ThemedText>
                 </View>
                 {claimedQuests.map(renderQuestCard)}
               </View>
             )}
           </>
         )}
-        
-        {/* Bottom padding */}
-        <View style={{ height: 40 }} />
+
+        <View style={{ height: spacing['3xl'] }} />
       </ScrollView>
-    </ImageBackground>
+    </ScreenContainer>
   )
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
+  scrollView: { flex: 1 },
+
+  // ── Header ────────────────────────────────────────────────
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    paddingBottom: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
   },
-  backButton: {
+  backBtn: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
   },
+  headerTitleBlock: { flex: 1 },
   headerTitle: {
-    fontSize: 24,
-    fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
+    fontSize: fontSizes.display,
+    fontFamily: fonts.extraBold,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+    marginBottom: spacing.xs,
   },
-  placeholder: {
-    width: 40,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing['5xl'],
-  },
-  loadingText: {
-    marginTop: spacing.md,
+  headerSubtitle: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
-    fontSize: 14,
-    fontFamily: fonts.regular,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing['5xl'],
-  },
-  emptyText: {
-    fontSize: 18,
-    fontFamily: fonts.bold,
-    color: colors.outline,
-    marginTop: spacing.lg,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.outlineVariant,
-    marginTop: spacing.sm,
-  },
+
+  // ── Section ───────────────────────────────────────────────
   section: {
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing['2xl'],
+    marginBottom: spacing.xl,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -368,123 +328,186 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontFamily: fonts.semiBold,
+    fontSize: fontSizes.large,
+    fontFamily: fonts.bold,
     color: colors.onSurface,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
+  countBadge: {
+    backgroundColor: 'rgba(255,219,60,0.20)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,219,60,0.30)',
+  },
+  countBadgeText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    color: colors.secondaryFixed,
+  },
+
+  // ── Quest Card ────────────────────────────────────────────
   questCard: {
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlow,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    borderRadius: radii.md,
   },
   questHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    gap: spacing.md,
     marginBottom: spacing.md,
   },
-  categoryBadge: {
-    width: 40,
-    height: 40,
+  categoryIcon: {
+    width: 48,
+    height: 48,
     borderRadius: radii.lg,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
   },
-  questInfo: {
-    flex: 1,
-    marginRight: spacing.sm,
+  questInfo: { flex: 1, gap: 2 },
+  questCategory: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    letterSpacing: 2,
   },
   questName: {
-    fontSize: 16,
-    fontFamily: fonts.bold,
+    fontSize: fontSizes.large,
+    fontFamily: fonts.extraBold,
     color: colors.onSurface,
-    marginBottom: spacing.xs,
   },
   questDescription: {
-    fontSize: 13,
+    fontSize: fontSizes.small,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
+    marginTop: 2,
   },
-  difficultyBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-  },
-  difficultyText: {
-    fontSize: 10,
-    fontFamily: fonts.bold,
-  },
+
+  // ── Progress ──────────────────────────────────────────────
   progressSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: spacing.md,
     gap: spacing.sm,
   },
-  progressBar: {
-    flex: 1,
+  progressLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressBadge: {
+    backgroundColor: 'rgba(68,216,241,0.10)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+  },
+  progressBadgeText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.semiBold,
+    color: colors.primary,
+    textTransform: 'uppercase',
+  },
+  progressValue: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+  },
+  progressTrack: {
     height: 8,
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: radii.sm,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: radii.full,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   progressFill: {
     height: '100%',
     backgroundColor: colors.primary,
-    borderRadius: radii.sm,
+    borderRadius: radii.full,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
   },
-  progressText: {
-    fontSize: 12,
-    fontFamily: fonts.semiBold,
-    color: colors.onSurfaceVariant,
-    minWidth: 50,
-    textAlign: 'right',
+  progressFillComplete: {
+    backgroundColor: colors.secondaryFixed,
+    shadowColor: colors.secondaryFixed,
   },
-  rewardsRow: {
+
+  // ── Footer ────────────────────────────────────────────────
+  questFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  rewardsList: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  rewardItem: {
+  rewardsList: { flexDirection: 'row', gap: spacing.md },
+  rewardChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
   },
-  rewardText: {
-    fontSize: 13,
-    fontFamily: fonts.semiBold,
-    color: colors.onSurface,
-  },
-  claimButtonContainer: {
-    borderRadius: radii.sm,
-    overflow: 'hidden',
-  },
-  claimButton: {
-    flexDirection: 'row',
+  rewardChipGold: { fontSize: fontSizes.small, fontFamily: fonts.bold, color: colors.secondaryFixed },
+  rewardChipCyan: { fontSize: fontSizes.small, fontFamily: fonts.bold, color: colors.primary },
+
+  claimBtn: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radii.full,
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: 6,
+    shadowColor: 'rgba(255,225,109,0.4)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
   },
-  claimButtonText: {
-    fontSize: 14,
+  claimBtnText: {
+    fontSize: fontSizes.small,
     fontFamily: fonts.bold,
     color: colors.onSecondary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
-  claimButtonTextDisabled: {
-    color: colors.outline,
+  claimedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  claimedText: { fontSize: fontSizes.span, fontFamily: fonts.semiBold, color: colors.success },
+  inProgressLabel: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
   },
-  claimedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  claimedText: {
-    fontSize: 14,
+  inProgressText: {
+    fontSize: fontSizes.small,
     fontFamily: fonts.semiBold,
-    color: colors.success,
+    color: colors.onSurfaceVariant,
+  },
+
+  // ── Empty State ───────────────────────────────────────────
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing['5xl'],
+    paddingHorizontal: spacing.xl,
+  },
+  emptyText: {
+    fontSize: fontSizes.large,
+    fontFamily: fonts.bold,
+    color: colors.outline,
+    marginTop: spacing.lg,
+  },
+  emptySubtext: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.regular,
+    color: colors.outlineVariant,
+    marginTop: spacing.sm,
   },
 })

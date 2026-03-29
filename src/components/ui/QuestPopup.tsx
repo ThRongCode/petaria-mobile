@@ -1,6 +1,6 @@
 import React from 'react'
 import { StyleSheet, View, TouchableOpacity, Modal } from 'react-native'
-import { ThemedText } from '@/components'
+import { ThemedText } from '@/components/ThemedText'
 import { Ionicons } from '@expo/vector-icons'
 import { Panel } from './Panel'
 import { LinearGradient } from 'expo-linear-gradient'

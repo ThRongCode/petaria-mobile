@@ -8,7 +8,7 @@ import {
   Image,
   Dimensions 
 } from 'react-native'
-import { ThemedText } from '@/components'
+import { ThemedText } from '@/components/ThemedText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { Panel } from './Panel'

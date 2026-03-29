@@ -1,18 +1,20 @@
 /**
- * SessionHeader Component
- * Single Responsibility: Display hunt session header with region info and moves left
+ * SessionHeader — "Lapis Glassworks" glass header
+ *
+ * Region name (large bold white), "DUNGEON EXPLORATION" subtitle with compass
+ * icon, and gold "ACTIONS LEFT" counter with glow.
+ * Design ref: desgin/hunting_session_exploration/code.html
  */
 
 import React from 'react'
 import { StyleSheet, View, TouchableOpacity } from 'react-native'
 import { ThemedText } from '@/components'
-import { Panel } from '@/components/ui'
-import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { HuntSession } from '../types'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
 
 interface SessionHeaderProps {
   session: HuntSession | null
@@ -26,25 +28,40 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
   session,
   regionName,
   movesLeft,
-  onComplete,
-  onExit,
 }) => {
+  const router = useRouter()
   const displayRegionName = session?.region.name || regionName || 'Unknown Region'
 
   return (
-    <Panel variant="dark" style={styles.container}>
-      <View style={styles.regionInfo}>
-        <ThemedText style={styles.regionName}>{displayRegionName}</ThemedText>
-        <ThemedText style={styles.regionSubtitle}>Dungeon Exploration</ThemedText>
-      </View>
+    <View style={styles.headerCard}>
+      <View style={styles.headerRow}>
+        {/* Back button */}
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={20} color={colors.onSurface} />
+        </TouchableOpacity>
 
-      <View style={styles.movesContainer}>
-        <ThemedText style={styles.movesLabel}>Actions Left</ThemedText>
-        <ThemedText style={styles.movesValue}>{movesLeft}</ThemedText>
+        {/* Region info */}
+        <View style={styles.regionInfo}>
+          <ThemedText style={styles.regionName} numberOfLines={1}>
+            {displayRegionName}
+          </ThemedText>
+          <View style={styles.subtitleRow}>
+            <Ionicons name="compass-outline" size={12} color={colors.primary} />
+            <ThemedText style={styles.subtitle}>DUNGEON EXPLORATION</ThemedText>
+          </View>
+        </View>
+
+        {/* Actions counter */}
+        <View style={styles.actionsBox}>
+          <ThemedText style={styles.actionsLabel}>ACTIONS LEFT</ThemedText>
+          <ThemedText style={styles.actionsNum}>{movesLeft}</ThemedText>
+        </View>
       </View>
-    </Panel>
+    </View>
   )
 }
+
+/* ── Session Actions (Pause & Exit / Complete) ──── */
 
 interface SessionActionsProps {
   onComplete: () => void
@@ -57,88 +74,115 @@ export const SessionActions: React.FC<SessionActionsProps> = ({
   onExit,
   movesLeft,
 }) => {
+  if (movesLeft === 0) {
+    return (
+      <TouchableOpacity onPress={onComplete} style={styles.exitButton} activeOpacity={0.75}>
+        <Ionicons name="checkmark-circle-outline" size={18} color={colors.success} />
+        <ThemedText style={[styles.exitText, { color: colors.success }]}>COMPLETE HUNT</ThemedText>
+      </TouchableOpacity>
+    )
+  }
+
   return (
-    <View style={styles.actionsContainer}>
-      {movesLeft === 0 ? (
-        <TouchableOpacity style={styles.actionButton} onPress={onComplete}>
-          <LinearGradient
-            colors={[colors.success, '#2E7D32']}
-            style={styles.actionGradient}
-          >
-            <Ionicons name="checkmark-circle" size={20} color={colors.onSurface} />
-            <ThemedText style={styles.actionText}>Complete Hunt</ThemedText>
-          </LinearGradient>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={styles.actionButton} onPress={onExit}>
-          <LinearGradient
-            colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
-            style={styles.actionGradient}
-          >
-            <Ionicons name="pause" size={20} color={colors.onSurface} />
-            <ThemedText style={styles.actionText}>Pause & Exit</ThemedText>
-          </LinearGradient>
-        </TouchableOpacity>
-      )}
-    </View>
+    <TouchableOpacity onPress={onExit} style={styles.exitButton} activeOpacity={0.75}>
+      <Ionicons name="log-out-outline" size={18} color={colors.error} />
+      <ThemedText style={styles.exitText}>PAUSE & EXIT</ThemedText>
+    </TouchableOpacity>
   )
 }
 
+/* ═══════════════════════════════════════════════════ */
+
 const styles = StyleSheet.create({
-  container: {
+  /* ── Header Card ──────────────────────────────── */
+  headerCard: {
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    borderRadius: radii.DEFAULT,
+    padding: spacing.xl,
+    marginBottom: spacing.md,
+  },
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.lg,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
   },
-  regionInfo: {
-    flex: 1,
+  backBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.glass.subtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
   },
+  regionInfo: { flex: 1, marginRight: spacing.md },
   regionName: {
-    fontSize: 20,
+    fontSize: fontSizes.title,
+    fontFamily: fonts.extraBold,
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+    marginBottom: 2,
+  },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  subtitle: {
+    fontSize: fontSizes.xs,
     fontFamily: fonts.bold,
-    color: colors.secondaryContainer,
-    marginBottom: spacing.xs,
+    color: colors.primary,
+    letterSpacing: 2,
+    opacity: 0.8,
   },
-  regionSubtitle: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-  },
-  movesContainer: {
+
+  /* ── Actions counter ────────────────────────────── */
+  actionsBox: {
     alignItems: 'flex-end',
+    backgroundColor: 'rgba(255, 219, 60, 0.08)',
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 219, 60, 0.2)',
   },
-  movesLabel: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  movesValue: {
-    fontSize: 28,
+  actionsLabel: {
+    fontSize: 9,
     fontFamily: fonts.bold,
     color: colors.secondaryContainer,
+    letterSpacing: 2,
+    marginBottom: 2,
   },
-  actionsContainer: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
+  actionsNum: {
+    fontSize: 40,
+    fontFamily: fonts.extraBold,
+    color: colors.secondaryContainer,
+    lineHeight: 44,
+    textShadowColor: 'rgba(255, 215, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
   },
-  actionButton: {
-    borderRadius: radii.lg,
-    overflow: 'hidden',
-  },
-  actionGradient: {
+
+  /* ── Pause / Exit ───────────────────────────────── */
+  exitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    gap: spacing.sm,
+    gap: spacing.md,
+    backgroundColor: colors.glass.default,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
+    borderRadius: radii.DEFAULT,
+    paddingVertical: spacing.lg,
+    marginBottom: spacing['2xl'],
   },
-  actionText: {
-    fontSize: 16,
-    fontFamily: fonts.bold,
+  exitText: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.extraBold,
     color: colors.onSurface,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
   },
 })

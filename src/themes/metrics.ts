@@ -33,13 +33,13 @@ function deviceHeight(): number {
 
 const isIOS = Platform.OS === 'ios'
 
-// ─── Shadows (dark-theme aware) ─────────────────────────────────────────────
+// ─── Shadows (cyan-tinted per DESIGN.md §4 — no black shadows) ───────────────
 const shadow = {
-  shadowColor: '#000',
-  shadowRadius: 5,
-  elevation: 5,
-  shadowOpacity: 0.2,
-  shadowOffset: { width: 0, height: 3 },
+  shadowColor: 'rgba(0, 188, 212, 0.12)',
+  shadowRadius: 24,
+  elevation: 4,
+  shadowOpacity: 1,
+  shadowOffset: { width: 0, height: 4 },
 } as const
 
 const hitSlop = {
@@ -114,8 +114,9 @@ const metrics = {
   textInputHeight: responsiveHeight(44),
 } as const
 
-// ─── Font Sizes ─────────────────────────────────────────────────────────────
+// ─── Font Sizes ───────────────────────────────────────────────────────────
 const fontSizes = {
+  micro: responsiveFont(8),     // ultra-small HUD micro-labels
   xs: responsiveFont(10),
   small: responsiveFont(12),
   span: responsiveFont(14),
@@ -124,6 +125,7 @@ const fontSizes = {
   title: responsiveFont(20),
   heading: responsiveFont(24),
   display: responsiveFont(32),
+  hero: responsiveFont(40),     // hero moments per DESIGN.md §3
 } as const
 
 const fontWeights = {

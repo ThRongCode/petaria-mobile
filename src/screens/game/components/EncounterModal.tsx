@@ -1,13 +1,20 @@
+/**
+ * EncounterModal — "Lapis Glassworks" glass encounter
+ *
+ * Full-screen modal for wild Pokémon encounter with capture animation,
+ * pokeball shaking, success sparkles, and glass card layout.
+ */
+
 import React from 'react'
 import { StyleSheet, View, TouchableOpacity, Image, Modal, Animated, ActivityIndicator } from 'react-native'
 import { ThemedText } from '@/components'
-import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPokemonImage } from '@/assets/images'
 import { CaptureState } from './useCaptureAnimation'
 import { colors, rarityColors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
-import { spacing, radii } from '@/themes/metrics'
+import { spacing, radii, fontSizes } from '@/themes/metrics'
+import { gradientPrimary } from '@/themes/styles'
 
 interface BackendEncounter {
   id: string
@@ -43,18 +50,13 @@ function getRarityColor(rarity: string): string {
   return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
 }
 
-function getCaptureStatusText(captureState: CaptureState, speciesName: string): string {
+function getCaptureStatusText(captureState: CaptureState, name: string): string {
   switch (captureState) {
-    case 'throwing':
-      return '🔴 Throwing Pokeball...'
-    case 'shaking':
-      return '⏳ Come on...'
-    case 'success':
-      return '✨ Gotcha!'
-    case 'failed':
-      return '💨 Oh no!'
-    default:
-      return `Wild ${speciesName} Appears!`
+    case 'throwing': return '🔴 Throwing Pokeball...'
+    case 'shaking':  return '⏳ Come on...'
+    case 'success':  return '✨ Gotcha!'
+    case 'failed':   return '💨 Oh no!'
+    default:         return `Wild ${name} Appears!`
   }
 }
 
@@ -76,198 +78,191 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
 }) => {
   if (!encounter) return null
 
+  const rarityColor = getRarityColor(encounter.rarity)
+
   return (
     <Modal visible={visible} animationType="fade" transparent>
-      <View style={styles.modalOverlay}>
-        <Panel variant="dark" style={styles.modalContent}>
-          <View style={styles.encounterContent}>
-            <ThemedText style={[
-              styles.encounterTitle,
+      <View style={styles.overlay}>
+        <View style={styles.card}>
+          {/* Status */}
+          <ThemedText
+            style={[
+              styles.statusTitle,
               captureState === 'success' && { color: colors.success },
-              captureState === 'failed' && { color: colors.error }
-            ]}>
-              {getCaptureStatusText(captureState, encounter.species)}
-            </ThemedText>
-            
-            {/* Pokemon with animations */}
-            <View style={styles.pokemonContainer}>
-              <Animated.View style={[
-                styles.pokemonWrapper,
-                {
-                  opacity: pokemonOpacity,
-                  transform: [{ scale: pokemonScale }]
-                }
-              ]}>
-                <Image source={getPokemonImage(encounter.species)} style={styles.monsterImage} resizeMode="contain" />
-              </Animated.View>
-              
-              {/* Pokeball animation overlay */}
-              {isCapturing && captureState !== 'idle' && (
-                <Animated.View style={[
+              captureState === 'failed' && { color: colors.error },
+            ]}
+          >
+            {getCaptureStatusText(captureState, encounter.species)}
+          </ThemedText>
+
+          {/* Pokemon + Animations */}
+          <View style={styles.pokemonArea}>
+            <Animated.View style={{ opacity: pokemonOpacity, transform: [{ scale: pokemonScale }] }}>
+              <Image source={getPokemonImage(encounter.species)} style={styles.sprite} resizeMode="contain" />
+            </Animated.View>
+
+            {/* Pokeball overlay */}
+            {isCapturing && captureState !== 'idle' && (
+              <Animated.View
+                style={[
                   styles.pokeballOverlay,
                   {
                     opacity: pokeballAnim,
                     transform: [
                       { translateY: pokeballTranslateY },
                       { scale: pokeballScaleInterp },
-                      { rotate: captureState === 'shaking' ? shakeRotate : '0deg' }
-                    ]
-                  }
-                ]}>
-                  <View style={styles.pokeballIcon}>
-                    <View style={styles.pokeballTop} />
-                    <View style={styles.pokeballMiddle}>
-                      <View style={styles.pokeballButton} />
-                    </View>
-                    <View style={styles.pokeballBottom} />
+                      { rotate: captureState === 'shaking' ? shakeRotate : '0deg' },
+                    ],
+                  },
+                ]}
+              >
+                <View style={styles.pokeball}>
+                  <View style={styles.pokeballTop} />
+                  <View style={styles.pokeballMiddle}>
+                    <View style={styles.pokeballButton} />
                   </View>
-                </Animated.View>
-              )}
-              
-              {/* Success sparkles */}
-              {captureState === 'success' && (
-                <Animated.View style={[
-                  styles.sparkleContainer,
-                  {
-                    opacity: sparkleAnim,
-                    transform: [{ scale: sparkleScale }]
-                  }
-                ]}>
-                  <ThemedText style={styles.sparkle}>✨</ThemedText>
-                  <ThemedText style={[styles.sparkle, styles.sparkle2]}>⭐</ThemedText>
-                  <ThemedText style={[styles.sparkle, styles.sparkle3]}>✨</ThemedText>
-                  <ThemedText style={[styles.sparkle, styles.sparkle4]}>⭐</ThemedText>
-                </Animated.View>
-              )}
-            </View>
-            
-            <ThemedText style={styles.monsterName}>
-              {encounter.species} (Level {encounter.level})
-            </ThemedText>
-            <ThemedText style={[styles.monsterRarity, { color: getRarityColor(encounter.rarity) }]}>
-              {encounter.rarity}
-            </ThemedText>
-            
-            <View style={styles.captureInfo}>
-              <ThemedText style={styles.captureText}>
-                HP: {encounter.hp}/{encounter.maxHp}
-              </ThemedText>
-              <ThemedText style={styles.captureRate}>
-                Attack: {encounter.attack} | Defense: {encounter.defense}
-              </ThemedText>
-            </View>
+                  <View style={styles.pokeballBottom} />
+                </View>
+              </Animated.View>
+            )}
 
-            <View style={styles.encounterActions}>
-              <TouchableOpacity 
-                style={[styles.actionButton, (encounter.caught || isCapturing) && styles.disabledButton]}
-                onPress={onCapture}
-                disabled={encounter.caught || isCapturing}
+            {/* Sparkles */}
+            {captureState === 'success' && (
+              <Animated.View
+                style={[styles.sparkleContainer, { opacity: sparkleAnim, transform: [{ scale: sparkleScale }] }]}
               >
-                <LinearGradient
-                  colors={encounter.caught || isCapturing ? [colors.surfaceContainerHighest, colors.surfaceContainerHigh] : [colors.success, '#2E7D32']}
-                  style={styles.gradientButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  {isCapturing ? (
-                    <View style={styles.capturingContainer}>
-                      <ActivityIndicator size="small" color={colors.onSurface} style={{ marginRight: 8 }} />
-                      <ThemedText style={styles.buttonText}>
-                        {captureState === 'throwing' ? 'Throwing...' : 
-                         captureState === 'shaking' ? 'Catching...' : 'Capturing...'}
-                      </ThemedText>
-                    </View>
-                  ) : (
-                    <ThemedText style={styles.buttonText}>
-                      {encounter.caught ? '✓ Caught' : '⚾ Throw Pokéball'}
-                    </ThemedText>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.actionButton, isCapturing && styles.disabledButton]}
-                onPress={onFlee}
-                disabled={isCapturing}
-              >
-                <LinearGradient
-                  colors={isCapturing ? [colors.surfaceContainerHighest, colors.surfaceContainerHigh] : [colors.warning, '#E65100']}
-                  style={styles.gradientButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <ThemedText style={styles.buttonText}>🏃 Run Away</ThemedText>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
+                <ThemedText style={[styles.sparkle, { top: 5, left: 10 }]}>✨</ThemedText>
+                <ThemedText style={[styles.sparkle, { top: 10, right: 20 }]}>⭐</ThemedText>
+                <ThemedText style={[styles.sparkle, { bottom: 10, left: 20 }]}>✨</ThemedText>
+                <ThemedText style={[styles.sparkle, { bottom: 20, right: 30 }]}>⭐</ThemedText>
+              </Animated.View>
+            )}
           </View>
-        </Panel>
+
+          {/* Name / Rarity */}
+          <ThemedText style={styles.monsterName}>
+            {encounter.species} (Level {encounter.level})
+          </ThemedText>
+          <ThemedText style={[styles.rarityLabel, { color: rarityColor }]}>
+            {encounter.rarity}
+          </ThemedText>
+
+          {/* Stats */}
+          <View style={styles.statsCard}>
+            <ThemedText style={styles.statsLine}>HP: {encounter.hp}/{encounter.maxHp}</ThemedText>
+            <ThemedText style={styles.statsSecondary}>
+              ATK: {encounter.attack}  |  DEF: {encounter.defense}  |  SPD: {encounter.speed}
+            </ThemedText>
+          </View>
+
+          {/* Actions */}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.actionBtn, (encounter.caught || isCapturing) && styles.disabledBtn]}
+              onPress={onCapture}
+              disabled={encounter.caught || isCapturing}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={encounter.caught || isCapturing ? [colors.surfaceContainerHighest, colors.surfaceContainerHigh] : [colors.success, '#2E7D32']}
+                style={styles.actionGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                {isCapturing ? (
+                  <View style={styles.capturingRow}>
+                    <ActivityIndicator size="small" color={colors.onSurface} />
+                    <ThemedText style={styles.actionText}>
+                      {captureState === 'throwing' ? 'Throwing...' : captureState === 'shaking' ? 'Catching...' : 'Capturing...'}
+                    </ThemedText>
+                  </View>
+                ) : (
+                  <ThemedText style={styles.actionText}>
+                    {encounter.caught ? '✓ Caught' : '⚾ Throw Pokéball'}
+                  </ThemedText>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionBtn, isCapturing && styles.disabledBtn]}
+              onPress={onFlee}
+              disabled={isCapturing}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={isCapturing ? [colors.surfaceContainerHighest, colors.surfaceContainerHigh] : [colors.warning, '#E65100']}
+                style={styles.actionGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <ThemedText style={styles.actionText}>🏃 Run Away</ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </Modal>
   )
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  overlay: {
     flex: 1,
-    backgroundColor: 'rgba(10, 14, 26, 0.9)',
+    backgroundColor: 'rgba(10, 14, 26, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    padding: spacing.xl,
   },
-  modalContent: {
+  card: {
     width: '100%',
     maxWidth: 400,
-  },
-  encounterContent: {
+    backgroundColor: colors.glass.darkFill,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlow,
+    borderRadius: radii.xl,
+    padding: spacing.xl,
     alignItems: 'center',
   },
-  encounterTitle: {
-    fontSize: 22,
+
+  statusTitle: {
+    fontSize: fontSizes.title,
     fontFamily: fonts.bold,
+    color: colors.primary,
     textAlign: 'center',
     marginBottom: spacing.lg,
-    color: colors.secondaryContainer,
   },
-  pokemonContainer: {
+
+  // ── Pokemon ────────────────────────────────────
+  pokemonArea: {
     position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
     width: 150,
     height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.lg,
   },
-  pokemonWrapper: {
-    width: '100%',
-    height: '100%',
-  },
-  monsterImage: {
+  sprite: {
     width: 150,
     height: 150,
     borderRadius: radii.lg,
-    backgroundColor: colors.surfaceContainerHigh,
+    backgroundColor: colors.glass.subtle,
   },
   pokeballOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pokeballIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  pokeball: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     overflow: 'hidden',
     borderWidth: 3,
     borderColor: colors.surfaceContainerHighest,
   },
-  pokeballTop: {
-    flex: 1,
-    backgroundColor: colors.error,
-  },
+  pokeballTop: { flex: 1, backgroundColor: colors.error },
   pokeballMiddle: {
     height: 8,
     backgroundColor: colors.surfaceContainerHighest,
@@ -283,90 +278,70 @@ const styles = StyleSheet.create({
     borderColor: colors.surfaceContainerHighest,
     position: 'absolute',
   },
-  pokeballBottom: {
-    flex: 1,
-    backgroundColor: colors.onSurface,
-  },
+  pokeballBottom: { flex: 1, backgroundColor: colors.onSurface },
   sparkleContainer: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sparkle: {
-    position: 'absolute',
-    fontSize: 24,
-  },
-  sparkle2: {
-    top: 10,
-    right: 20,
-  },
-  sparkle3: {
-    bottom: 10,
-    left: 20,
-  },
-  sparkle4: {
-    bottom: 20,
-    right: 30,
-  },
-  capturingContainer: {
+  sparkle: { position: 'absolute', fontSize: 22 },
+  capturingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
+
+  // ── Info ───────────────────────────────────────
   monsterName: {
-    fontSize: 18,
+    fontSize: fontSizes.large,
     fontFamily: fonts.bold,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
     color: colors.onSurface,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
   },
-  monsterRarity: {
-    fontSize: 16,
+  rarityLabel: {
+    fontSize: fontSizes.body,
     fontFamily: fonts.semiBold,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
-  captureInfo: {
-    backgroundColor: colors.surfaceContainerHigh,
-    padding: spacing.lg,
-    borderRadius: radii.md,
-    marginBottom: spacing.lg,
+  statsCard: {
+    backgroundColor: colors.glass.subtle,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
     width: '100%',
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.glass.innerGlowSubtle,
   },
-  captureText: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontFamily: fonts.medium,
-    marginBottom: spacing.sm,
+  statsLine: {
+    fontSize: fontSizes.body,
+    fontFamily: fonts.semiBold,
     color: colors.onSurface,
-  },
-  captureRate: {
     textAlign: 'center',
-    fontSize: 14,
+    marginBottom: spacing.xs,
+  },
+  statsSecondary: {
+    fontSize: fontSizes.span,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
+    textAlign: 'center',
   },
-  encounterActions: {
-    gap: spacing.md,
-    width: '100%',
-  },
-  actionButton: {
-    width: '100%',
-  },
-  disabledButton: {
-    opacity: 0.4,
-  },
-  gradientButton: {
-    padding: spacing.lg,
+
+  // ── Actions ────────────────────────────────────
+  actions: { gap: spacing.md, width: '100%' },
+  actionBtn: { width: '100%' },
+  disabledBtn: { opacity: 0.4 },
+  actionGradient: {
+    paddingVertical: spacing.lg,
     borderRadius: radii.md,
     alignItems: 'center',
   },
-  buttonText: {
-    fontSize: 16,
+  actionText: {
+    fontSize: fontSizes.body,
     fontFamily: fonts.bold,
     color: colors.onSurface,
   },

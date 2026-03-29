@@ -91,6 +91,60 @@ const semantic = {
   info: '#48A7F8',
 } as const
 
+// ─── Glass Fill Opacities ───────────────────────────────────────────────────
+// Three-tier glass hierarchy from DESIGN.md §2: "The Glass Layer"
+// Usage: backgroundColor: colors.glass.subtle  (or .default / .prominent)
+const glass = {
+  /** Deepest glass — barely visible lift (nested inner cards) */
+  subtle: 'rgba(255, 255, 255, 0.05)',
+  /** Standard glass fill for most panels (DESIGN.md default) */
+  default: 'rgba(255, 255, 255, 0.10)',
+  /** Prominent glass — most visible lift (hero cards, modals) */
+  prominent: 'rgba(255, 255, 255, 0.15)',
+  /** Inner glow border — simulates light catching edge of glass */
+  innerGlow: 'rgba(255, 255, 255, 0.2)',
+  /** Faint inner glow for nested elements */
+  innerGlowSubtle: 'rgba(255, 255, 255, 0.1)',
+  /** Dark glass fill used in HTML designs (rgba(15,19,31,0.7-0.8)) */
+  darkFill: 'rgba(15, 19, 31, 0.70)',
+  darkFillStrong: 'rgba(15, 19, 31, 0.80)',
+  /** Active/Focus state: glass brightens */
+  activeFill: 'rgba(255, 255, 255, 0.18)',
+  /** Divider — not a 1px line, just a color shift */
+  divider: 'rgba(255, 255, 255, 0.05)',
+} as const
+
+// ─── Glow Shadow Colors ─────────────────────────────────────────────────────
+// DESIGN.md §4: "Cyan-Tinted Shadow" — no standard black shadows.
+const glow = {
+  /** Default ambient glow — cyan-tinted per DESIGN.md */
+  cyan: 'rgba(0, 188, 212, 0.12)',
+  /** Stronger cyan for hero elements */
+  cyanStrong: 'rgba(0, 188, 212, 0.30)',
+  /** Intense cyan for active/pressed states */
+  cyanIntense: 'rgba(68, 216, 241, 0.40)',
+  /** Gold glow — rarity indicators, legendary, gold standard buttons */
+  gold: 'rgba(255, 219, 60, 0.25)',
+  goldStrong: 'rgba(255, 219, 60, 0.40)',
+  /** Red glow — error states, danger buttons */
+  error: 'rgba(255, 180, 171, 0.20)',
+  errorStrong: 'rgba(255, 180, 171, 0.35)',
+  /** Purple glow — epic rarity */
+  purple: 'rgba(163, 62, 161, 0.25)',
+  /** White glow — for text neon effects */
+  white: 'rgba(255, 255, 255, 0.15)',
+} as const
+
+// ─── Rarity Gradient Pairs (for thin accent strips & badges) ────────────────
+// Extracted from HTML designs: each rarity has a gradient start→end
+const rarityGradients = {
+  common:    ['#A8A77A', '#8B8A5E'] as const,
+  uncommon:  ['#23C16B', '#1A9E55'] as const,
+  rare:      ['#6390F0', '#4A74D4'] as const,
+  epic:      ['#A33EA1', '#7B2D7A'] as const,
+  legendary: ['#FFD700', '#FF8F00'] as const,
+} as const
+
 // ─── Pokémon Type Colors (centralized) ──────────────────────────────────────
 const typeColors: Record<string, string> = {
   normal: '#A8A77A',
@@ -131,8 +185,11 @@ const colors = {
   ...error,
   ...outline,
   ...semantic,
+  glass,
+  glow,
   typeColors,
   rarityColors,
+  rarityGradients,
 
   // Legacy aliases (for backward compat during migration)
   white: '#FFFFFF',
@@ -181,5 +238,5 @@ const getColorOpacity = (color: string, opacity: number): string => {
   return color
 }
 
-export { colors, getColorOpacity, typeColors, rarityColors }
+export { colors, getColorOpacity, typeColors, rarityColors, rarityGradients, glass, glow }
 export type ColorToken = keyof typeof colors
