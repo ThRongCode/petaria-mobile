@@ -3,9 +3,8 @@
  */
 
 import React, { useCallback } from 'react'
-import { Image, StyleSheet, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { StyleSheet, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { ThemedText } from '@/components'
-import { Images } from '@/themes'
 import { getString } from '@/locale/I18nConfig'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -54,9 +53,8 @@ export const SignUpScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo + Title */}
+          {/* Title */}
           <View style={styles.heroSection}>
-            <Image source={Images.sts} style={styles.logo} />
             <ThemedText style={styles.title}>{getString('auth.signUp')}</ThemedText>
             <ThemedText style={styles.subtitle}>Create your VnPeteria account</ThemedText>
           </View>
@@ -91,7 +89,6 @@ const styles = StyleSheet.create({
 
   // ── Hero ──────────────────────────────────────────────────
   heroSection: { alignItems: 'center', marginBottom: spacing.xl },
-  logo: { width: 70, height: 70, marginBottom: spacing.md },
   title: {
     fontSize: fontSizes.heading,
     fontFamily: fonts.extraBold,

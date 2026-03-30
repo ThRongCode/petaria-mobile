@@ -36,7 +36,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
     >
       <View style={styles.modalOverlay}>
         <Panel variant="dark" style={styles.modalPanel}>
-          <ThemedText style={styles.modalTitle}>🌟 Evolve Pet?</ThemedText>
+          <ThemedText style={styles.modalTitle}>Evolve Pet?</ThemedText>
           
           {selectedEvolution && (
             <>
@@ -92,7 +92,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   {evolving ? (
                     <ActivityIndicator size="small" color={colors.onSurface} />
                   ) : (
-                    <ThemedText style={styles.evolveButtonText}>✨ Evolve!</ThemedText>
+                    <ThemedText style={styles.evolveButtonText}>Evolve!</ThemedText>
                   )}
                 </TouchableOpacity>
               </View>

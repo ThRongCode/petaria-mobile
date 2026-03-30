@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    height: 60,
+    height: 72,
     paddingHorizontal: 12,
     alignItems: 'center',
   },
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 10,
   },
   tabContent: {
     alignItems: 'center',

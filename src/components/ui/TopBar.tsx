@@ -75,7 +75,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           {/* Pokeballs */}
           {pokeballs !== undefined && (
             <Panel variant="dark" style={styles.currencyPanel}>
-              <ThemedText style={styles.pokeballIcon}>⚾</ThemedText>
+              <Ionicons name="tennisball" size={16} color="#EF5350" />
               <ThemedText style={styles.currencyText}>{pokeballs}</ThemedText>
             </Panel>
           )}

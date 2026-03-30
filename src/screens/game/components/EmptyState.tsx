@@ -15,7 +15,7 @@ import { spacing, radii, fontSizes } from '@/themes/metrics'
 import { gradientPrimary } from '@/themes/styles'
 
 interface EmptyStateProps {
-  icon: string
+  icon: keyof typeof Ionicons.glyphMap
   title: string
   message: string
   buttonText?: string
@@ -38,7 +38,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {/* Decorative glow */}
       <View style={styles.glowDot} />
 
-      <ThemedText style={styles.icon}>{icon}</ThemedText>
+      <Ionicons name={icon} size={56} color={colors.outline} style={styles.icon} />
       <ThemedText style={styles.title}>{title}</ThemedText>
       <ThemedText style={styles.message}>{message}</ThemedText>
 
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: 'rgba(68, 216, 241, 0.06)',
   },
-  icon: { fontSize: 56, marginBottom: spacing.lg },
+  icon: { marginBottom: spacing.lg },
   title: {
     fontSize: fontSizes.title,
     fontFamily: fonts.bold,

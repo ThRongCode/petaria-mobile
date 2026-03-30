@@ -18,6 +18,7 @@ import { configureLocalization } from '@/locale/I18nConfig'
 import { useSelector } from 'react-redux'
 import { getLoadingIndicator } from '@/stores/selectors'
 import { IndicatorDialog } from '@/components'
+import { AlertProvider } from '@/components/ui'
 import { useSessionExpiration } from '@/hooks'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -69,15 +70,17 @@ function RootLayoutContent() {
     <>
       <BaseProvider theme={theme}>
         <ThemeProvider value={AppNavigationTheme}>
-          <BottomSheetModalProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(app)" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="light" />
-          </BottomSheetModalProvider>
+          <AlertProvider>
+            <BottomSheetModalProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(app)" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="light" />
+            </BottomSheetModalProvider>
+          </AlertProvider>
         </ThemeProvider>
       </BaseProvider>
       {showGlobalIndicator && <IndicatorDialog />}

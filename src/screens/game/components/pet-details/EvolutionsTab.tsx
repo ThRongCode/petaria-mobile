@@ -75,7 +75,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
         </ThemedText>
         {isFullyEvolved && (
           <View style={styles.fullyEvolvedBadge}>
-            <ThemedText style={styles.fullyEvolvedText}>✨ Fully Evolved!</ThemedText>
+            <ThemedText style={styles.fullyEvolvedText}>Fully Evolved!</ThemedText>
           </View>
         )}
       </View>
@@ -129,7 +129,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
                       color={levelMet ? colors.success : colors.error} 
                     />
                     <ThemedText style={[styles.requirementText, levelMet && styles.requirementTextMet]}>
-                      Level {evolution.levelRequired} {levelMet ? '✓' : `(Current: ${pet.level})`}
+                      Level {evolution.levelRequired} {levelMet ? '' : `(Current: ${pet.level})`}
                     </ThemedText>
                   </View>
                   
@@ -143,7 +143,7 @@ export const EvolutionsTab: React.FC<EvolutionsTabProps> = ({ pet, evolutionOpti
                       <ThemedText style={[styles.requirementText, evolution.hasItem && styles.requirementTextMet]}>
                         {evolution.itemRequired.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         {evolution.hasItem 
-                          ? ` ✓ (${evolution.itemQuantity} owned)` 
+                          ? ` (${evolution.itemQuantity} owned)` 
                           : ' (Not owned - buy in shop!)'}
                       </ThemedText>
                     </View>

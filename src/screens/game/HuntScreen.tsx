@@ -4,10 +4,9 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Image,
 } from 'react-native'
-import { Panel, LoadingContainer } from '@/components/ui'
+import { Panel, LoadingContainer, useAlert, CurrencyBar } from '@/components/ui'
 import { ScreenContainer, ThemedText } from '@/components'
 import { useRouter, useFocusEffect } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -16,6 +15,7 @@ import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { huntApi } from '@/services/api'
 import { getPokemonImage } from '@/assets/images'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { colors, rarityColors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import {
@@ -62,6 +62,7 @@ interface BackendRegion {
  */
 export const HuntScreen: React.FC = () => {
   const router = useRouter()
+  const alert = useAlert()
   const profile = useSelector(getUserProfile)
   const insets = useSafeAreaInsets()
 
@@ -119,7 +120,7 @@ export const HuntScreen: React.FC = () => {
 
   const handleCancelSession = async () => {
     if (!activeSession) return
-    Alert.alert(
+    alert.show(
       'Cancel Hunt?',
       'Are you sure you want to cancel your current hunt? You will lose all progress.',
       [
@@ -132,9 +133,9 @@ export const HuntScreen: React.FC = () => {
               await huntApi.cancelSession(activeSession.session.id)
               setActiveSession(null)
               await new Promise(resolve => setTimeout(resolve, 300))
-              Alert.alert('Hunt Cancelled', 'Your hunt session has been cancelled.')
+              alert.show('Hunt Cancelled', 'Your hunt session has been cancelled.')
             } catch {
-              Alert.alert('Error', 'Failed to cancel hunt session')
+              alert.show('Error', 'Failed to cancel hunt session')
             }
           },
         },
@@ -155,12 +156,12 @@ export const HuntScreen: React.FC = () => {
 
   const handleStartHunt = (region: BackendRegion) => {
     if (profile.level < region.unlockLevel) {
-      Alert.alert('Locked', `This region requires level ${region.unlockLevel}`)
+      alert.show('Locked', `This region requires level ${region.unlockLevel}`)
       return
     }
 
     if (activeSession) {
-      Alert.alert(
+      alert.show(
         'Active Hunt Detected',
         `You have an active hunt in ${activeSession.session.region.name}. Starting a new hunt will cancel your current progress.`,
         [
@@ -178,7 +179,7 @@ export const HuntScreen: React.FC = () => {
                   params: { regionId: region.id, regionName: region.name },
                 })
               } catch {
-                Alert.alert('Error', 'Failed to cancel current hunt')
+                alert.show('Error', 'Failed to cancel current hunt')
               }
             },
           },
@@ -219,7 +220,7 @@ export const HuntScreen: React.FC = () => {
 
   return (
     <ScreenContainer
-      backgroundImage={require('@/assets/images/background/mobile_background.png')}
+      backgroundImage={backgrounds.huntingGrounds}
       backgroundOverlay
     >
       <ScrollView
@@ -227,6 +228,14 @@ export const HuntScreen: React.FC = () => {
         contentContainerStyle={[s.scrollContent, { paddingTop: insets.top + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* ════════════ HEADER BAR ════════════ */}
+        <View style={s.headerBar}>
+          <ThemedText style={s.headerTitle}>Hunting Grounds</ThemedText>
+        </View>
+        <View style={s.currencyRow}>
+          <CurrencyBar coins={profile.currency?.coins} gems={profile.currency?.gems} />
+        </View>
+
         {/* ════════════ EVENT BANNER ════════════ */}
         <TouchableOpacity
           style={s.eventBanner}
@@ -417,6 +426,23 @@ export const HuntScreen: React.FC = () => {
 const s = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: spacing['4xl'] },
+
+  // ── Header Bar ────────────────────────────────────────────
+  headerBar: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  headerTitle: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.extraBold,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+  currencyRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
 
   // ── Event Banner ───────────────────────────────────────────
   eventBanner: {

@@ -240,7 +240,7 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
                                 <ThemedText style={styles.priceText}>
                                   {item.price.coins}
                                 </ThemedText>
-                                <ThemedText style={styles.priceIcon}>💰</ThemedText>
+                                <Ionicons name="cash-outline" size={14} color={colors.secondaryContainer} />
                               </View>
                             )}
                             {item.price.gems && (
@@ -248,7 +248,7 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
                                 <ThemedText style={styles.priceText}>
                                   {item.price.gems}
                                 </ThemedText>
-                                <ThemedText style={styles.priceIcon}>💎</ThemedText>
+                                <Ionicons name="diamond" size={14} color={colors.primary} />
                               </View>
                             )}
                           </View>

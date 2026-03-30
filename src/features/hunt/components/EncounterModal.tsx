@@ -22,6 +22,7 @@ import {
 import { ThemedText } from '@/components'
 import { Panel } from '@/components/ui'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import { Encounter, CaptureState } from '../types'
 import { getRarityColor, getCaptureStatusText, getCaptureButtonText } from '../utils'
@@ -150,10 +151,10 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                     },
                   ]}
                 >
-                  <ThemedText style={styles.sparkle}>✨</ThemedText>
-                  <ThemedText style={[styles.sparkle, styles.sparkle2]}>⭐</ThemedText>
-                  <ThemedText style={[styles.sparkle, styles.sparkle3]}>✨</ThemedText>
-                  <ThemedText style={[styles.sparkle, styles.sparkle4]}>⭐</ThemedText>
+                  <Ionicons name="sparkles" size={20} color={colors.secondaryContainer} style={styles.sparkle} />
+                  <Ionicons name="star" size={16} color={colors.primary} style={[styles.sparkle, styles.sparkle2]} />
+                  <Ionicons name="sparkles" size={20} color={colors.secondaryContainer} style={[styles.sparkle, styles.sparkle3]} />
+                  <Ionicons name="star" size={16} color={colors.primary} style={[styles.sparkle, styles.sparkle4]} />
                 </Animated.View>
               )}
             </View>
@@ -197,9 +198,12 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                       </ThemedText>
                     </View>
                   ) : (
-                    <ThemedText style={styles.buttonText}>
-                      {getCaptureButtonText(isCaught, isCapturing, captureState)}
-                    </ThemedText>
+                    <View style={styles.capturingContainer}>
+                      <Ionicons name={isCaught ? 'checkmark-circle' : 'tennisball'} size={18} color={colors.onSurface} style={{ marginRight: 8 }} />
+                      <ThemedText style={styles.buttonText}>
+                        {getCaptureButtonText(isCaught, isCapturing, captureState)}
+                      </ThemedText>
+                    </View>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
@@ -215,7 +219,10 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <ThemedText style={styles.buttonText}>🏃 Run Away</ThemedText>
+                  <View style={styles.capturingContainer}>
+                    <Ionicons name="exit-outline" size={18} color={colors.onSurface} style={{ marginRight: 8 }} />
+                    <ThemedText style={styles.buttonText}>Run Away</ThemedText>
+                  </View>
                 </LinearGradient>
               </TouchableOpacity>
             </View>

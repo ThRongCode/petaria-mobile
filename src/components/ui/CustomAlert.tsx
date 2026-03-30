@@ -54,6 +54,17 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
     }
   }
 
+  const getButtonTextColor = (style?: string): string => {
+    switch (style) {
+      case 'cancel':
+        return colors.primary
+      case 'destructive':
+        return '#FFFFFF'
+      default:
+        return colors.onPrimary
+    }
+  }
+
   return (
     <Modal
       visible={visible}
@@ -62,7 +73,7 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
       onRequestClose={onDismiss}
     >
       <View style={styles.overlay}>
-        <Panel variant="dark" style={styles.alertContainer}>
+        <View style={styles.alertContainer}>
           {/* Title */}
           <ThemedText style={styles.title}>{title}</ThemedText>
 
@@ -86,14 +97,14 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <ThemedText style={styles.buttonText}>
+                  <ThemedText style={[styles.buttonText, { color: getButtonTextColor(button.style) }]}>
                     {button.text}
                   </ThemedText>
                 </LinearGradient>
               </TouchableOpacity>
             ))}
           </View>
-        </Panel>
+        </View>
       </View>
     </Modal>
   )
@@ -127,9 +138,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     padding: 24,
+    borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.glass.innerGlow,
-    backgroundColor: colors.glass.darkFill,
+    backgroundColor: colors.surfaceContainer,
     shadowColor: 'rgba(0, 188, 212, 0.12)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,

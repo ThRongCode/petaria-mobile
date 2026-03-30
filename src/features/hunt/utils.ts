@@ -31,12 +31,12 @@ export const getDifficultyColor = (difficulty: string): string => {
  */
 export const getDifficultyIcon = (difficulty: string): string => {
   const icons: Record<string, string> = {
-    'Easy': '🌱',
-    'Medium': '⚡',
-    'Hard': '🔥',
-    'Expert': '💎',
+    'Easy': 'E',
+    'Medium': 'M',
+    'Hard': 'H',
+    'Expert': 'X',
   }
-  return icons[difficulty] || '🗺️'
+  return icons[difficulty] || '?'
 }
 
 /**
@@ -45,13 +45,13 @@ export const getDifficultyIcon = (difficulty: string): string => {
 export const getCaptureStatusText = (state: CaptureState, speciesName: string): string => {
   switch (state) {
     case 'throwing':
-      return '🔴 Throwing Pokéball...'
+      return 'Throwing Pokéball...'
     case 'shaking':
-      return '⏳ Come on...'
+      return 'Come on...'
     case 'success':
-      return '✨ Gotcha!'
+      return 'Gotcha!'
     case 'failed':
-      return '💨 Oh no!'
+      return 'Oh no!'
     default:
       return `Wild ${speciesName} Appears!`
   }
@@ -65,8 +65,8 @@ export const getCaptureButtonText = (
   isCapturing: boolean,
   captureState: CaptureState
 ): string => {
-  if (isCaught) return '✓ Caught'
-  if (!isCapturing) return '⚾ Throw Pokéball'
+  if (isCaught) return 'Caught'
+  if (!isCapturing) return 'Throw Pokéball'
   
   switch (captureState) {
     case 'throwing':

@@ -73,47 +73,6 @@ export const HuntingControls: React.FC<HuntingControlsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* ── Central Explorer Area ──────────────────── */}
-      <View style={styles.explorationArea}>
-        {/* Outer glow ring */}
-        <View style={styles.explorerGlowOuter} />
-
-        {/* Explorer circle */}
-        <Animated.View
-          style={[
-            styles.explorerCircle,
-            {
-              transform: [{
-                scale: moveAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 1.08],
-                }),
-              }],
-            },
-          ]}
-        >
-          <View style={styles.explorerBorderRing}>
-            <View style={styles.explorerInner}>
-              <ThemedText style={styles.explorerEmoji}>🧙‍♂️</ThemedText>
-            </View>
-          </View>
-          {/* Dashed orbit ring */}
-          <View style={styles.orbitRing} />
-        </Animated.View>
-
-        {/* Status badge */}
-        <View style={styles.statusBadge}>
-          <View style={styles.statusDot} />
-          <ThemedText style={styles.statusText}>
-            {isMoving ? 'MOVING...' : 'SCOUTING...'}
-          </ThemedText>
-        </View>
-
-        <ThemedText style={styles.explorationHint}>
-          Explore the tall grass to find rare creatures.
-        </ThemedText>
-      </View>
-
       {/* ── D-Pad ────────────────────────────────────── */}
       <View style={styles.dpad}>
         {/* Up */}

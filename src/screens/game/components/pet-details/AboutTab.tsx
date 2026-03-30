@@ -2,6 +2,7 @@ import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { ThemedText } from '@/components/ThemedText'
 import { Panel } from '@/components/ui'
+import { Ionicons } from '@expo/vector-icons'
 import { Pet } from '@/stores/types/game'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
@@ -20,19 +21,19 @@ export const AboutTab: React.FC<AboutTabProps> = ({ pet }) => (
     
     <View style={styles.infoGrid}>
       <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>⚔️ Attack</ThemedText>
+        <View style={styles.infoLabelRow}><Ionicons name="flash" size={14} color={colors.warning} /><ThemedText style={styles.infoLabel}>Attack</ThemedText></View>
         <ThemedText style={styles.infoValue}>{pet.stats.attack}</ThemedText>
       </View>
       <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>🛡️ Defense</ThemedText>
+        <View style={styles.infoLabelRow}><Ionicons name="shield" size={14} color={colors.info} /><ThemedText style={styles.infoLabel}>Defense</ThemedText></View>
         <ThemedText style={styles.infoValue}>{pet.stats.defense}</ThemedText>
       </View>
       <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>⚡ Speed</ThemedText>
+        <View style={styles.infoLabelRow}><Ionicons name="speedometer" size={14} color={colors.tertiary} /><ThemedText style={styles.infoLabel}>Speed</ThemedText></View>
         <ThemedText style={styles.infoValue}>{pet.stats.speed}</ThemedText>
       </View>
       <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>✨ Experience</ThemedText>
+        <View style={styles.infoLabelRow}><Ionicons name="star" size={14} color={colors.secondaryContainer} /><ThemedText style={styles.infoLabel}>Experience</ThemedText></View>
         <View style={styles.xpProgressContainer}>
           <View style={styles.xpProgressBar}>
             <View 
@@ -48,11 +49,17 @@ export const AboutTab: React.FC<AboutTabProps> = ({ pet }) => (
         </View>
       </View>
       <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>🌟 Rarity</ThemedText>
+        <View style={styles.infoLabelRow}>
+          <Ionicons name="star" size={14} color={colors.secondaryContainer} />
+          <ThemedText style={styles.infoLabel}>Rarity</ThemedText>
+        </View>
         <ThemedText style={styles.infoValue}>{pet.rarity}</ThemedText>
       </View>
       <View style={styles.infoItem}>
-        <ThemedText style={styles.infoLabel}>😊 Mood</ThemedText>
+        <View style={styles.infoLabelRow}>
+          <Ionicons name="happy" size={14} color={colors.secondaryContainer} />
+          <ThemedText style={styles.infoLabel}>Mood</ThemedText>
+        </View>
         <ThemedText style={styles.infoValue}>{pet.mood}/100</ThemedText>
       </View>
     </View>
@@ -89,11 +96,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.outlineVariant,
   },
+  infoLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: spacing.xs,
+  },
   infoLabel: {
     fontSize: 12,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
   },
   infoValue: {
     fontSize: 18,

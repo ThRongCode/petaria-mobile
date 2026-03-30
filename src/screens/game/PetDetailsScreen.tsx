@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, Dimensions } from 'react-native'
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
@@ -19,10 +19,12 @@ import { petApi } from '@/services/api/petApi'
 import { gameActions } from '@/stores/reducers/game'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
 import { gradientPrimary } from '@/themes/styles'
+import { useAlert } from '@/components/ui'
 import {
   AboutTab,
   StatsTab,
@@ -50,6 +52,7 @@ export default function PetDetailsScreen() {
   const params = useLocalSearchParams()
   const dispatch = useDispatch()
   const insets = useSafeAreaInsets()
+  const alert = useAlert()
   const userProfile = useSelector(getUserProfile)
   const allPets = useSelector(getAllPets) as Pet[]
 
@@ -99,10 +102,10 @@ export default function PetDetailsScreen() {
       const response = await petApi.evolvePet(pet.id, itemId)
       if (response.success && response.data) {
         const { previousSpecies, newSpecies, statsChanged } = response.data
-        Alert.alert(
-          '🎉 Evolution Complete!',
+        alert.show(
+          'Evolution Complete!',
           `${previousSpecies} evolved into ${newSpecies}!\n\n` +
-          `📊 Stat Changes:\n` +
+          `Stat Changes:\n` +
           `HP: ${statsChanged.maxHp.from} → ${statsChanged.maxHp.to}\n` +
           `Attack: ${statsChanged.attack.from} → ${statsChanged.attack.to}\n` +
           `Defense: ${statsChanged.defense.from} → ${statsChanged.defense.to}\n` +
@@ -114,7 +117,7 @@ export default function PetDetailsScreen() {
         fetchEvolutionOptions()
       }
     } catch (error: any) {
-      Alert.alert('Evolution Failed', error?.message || 'Something went wrong')
+      alert.show('Evolution Failed', error?.message || 'Something went wrong')
     } finally {
       setEvolving(false)
     }
@@ -123,7 +126,12 @@ export default function PetDetailsScreen() {
   // Error / not found
   if (!pet) {
     return (
-      <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      <ScreenContainer
+        blurOrbs={[
+          { color: colors.primary, size: 384, top: 180, left: -80, opacity: 0.12 },
+          { color: colors.tertiary, size: 384, bottom: 180, right: -80, opacity: 0.12 },
+        ]}
+      >
         <View style={styles.errorContainer}>
           <View style={styles.errorPanel}>
             <ThemedText style={styles.errorTitle}>Unknown</ThemedText>
@@ -143,7 +151,12 @@ export default function PetDetailsScreen() {
   const xpPercent = pet.xpToNext > 0 ? (pet.xp / pet.xpToNext) * 100 : 0
 
   return (
-    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+    <ScreenContainer
+      blurOrbs={[
+        { color: colors.primary, size: 384, top: 180, left: -80, opacity: 0.12 },
+        { color: colors.tertiary, size: 384, bottom: 180, right: -80, opacity: 0.12 },
+      ]}
+    >
       {/* Fixed Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
@@ -387,6 +400,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.extraBold,
     color: colors.primary,
     letterSpacing: -0.5,
+    lineHeight: fontSizes.display * 1.3,
     marginTop: spacing.md,
     marginBottom: spacing.md,
   },

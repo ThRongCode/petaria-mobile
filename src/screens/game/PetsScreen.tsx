@@ -16,9 +16,8 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  Alert,
 } from 'react-native'
-import { Panel, ItemDetailDialog, LoadingContainer } from '@/components/ui'
+import { Panel, ItemDetailDialog, LoadingContainer, useAlert, CurrencyBar } from '@/components/ui'
 import { ScreenContainer, ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -36,6 +35,7 @@ import {
   fontSizes,
   glowAmbient,
 } from '@/themes'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 // Extracted components
@@ -46,6 +46,7 @@ type TabType = 'pokemon' | 'items'
 export const PetsScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useDispatch()
+  const alert = useAlert()
   const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
   const pets = useSelector(getAllPets) as Pet[]
@@ -116,7 +117,7 @@ export const PetsScreen: React.FC = () => {
         if (response.success) dispatch(gameActions.loadUserData())
       }
     } catch {
-      Alert.alert('Error', 'Failed to update favorite status')
+      alert.show('Error', 'Failed to update favorite status')
     } finally {
       setTogglingFavorite(null)
     }
@@ -158,7 +159,7 @@ export const PetsScreen: React.FC = () => {
 
   const renderPetEmptyState = useCallback(() => (
     <EmptyState
-      icon="🎒"
+      icon="bag-handle-outline"
       title="No Pokemon Yet"
       message="Start hunting to catch your first Pokemon!"
       buttonText="Go Hunt"
@@ -190,10 +191,20 @@ export const PetsScreen: React.FC = () => {
 
   return (
     <ScreenContainer
-      backgroundImage={require('@/assets/images/background/mobile_background.png')}
-      backgroundOverlay
+      blurOrbs={[
+        { color: colors.primary, size: 384, top: 180, left: -80, opacity: 0.12 },
+        { color: colors.tertiary, size: 384, bottom: 180, right: -80, opacity: 0.12 },
+      ]}
     >
       <View style={[s.content, { paddingTop: insets.top + spacing.lg }]}>
+        {/* ════════════ HEADER BAR ════════════ */}
+        <View style={s.headerBar}>
+          <ThemedText style={s.headerTitle}>Collection</ThemedText>
+        </View>
+        <View style={s.currencyRow}>
+          <CurrencyBar coins={profile.currency?.coins} gems={profile.currency?.gems} />
+        </View>
+
         {/* ════════════ TAB SWITCHER ════════════ */}
         <View style={s.tabSection}>
           <View style={s.tabPill}>
@@ -303,6 +314,23 @@ export const PetsScreen: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════════════════
 const s = StyleSheet.create({
   content: { flex: 1 },
+
+  // ── Header Bar ────────────────────────────────────────────
+  headerBar: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  headerTitle: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.extraBold,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+  currencyRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
 
   // ── Tab Switcher ───────────────────────────────────────────
   tabSection: {

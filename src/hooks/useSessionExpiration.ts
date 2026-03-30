@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
+import { globalAlert } from '@/components/ui/AlertProvider'
 import { useDispatch } from 'react-redux'
 import { authEventEmitter } from '@/services/api/authEventEmitter'
 import { userActions } from '@/stores/reducers/user'
@@ -28,7 +28,7 @@ export function useSessionExpiration() {
       dispatch(userActions.logout())
 
       // Show alert and redirect to login
-      Alert.alert(
+      globalAlert.show(
         'Session Expired',
         'Your session has expired. Please log in again to continue.',
         [
@@ -39,8 +39,7 @@ export function useSessionExpiration() {
               router.replace(RouteKeys.SignIn)
             },
           },
-        ],
-        { cancelable: false }
+        ]
       )
     })
 

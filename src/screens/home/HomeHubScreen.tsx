@@ -6,9 +6,8 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
-  Alert,
 } from 'react-native'
-import { Panel } from '@/components/ui'
+import { Panel, useAlert, CurrencyBar } from '@/components/ui'
 import { ScreenContainer, ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { useSelector, useDispatch } from 'react-redux'
@@ -16,6 +15,8 @@ import { getUserProfile } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers'
 import { apiClient } from '@/services/api/client'
 import { Ionicons } from '@expo/vector-icons'
+import { AppIcons } from '@/constants/icons'
+import { backgrounds } from '@/assets/images/backgrounds'
 import {
   colors,
   fonts,
@@ -56,6 +57,7 @@ interface NavItem {
 export const HomeHubScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useDispatch()
+  const alert = useAlert()
   const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
   const [healingLoading, setHealingLoading] = useState(false)
@@ -63,7 +65,7 @@ export const HomeHubScreen: React.FC = () => {
   // ── Healing handler (preserved from original) ───────────────────────────
   const handleHealAllPets = async () => {
     const HEAL_COST = 200
-    Alert.alert(
+    alert.show(
       'Healing Center',
       `Heal all your Pokémon to full HP for ${HEAL_COST} coins?\n\nBalance: ${profile.currency?.coins || 0} coins`,
       [
@@ -82,11 +84,11 @@ export const HomeHubScreen: React.FC = () => {
                   }))
                 }
                 dispatch(gameActions.loadUserData())
-                Alert.alert(
-                  healedCount === 0 ? 'All Healthy! 💚' : 'Healing Complete!',
+                alert.show(
+                  healedCount === 0 ? 'All Healthy!' : 'Healing Complete!',
                   healedCount === 0
                     ? message || 'All Pokémon are already at full health'
-                    : `Healed ${healedCount} Pokémon! ✨\nCoins: ${coinCost} spent, ${coinsRemaining} left`,
+                    : `Healed ${healedCount} Pokémon!\nCoins: ${coinCost} spent, ${coinsRemaining} left`,
                   [{ text: 'OK' }],
                 )
               } else {
@@ -94,7 +96,7 @@ export const HomeHubScreen: React.FC = () => {
               }
             } catch (err) {
               const msg = err instanceof Error ? err.message : 'Unable to heal right now'
-              Alert.alert('Healing Failed', msg, [{ text: 'OK' }])
+              alert.show('Healing Failed', msg, [{ text: 'OK' }])
             } finally {
               setHealingLoading(false)
             }
@@ -174,7 +176,7 @@ export const HomeHubScreen: React.FC = () => {
 
   return (
     <ScreenContainer
-      backgroundImage={require('@/assets/images/background/mobile_background.png')}
+      backgroundImage={backgrounds.homeHub}
       backgroundOverlay
     >
       <ScrollView
@@ -191,27 +193,24 @@ export const HomeHubScreen: React.FC = () => {
               style={s.avatarWrap}
             >
               <View style={s.avatarHolder}>
-                <Ionicons name="person" size={22} color={colors.primaryFixedDim} />
+                <AppIcons.person size={22} color={colors.primaryFixedDim} />
               </View>
             </TouchableOpacity>
             <ThemedText style={s.brandText}>VnPeteria</ThemedText>
           </View>
 
-          {/* Right: Gems + Notifications */}
-          <View style={s.topBarRight}>
-            <Panel variant="glass" intensity="subtle" flush style={s.gemsPill}>
-              <ThemedText style={s.gemsText}>
-                {profile.currency?.gems || 0}
-              </ThemedText>
-              <Ionicons name="diamond" size={14} color={colors.secondaryFixed} />
-            </Panel>
-            <TouchableOpacity
-              style={s.notifBtn}
-              onPress={() => router.push('/settings')}
-            >
-              <Ionicons name="notifications-outline" size={22} color={colors.onSurfaceVariant} />
-            </TouchableOpacity>
-          </View>
+          {/* Right: Notifications */}
+          <TouchableOpacity
+            style={s.notifBtn}
+            onPress={() => router.push('/settings')}
+          >
+            <AppIcons.notifications size={22} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Currency row */}
+        <View style={s.currencyRow}>
+          <CurrencyBar coins={profile.currency?.coins} gems={profile.currency?.gems} />
         </View>
 
         {/* ════════════ HERO SECTION ════════════ */}
@@ -325,23 +324,10 @@ const s = StyleSheet.create({
     color: colors.primary,
     letterSpacing: -0.5,
   },
-  topBarRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  gemsPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.full,
-  },
-  gemsText: {
-    fontSize: fontSizes.span,
-    fontFamily: fonts.bold,
-    color: colors.secondaryFixed,
+  currencyRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
   },
   notifBtn: {
     padding: spacing.sm,

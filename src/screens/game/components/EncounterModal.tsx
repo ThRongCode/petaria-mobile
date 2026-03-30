@@ -9,6 +9,7 @@ import React from 'react'
 import { StyleSheet, View, TouchableOpacity, Image, Modal, Animated, ActivityIndicator } from 'react-native'
 import { ThemedText } from '@/components'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
 import { CaptureState } from './useCaptureAnimation'
 import { colors, rarityColors } from '@/themes/colors'
@@ -52,10 +53,10 @@ function getRarityColor(rarity: string): string {
 
 function getCaptureStatusText(captureState: CaptureState, name: string): string {
   switch (captureState) {
-    case 'throwing': return '🔴 Throwing Pokeball...'
-    case 'shaking':  return '⏳ Come on...'
-    case 'success':  return '✨ Gotcha!'
-    case 'failed':   return '💨 Oh no!'
+    case 'throwing': return 'Throwing Pokéball...'
+    case 'shaking':  return 'Come on...'
+    case 'success':  return 'Gotcha!'
+    case 'failed':   return 'Oh no!'
     default:         return `Wild ${name} Appears!`
   }
 }
@@ -131,10 +132,10 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
               <Animated.View
                 style={[styles.sparkleContainer, { opacity: sparkleAnim, transform: [{ scale: sparkleScale }] }]}
               >
-                <ThemedText style={[styles.sparkle, { top: 5, left: 10 }]}>✨</ThemedText>
-                <ThemedText style={[styles.sparkle, { top: 10, right: 20 }]}>⭐</ThemedText>
-                <ThemedText style={[styles.sparkle, { bottom: 10, left: 20 }]}>✨</ThemedText>
-                <ThemedText style={[styles.sparkle, { bottom: 20, right: 30 }]}>⭐</ThemedText>
+                <Ionicons name="sparkles" size={20} color={colors.secondaryContainer} style={[styles.sparkle, { top: 5, left: 10 }]} />
+                <Ionicons name="star" size={16} color={colors.primary} style={[styles.sparkle, { top: 10, right: 20 }]} />
+                <Ionicons name="sparkles" size={20} color={colors.secondaryContainer} style={[styles.sparkle, { bottom: 10, left: 20 }]} />
+                <Ionicons name="star" size={16} color={colors.primary} style={[styles.sparkle, { bottom: 20, right: 30 }]} />
               </Animated.View>
             )}
           </View>
@@ -177,9 +178,12 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                     </ThemedText>
                   </View>
                 ) : (
-                  <ThemedText style={styles.actionText}>
-                    {encounter.caught ? '✓ Caught' : '⚾ Throw Pokéball'}
-                  </ThemedText>
+                  <View style={styles.capturingRow}>
+                    <Ionicons name={encounter.caught ? 'checkmark-circle' : 'tennisball'} size={18} color={colors.onSurface} />
+                    <ThemedText style={styles.actionText}>
+                      {encounter.caught ? 'Caught' : 'Throw Pokéball'}
+                    </ThemedText>
+                  </View>
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -196,7 +200,10 @@ export const EncounterModal: React.FC<EncounterModalProps> = ({
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <ThemedText style={styles.actionText}>🏃 Run Away</ThemedText>
+                <View style={styles.capturingRow}>
+                  <Ionicons name="exit-outline" size={18} color={colors.onSurface} />
+                  <ThemedText style={styles.actionText}>Run Away</ThemedText>
+                </View>
               </LinearGradient>
             </TouchableOpacity>
           </View>

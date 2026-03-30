@@ -158,15 +158,15 @@ interface BattleResultForMessage {
 
 export function buildRewardsMessage(result: BattleResultForMessage): string {
   const lines: string[] = [
-    `⭐ ${result.xpReward} XP earned`,
-    `💰 ${result.coinReward} Coins earned`,
+    `${result.xpReward} XP earned`,
+    `${result.coinReward} Coins earned`,
   ]
 
   if (result.petLeveledUp) {
     lines.push('')
-    lines.push(`🎊 Your pet leveled up to Lv.${result.petNewLevel}!`)
+    lines.push(`Your pet leveled up to Lv.${result.petNewLevel}!`)
     if (result.petStatChanges) {
-      lines.push(`📊 New Stats:`)
+      lines.push(`New Stats:`)
       lines.push(`   HP: ${result.petStatChanges.maxHp}`)
       lines.push(`   ATK: ${result.petStatChanges.attack}`)
       lines.push(`   DEF: ${result.petStatChanges.defense}`)
@@ -176,7 +176,7 @@ export function buildRewardsMessage(result: BattleResultForMessage): string {
 
   if (result.userLeveledUp) {
     lines.push('')
-    lines.push(`🏆 YOU LEVELED UP to Lv.${result.userNewLevel}!`)
+    lines.push(`YOU LEVELED UP to Lv.${result.userNewLevel}!`)
   }
 
   return lines.join('\n')

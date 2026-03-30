@@ -26,7 +26,7 @@ export class BattleService {
     return [
       {
         id: 'event',
-        name: '⚡ Event Battle',
+        name: 'Event Battle',
         description: 'Limited time event with exclusive rewards! Weekly rotating challenges.',
         icon: 'trophy',
         gradient: ['#FFD700', '#FFA500'],
@@ -35,7 +35,7 @@ export class BattleService {
       },
       {
         id: 'exp',
-        name: '📚 EXP Battle',
+        name: 'EXP Battle',
         description: 'Train your Pokemon and gain massive experience points!',
         icon: 'trending-up',
         gradient: ['#9C27B0', '#5E35B1'],
@@ -44,7 +44,7 @@ export class BattleService {
       },
       {
         id: 'material',
-        name: '💎 Material Battle',
+        name: 'Material Battle',
         description: 'Farm materials, gold, and evolution stones!',
         icon: 'diamond',
         gradient: ['#2196F3', '#1976D2'],

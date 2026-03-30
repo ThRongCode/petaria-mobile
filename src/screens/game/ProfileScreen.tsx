@@ -4,10 +4,9 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Dimensions,
 } from 'react-native'
-import { Panel } from '@/components/ui'
+import { Panel, useAlert, CurrencyBar } from '@/components/ui'
 import { ScreenContainer, ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -17,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAppDispatch } from '@/stores/store'
 import { userActions, gameActions } from '@/stores/reducers'
 import { userApi } from '@/services/api'
+import { backgrounds } from '@/assets/images/backgrounds'
 import {
   colors,
   fonts,
@@ -44,11 +44,12 @@ const STAT_CARD_SIZE = (SCREEN_WIDTH - spacing.lg * 2 - spacing.md) / 2
 export const ProfileScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useAppDispatch()
+  const alert = useAlert()
   const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
 
   const handleLogout = () => {
-    Alert.alert(
+    alert.show(
       'Logout',
       'Are you sure you want to logout?',
       [
@@ -68,11 +69,11 @@ export const ProfileScreen: React.FC = () => {
     try {
       const response = await userApi.addBattleTickets()
       if (response.success) {
-        Alert.alert('Success', response.data.message)
+        alert.show('Success', response.data.message)
         dispatch(gameActions.loadUserData())
       }
     } catch {
-      Alert.alert('Error', 'Failed to add battle tickets')
+      alert.show('Error', 'Failed to add battle tickets')
     }
   }
 
@@ -80,11 +81,11 @@ export const ProfileScreen: React.FC = () => {
     try {
       const response = await userApi.addHuntTickets()
       if (response.success) {
-        Alert.alert('Success', response.data.message)
+        alert.show('Success', response.data.message)
         dispatch(gameActions.loadUserData())
       }
     } catch {
-      Alert.alert('Error', 'Failed to add hunt tickets')
+      alert.show('Error', 'Failed to add hunt tickets')
     }
   }
 
@@ -99,7 +100,7 @@ export const ProfileScreen: React.FC = () => {
 
   return (
     <ScreenContainer
-      backgroundImage={require('@/assets/images/background/mobile_background.png')}
+      backgroundImage={backgrounds.profile}
       backgroundOverlay
     >
       <ScrollView
@@ -107,6 +108,14 @@ export const ProfileScreen: React.FC = () => {
         contentContainerStyle={[s.scrollContent, { paddingTop: insets.top + spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* ════════════ HEADER BAR ════════════ */}
+        <View style={s.headerBar}>
+          <ThemedText style={s.headerBarTitle}>Profile</ThemedText>
+        </View>
+        <View style={s.currencyRow}>
+          <CurrencyBar coins={profile.currency?.coins} gems={profile.currency?.gems} />
+        </View>
+
         {/* ════════════ PROFILE HEADER CARD ════════════ */}
         <View style={s.headerSection}>
           <Panel variant="glass" intensity="default" style={s.headerPanel}>
@@ -229,6 +238,23 @@ export const ProfileScreen: React.FC = () => {
 const s = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: spacing['4xl'] },
+
+  // ── Header Bar ────────────────────────────────────────────
+  headerBar: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  headerBarTitle: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.extraBold,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+  currencyRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
 
   // ── Header Card ────────────────────────────────────────────
   headerSection: {

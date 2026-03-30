@@ -26,6 +26,7 @@ import { getPokemonImage } from '@/assets/images'
 import type { Pet, Opponent } from '@/stores/types/game'
 import { petApi } from '@/services/api'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
@@ -110,7 +111,7 @@ export default function PokemonSelectionScreen() {
 
   if (!opponent) {
     return (
-      <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      <ScreenContainer backgroundImage={backgrounds.pokemonSelection}>
         <View style={styles.errorContainer}>
           <View style={styles.errorPanel}>
             <ThemedText style={styles.errorText}>No opponent selected</ThemedText>
@@ -124,7 +125,7 @@ export default function PokemonSelectionScreen() {
   }
 
   return (
-    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+    <ScreenContainer backgroundImage={backgrounds.pokemonSelection}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

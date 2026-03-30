@@ -160,7 +160,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                             </View>
                             {emailForm.formState.errors.email && (
                               <ThemedText style={styles.errorText}>
-                                ⚠️ {emailForm.formState.errors.email.message}
+                                {emailForm.formState.errors.email.message}
                               </ThemedText>
                             )}
                           </View>
@@ -234,7 +234,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                             </View>
                             {resetForm.formState.errors.code && (
                               <ThemedText style={styles.errorText}>
-                                ⚠️ {resetForm.formState.errors.code.message}
+                                {resetForm.formState.errors.code.message}
                               </ThemedText>
                             )}
                           </View>
@@ -246,7 +246,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                         name="newPassword"
                         render={({ field: { onChange, onBlur, value } }) => (
                           <View style={styles.inputGroup}>
-                            <ThemedText style={styles.label}>🔒 New Password</ThemedText>
+                            <ThemedText style={styles.label}>New Password</ThemedText>
                             <View style={styles.inputWrapper}>
                               <TextInput
                                 value={value}
@@ -262,7 +262,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                             </View>
                             {resetForm.formState.errors.newPassword && (
                               <ThemedText style={styles.errorText}>
-                                ⚠️ {resetForm.formState.errors.newPassword.message}
+                                {resetForm.formState.errors.newPassword.message}
                               </ThemedText>
                             )}
                           </View>
@@ -274,7 +274,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                         name="confirmPassword"
                         render={({ field: { onChange, onBlur, value } }) => (
                           <View style={styles.inputGroup}>
-                            <ThemedText style={styles.label}>🔒 Confirm Password</ThemedText>
+                            <ThemedText style={styles.label}>Confirm Password</ThemedText>
                             <View style={styles.inputWrapper}>
                               <TextInput
                                 value={value}
@@ -290,7 +290,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                             </View>
                             {resetForm.formState.errors.confirmPassword && (
                               <ThemedText style={styles.errorText}>
-                                ⚠️ {resetForm.formState.errors.confirmPassword.message}
+                                {resetForm.formState.errors.confirmPassword.message}
                               </ThemedText>
                             )}
                           </View>
@@ -353,7 +353,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <ThemedText style={styles.buttonText}>🎯 Go to Sign In</ThemedText>
+                  <ThemedText style={styles.buttonText}>Go to Sign In</ThemedText>
                 </LinearGradient>
               </TouchableOpacity>
             </View>

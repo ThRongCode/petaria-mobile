@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  Alert,
   ActivityIndicator,
 } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -16,7 +15,7 @@ import { getUserProfile } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers'
 import { userApi } from '@/services/api'
 import { ScreenContainer, ThemedText } from '@/components'
-import { Panel } from '@/components/ui'
+import { Panel, useAlert } from '@/components/ui'
 import {
   colors,
   fonts,
@@ -80,6 +79,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
 export const SettingsScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useAppDispatch()
+  const alert = useAlert()
   const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
   const [isSaving, setIsSaving] = useState(false)
@@ -101,7 +101,7 @@ export const SettingsScreen: React.FC = () => {
         await userApi.updateSettings({ [key]: value })
       } catch {
         dispatch(gameActions.updateSettings({ [key]: !value }))
-        Alert.alert('Error', 'Failed to save setting. Please try again.')
+        alert.show('Error', 'Failed to save setting. Please try again.')
       } finally {
         setIsSaving(false)
       }
@@ -211,7 +211,7 @@ export const SettingsScreen: React.FC = () => {
           <Panel variant="glass" intensity="subtle" flush style={s.sectionPanel}>
             <TouchableOpacity
               style={s.linkRow}
-              onPress={() => Alert.alert('Coming Soon', 'Change password will be available soon.')}
+              onPress={() => alert.show('Coming Soon', 'Change password will be available soon.')}
             >
               <View style={[s.settingIcon, { backgroundColor: 'rgba(102,126,234,0.15)' }]}>
                 <Ionicons name="key" size={20} color="#667eea" />

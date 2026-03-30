@@ -6,16 +6,17 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, TouchableOpacity, Animated, ScrollView, Alert } from 'react-native'
+import { StyleSheet, View, TouchableOpacity, Animated, ScrollView } from 'react-native'
 import { ThemedText } from '@/components'
 import { ScreenContainer } from '@/components/ScreenContainer'
-import { LoadingContainer, CustomAlert } from '@/components/ui'
+import { LoadingContainer, useAlert } from '@/components/ui'
 import { Pet, Opponent, Move } from '@/stores/types/game'
 import { useAppDispatch } from '@/stores/store'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { battleApi } from '@/services/api'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
@@ -54,6 +55,7 @@ export const BattleArenaScreen: React.FC = () => {
   const params = useLocalSearchParams()
   const dispatch = useAppDispatch()
   const insets = useSafeAreaInsets()
+  const alert = useAlert()
 
   const [battleState, setBattleState] = useState<BattleState | null>(null)
   const [selectedMove, setSelectedMove] = useState<Move | null>(null)
@@ -85,7 +87,7 @@ export const BattleArenaScreen: React.FC = () => {
           }
         } catch (error) {
           const msg = error instanceof Error ? error.message : 'Failed to start battle'
-          Alert.alert('Cannot Start Battle', msg, [{ text: 'OK', onPress: () => router.back() }])
+          alert.show('Cannot Start Battle', msg, [{ text: 'OK', onPress: () => router.back() }])
           setIsStartingBattle(false)
           return
         } finally {
@@ -128,7 +130,7 @@ export const BattleArenaScreen: React.FC = () => {
     try {
       const response = await battleApi.completeBattle(battleSessionId, won, totalDamageDealt, totalDamageTaken, finalHp)
       if (response.success && response.data) {
-        setBattleResult({
+        const result = {
           won: response.data.won,
           xpReward: response.data.xpReward,
           coinReward: response.data.coinReward,
@@ -137,8 +139,13 @@ export const BattleArenaScreen: React.FC = () => {
           petStatChanges: response.data.pet?.statChanges,
           userLeveledUp: response.data.user?.leveledUp || false,
           userNewLevel: response.data.user?.newLevel || 0,
-        })
-        setShowRewardsDialog(true)
+        }
+        setBattleResult(result)
+        alert.show(
+          result.won ? 'Victory Rewards!' : 'Battle Complete',
+          buildRewardsMessage(result),
+          [{ text: 'Awesome!' }]
+        )
         dispatch({ type: 'game/loadUserData' })
       }
     } catch (error) {
@@ -238,7 +245,7 @@ export const BattleArenaScreen: React.FC = () => {
   // ── Loading state ──────────────────────────────
   if (!battleState || isStartingBattle) {
     return (
-      <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+      <ScreenContainer backgroundImage={backgrounds.battleArena}>
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
@@ -256,7 +263,7 @@ export const BattleArenaScreen: React.FC = () => {
   const opponentHpPct = (opponentPet.currentHp / opponentPet.temporaryStats.maxHp) * 100
 
   return (
-    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+    <ScreenContainer backgroundImage={backgrounds.battleArena}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -292,13 +299,6 @@ export const BattleArenaScreen: React.FC = () => {
         />
       </ScrollView>
 
-      <CustomAlert
-        visible={showRewardsDialog}
-        title={battleResult?.won ? '🎉 Victory Rewards!' : '💫 Battle Complete'}
-        message={battleResult ? buildRewardsMessage(battleResult) : ''}
-        buttons={[{ text: 'Awesome!', onPress: () => setShowRewardsDialog(false) }]}
-        onDismiss={() => setShowRewardsDialog(false)}
-      />
     </ScreenContainer>
   )
 }

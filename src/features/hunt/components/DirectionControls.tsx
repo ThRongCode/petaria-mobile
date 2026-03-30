@@ -64,20 +64,6 @@ export const DirectionControls: React.FC<DirectionControlsProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* ── Exploration Status ──────────────────────── */}
-      <View style={styles.explorationArea}>
-        <View style={styles.statusBadge}>
-          <View style={styles.statusDot} />
-          <ThemedText style={styles.statusText}>
-            {isMoving ? 'MOVING...' : 'SCOUTING...'}
-          </ThemedText>
-        </View>
-
-        <ThemedText style={styles.explorationHint}>
-          Explore the tall grass to find rare creatures.
-        </ThemedText>
-      </View>
-
       {/* ── D-Pad ────────────────────────────────────── */}
       <View style={styles.dpad}>
         {/* Up */}

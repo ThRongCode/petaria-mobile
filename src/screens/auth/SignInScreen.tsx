@@ -1,25 +1,44 @@
-import React, { useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+/**
+ * Sign In Screen — "Lapis Glassworks" redesign
+ * Matches the sign_up_immersive design: cinematic background image,
+ * gradient branding title, frosted glass form card, glass inputs.
+ */
+
+import React, { useState, useCallback } from 'react'
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput as RNTextInput,
+  Image,
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { LinearGradient } from 'expo-linear-gradient'
-import { BlurView } from 'expo-blur'
+import { Ionicons } from '@expo/vector-icons'
+import { ScreenContainer, ThemedText } from '@/components'
 import { useAppDispatch } from '@/stores/store'
 import { userActions } from '@/stores/reducers'
-import { ThemedView } from '@/components/ThemedView'
-import { ThemedText } from '@/components/ThemedText'
-import { TextInput } from '@/components/TextInput'
 import { SignInSchema } from './signin.schema'
-import { colors, fonts, spacing, radii } from '@/themes'
+import { backgrounds } from '@/assets/images/backgrounds'
+import { colors, fonts, spacing, radii, fontSizes, Images } from '@/themes'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type SignInFormData = z.infer<typeof SignInSchema>
 
 export const SignInScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useAppDispatch()
+  const insets = useSafeAreaInsets()
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const togglePassword = useCallback(() => setShowPassword(p => !p), [])
 
   const {
     control,
@@ -33,327 +52,387 @@ export const SignInScreen: React.FC = () => {
   })
 
   const onSubmit = async (data: SignInFormData) => {
-    if (__DEV__) console.log('🔐 Sign in attempt:', { email: data.email })
+    if (__DEV__) console.log('Sign in attempt:', { email: data.email })
     setIsLoading(true)
     try {
       dispatch(userActions.userLogin(data))
-      if (__DEV__) console.log('✅ Dispatched userLogin action')
-      // Navigation will be handled by Redux saga after successful login
-      // Don't set loading to false here - let saga handle it
     } catch (error) {
-      console.error('❌ Login error:', error)
+      console.error('Login error:', error)
       setIsLoading(false)
     }
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[colors.surfaceContainerLowest, colors.surface, '#0A1628']}
-        style={StyleSheet.absoluteFill}
-      />
-      
-      <KeyboardAvoidingView 
+    <ScreenContainer backgroundImage={backgrounds.signIn}>
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+        style={s.keyboardView}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+        <ScrollView
+          contentContainerStyle={[s.scrollContent, { paddingTop: insets.top + spacing.xl }]}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo/Title Section */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={[colors.primaryContainer, colors.primary]}
-                style={styles.logoGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <ThemedText style={styles.logoText}>🎮</ThemedText>
-              </LinearGradient>
-            </View>
-            <ThemedText style={styles.title}>VnPet Trainer</ThemedText>
-            <ThemedText style={styles.subtitle}>Sign in to continue your journey</ThemedText>
+          {/* ── Branding Header ────────────────────────────── */}
+          <View style={s.heroSection}>
+            <ThemedText style={s.brandTitle}>VnPeteria</ThemedText>
+            <ThemedText style={s.brandSubtitle}>THE ETHEREAL ARCHIVE</ThemedText>
           </View>
 
-          {/* Form Card with Glassmorphism */}
-          <View style={styles.formCard}>
-            <BlurView intensity={20} tint="dark" style={styles.blurCard}>
-              <View style={styles.cardBorder}>
-                <View style={styles.form}>
-                  <Controller
-                    control={control}
-                    name="email"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <View style={styles.inputContainer}>
-                        <ThemedText style={styles.label}>📧 Email</ThemedText>
-                        <View style={styles.inputWrapper}>
-                          <TextInput
-                            value={value}
-                            onChangeText={onChange}
-                            onBlur={onBlur}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            placeholder="trainer@vnpet.com"
-                            placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                            style={styles.input}
-                            inputContainerStyle={styles.inputInner}
-                            inputStyle={styles.inputText}
-                          />
-                        </View>
-                        {errors.email && (
-                          <ThemedText style={styles.errorText}>⚠️ {errors.email.message}</ThemedText>
-                        )}
-                      </View>
+          {/* ── Glass Form Card ────────────────────────────── */}
+          <View style={s.formCard}>
+            {/* Decorative blur orbs inside card */}
+            <View style={[s.decorOrb, s.orbTopRight]} />
+            <View style={[s.decorOrb, s.orbBottomLeft]} />
+
+            <View style={s.cardInner}>
+              {/* Card header */}
+              <View style={s.cardHeader}>
+                <ThemedText style={s.cardTitle}>Welcome Back</ThemedText>
+                <ThemedText style={s.cardSubtitle}>Sign in to continue your journey</ThemedText>
+              </View>
+
+              {/* Email field */}
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View style={s.fieldGroup}>
+                    <ThemedText style={s.fieldLabel}>EMAIL ADDRESS</ThemedText>
+                    <View style={s.inputGlass}>
+                      <Ionicons name="mail-outline" size={18} color={colors.onSurfaceVariant} />
+                      <RNTextInput
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        placeholder="trainer@vnpeteria.com"
+                        placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                        style={s.nativeInput}
+                        selectionColor={colors.primary}
+                      />
+                    </View>
+                    {errors.email && (
+                      <ThemedText style={s.errorText}>{errors.email.message}</ThemedText>
                     )}
-                  />
+                  </View>
+                )}
+              />
 
-                  <Controller
-                    control={control}
-                    name="password"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <View style={styles.inputContainer}>
-                        <ThemedText style={styles.label}>🔒 Password</ThemedText>
-                        <View style={styles.inputWrapper}>
-                          <TextInput
-                            value={value}
-                            onChangeText={onChange}
-                            onBlur={onBlur}
-                            secureTextEntry
-                            placeholder="Enter your password"
-                            placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                            style={styles.input}
-                            inputContainerStyle={styles.inputInner}
-                            inputStyle={styles.inputText}
-                          />
-                        </View>
-                        {errors.password && (
-                          <ThemedText style={styles.errorText}>⚠️ {errors.password.message}</ThemedText>
-                        )}
-                      </View>
+              {/* Password field */}
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View style={s.fieldGroup}>
+                    <ThemedText style={s.fieldLabel}>PASSWORD</ThemedText>
+                    <View style={s.inputGlass}>
+                      <Ionicons name="lock-closed-outline" size={18} color={colors.onSurfaceVariant} />
+                      <RNTextInput
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        secureTextEntry={!showPassword}
+                        placeholder="Enter your password"
+                        placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                        style={s.nativeInput}
+                        selectionColor={colors.primary}
+                      />
+                      <TouchableOpacity onPress={togglePassword} hitSlop={8}>
+                        <Image
+                          source={showPassword ? Images.eyeHide : Images.eye}
+                          style={s.eyeIcon}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    {errors.password && (
+                      <ThemedText style={s.errorText}>{errors.password.message}</ThemedText>
                     )}
-                  />
+                  </View>
+                )}
+              />
 
-                  <TouchableOpacity
-                    style={[styles.button, isLoading && styles.buttonDisabled]}
-                    onPress={handleSubmit(onSubmit)}
-                    disabled={isLoading}
-                  >
-                    <LinearGradient
-                      colors={[colors.primaryContainer, colors.primary]}
-                      style={styles.buttonGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                    >
-                      {isLoading ? (
-                        <View style={styles.loadingContainer}>
-                          <ActivityIndicator color={colors.onPrimary} size="small" />
-                          <ThemedText style={styles.buttonText}>Signing in...</ThemedText>
-                        </View>
-                      ) : (
-                        <ThemedText style={styles.buttonText}>🎯 Sign In</ThemedText>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
+              {/* Forgot password */}
+              <TouchableOpacity
+                style={s.forgotRow}
+                onPress={() => router.push('/forgot-password')}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={s.forgotText}>Forgot password?</ThemedText>
+              </TouchableOpacity>
 
-                  {/* Dev Info */}
-                  {__DEV__ && (
-                    <View style={styles.devInfo}>
-                      <ThemedText style={styles.devInfoText}>
-                        🧪 Dev Mode: Credentials pre-filled
-                      </ThemedText>
+              {/* Sign In button */}
+              <TouchableOpacity
+                style={[s.ctaButton, isLoading && s.ctaDisabled]}
+                onPress={handleSubmit(onSubmit)}
+                disabled={isLoading}
+                activeOpacity={0.9}
+              >
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryContainer]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={s.ctaGradient}
+                >
+                  {isLoading ? (
+                    <View style={s.loadingRow}>
+                      <ActivityIndicator color={colors.onPrimary} size="small" />
+                      <ThemedText style={s.ctaText}>SIGNING IN...</ThemedText>
+                    </View>
+                  ) : (
+                    <View style={s.ctaContent}>
+                      <ThemedText style={s.ctaText}>SIGN IN</ThemedText>
+                      <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />
                     </View>
                   )}
+                </LinearGradient>
+              </TouchableOpacity>
 
-                  {/* Forgot Password */}
-                  <TouchableOpacity
-                    style={styles.forgotPasswordButton}
-                    onPress={() => router.push('/forgot-password')}
-                  >
-                    <ThemedText style={styles.forgotPasswordText}>Forgot password?</ThemedText>
-                  </TouchableOpacity>
+              {/* Dev info */}
+              {__DEV__ && (
+                <View style={s.devInfo}>
+                  <ThemedText style={s.devInfoText}>Dev Mode: Credentials pre-filled</ThemedText>
                 </View>
-              </View>
-            </BlurView>
+              )}
+            </View>
           </View>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <ThemedText style={styles.footerText}>New trainer? </ThemedText>
-            <TouchableOpacity onPress={() => router.push('/sign-up')}>
-              <ThemedText style={styles.linkText}>Create Account →</ThemedText>
+          {/* ── Footer Link ────────────────────────────────── */}
+          <View style={s.footer}>
+            <View style={s.dividerRow}>
+              <View style={s.dividerLine} />
+              <ThemedText style={s.dividerLabel}>NEW TRAINER?</ThemedText>
+              <View style={s.dividerLine} />
+            </View>
+            <TouchableOpacity onPress={() => router.push('/sign-up')} activeOpacity={0.7}>
+              <ThemedText style={s.footerLink}>
+                Create Account
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenContainer>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
-  },
-  keyboardView: {
-    flex: 1,
-  },
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+const s = StyleSheet.create({
+  keyboardView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: spacing['2xl'],
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing['4xl'],
-  },
-  logoContainer: {
-    marginBottom: spacing.xl,
-  },
-  logoGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    padding: spacing.xl,
+    paddingBottom: spacing['4xl'],
   },
-  logoText: {
-    fontSize: 40,
+
+  // ── Branding ──────────────────────────────────────────────
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: spacing['3xl'],
+    gap: spacing.xs,
   },
-  title: {
-    fontSize: 32,
+  brandTitle: {
+    fontSize: fontSizes.hero,
+    fontFamily: fonts.extraBold,
+    lineHeight: fontSizes.hero * 1.3,
+    letterSpacing: -1,
+    color: colors.primary,
+    textShadowColor: 'rgba(68, 216, 241, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
+  },
+  brandSubtitle: {
+    fontSize: fontSizes.xs,
     fontFamily: fonts.bold,
-    color: colors.onSurface,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
-    textAlign: 'center',
+    letterSpacing: 4,
   },
+
+  // ── Glass Form Card ───────────────────────────────────────
   formCard: {
-    marginBottom: spacing['2xl'],
-  },
-  blurCard: {
-    borderRadius: radii.lg,
-    overflow: 'hidden',
-  },
-  cardBorder: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: radii.lg,
+    width: '100%',
+    backgroundColor: colors.glass.darkFillStrong,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  cardInner: {
     padding: spacing['2xl'],
+    gap: spacing.xl,
+    position: 'relative',
+    zIndex: 1,
   },
-  form: {
-    gap: spacing['2xl'],
+  decorOrb: {
+    position: 'absolute',
+    borderRadius: 999,
   },
-  inputContainer: {
+  orbTopRight: {
+    width: 200,
+    height: 200,
+    top: -80,
+    right: -80,
+    backgroundColor: 'rgba(68, 216, 241, 0.12)',
+  },
+  orbBottomLeft: {
+    width: 200,
+    height: 200,
+    bottom: -80,
+    left: -80,
+    backgroundColor: 'rgba(0, 218, 243, 0.06)',
+  },
+
+  // ── Card Header ───────────────────────────────────────────
+  cardHeader: {
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  cardTitle: {
+    fontSize: fontSizes.heading + 4,
+    fontFamily: fonts.bold,
+    lineHeight: (fontSizes.heading + 4) * 1.3,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+  },
+  cardSubtitle: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
+  },
+
+  // ── Input Fields ──────────────────────────────────────────
+  fieldGroup: {
     gap: spacing.sm,
   },
-  label: {
-    fontSize: 14,
-    fontFamily: fonts.semiBold,
-    color: colors.onSurface,
-    marginBottom: spacing.xs,
+  fieldLabel: {
+    fontSize: fontSizes.micro + 2,
+    fontFamily: fonts.extraBold,
+    letterSpacing: 2,
+    color: colors.primary,
+    marginLeft: 2,
   },
-  inputWrapper: {
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: radii.md,
+  inputGlass: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.glass.subtle,
     borderWidth: 1,
-    borderColor: colors.outlineVariant,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
-  input: {
-    padding: spacing.lg,
-    fontSize: 16,
+  nativeInput: {
+    flex: 1,
     color: colors.onSurface,
+    fontSize: fontSizes.span,
+    fontFamily: fonts.medium,
+    paddingVertical: spacing.lg,
   },
-  inputInner: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
-  inputText: {
-    color: colors.onSurface,
-    fontSize: 16,
-    fontFamily: fonts.regular,
+  eyeIcon: {
+    width: 22,
+    height: 22,
+    tintColor: colors.primary,
+    resizeMode: 'contain' as const,
   },
   errorText: {
     color: colors.error,
-    fontSize: 12,
+    fontSize: fontSizes.small,
     fontFamily: fonts.regular,
-    marginTop: spacing.xs,
+    marginTop: 2,
+    marginLeft: 2,
   },
-  button: {
-    borderRadius: radii.md,
+
+  // ── Forgot Password ──────────────────────────────────────
+  forgotRow: {
+    alignSelf: 'flex-end',
+    marginTop: -spacing.sm,
+  },
+  forgotText: {
+    fontSize: fontSizes.small,
+    fontFamily: fonts.medium,
+    color: colors.onSurfaceVariant,
+  },
+
+  // ── CTA Button ────────────────────────────────────────────
+  ctaButton: {
+    borderRadius: radii.xl,
     overflow: 'hidden',
-    marginTop: spacing.sm,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: 'rgba(68, 216, 241, 0.3)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    elevation: 8,
   },
-  buttonGradient: {
-    padding: spacing.lg,
+  ctaGradient: {
+    paddingVertical: spacing.lg + 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonDisabled: {
+  ctaContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  ctaText: {
+    color: colors.onPrimary,
+    fontSize: fontSizes.small,
+    fontFamily: fonts.extraBold,
+    letterSpacing: 3,
+  },
+  ctaDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    color: colors.onPrimary,
-    fontSize: 18,
-    fontFamily: fonts.bold,
-  },
-  loadingContainer: {
+  loadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
+
+  // ── Dev Info ──────────────────────────────────────────────
   devInfo: {
-    backgroundColor: 'rgba(68, 216, 241, 0.1)',
+    backgroundColor: 'rgba(68, 216, 241, 0.08)',
     borderRadius: radii.md,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(68, 216, 241, 0.2)',
+    borderColor: 'rgba(68, 216, 241, 0.15)',
   },
   devInfoText: {
-    fontSize: 12,
+    fontSize: fontSizes.small,
     fontFamily: fonts.medium,
     color: colors.primary,
     textAlign: 'center',
   },
+
+  // ── Footer ────────────────────────────────────────────────
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    marginTop: spacing['3xl'],
     alignItems: 'center',
+    gap: spacing.md,
   },
-  footerText: {
-    fontSize: 15,
-    fontFamily: fonts.regular,
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  dividerLine: {
+    width: 32,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  dividerLabel: {
+    fontSize: 10,
+    fontFamily: fonts.bold,
+    letterSpacing: 2,
     color: colors.onSurfaceVariant,
   },
-  linkText: {
-    fontSize: 15,
+  footerLink: {
+    fontSize: fontSizes.span,
     fontFamily: fonts.bold,
     color: colors.primary,
-  },
-  forgotPasswordButton: {
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  forgotPasswordText: {
-    fontSize: 13,
-    fontFamily: fonts.regular,
-    color: colors.onSurfaceVariant,
   },
 })

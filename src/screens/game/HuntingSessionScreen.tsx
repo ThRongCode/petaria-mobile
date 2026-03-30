@@ -1,14 +1,14 @@
 /**
  * Hunting Session Screen — "Lapis Glassworks" redesign
  *
- * Active hunting session with move controls and encounter modals.
- * Design ref: desgin/hunting_session/code.html
+ * Fully inline hunting flow: encounters, results, and events appear
+ * as inline cards between stats bar and D-pad. No modal dialogs.
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { StyleSheet, View, ScrollView, TouchableOpacity, Alert, Animated } from 'react-native'
+import { StyleSheet, View, ScrollView, TouchableOpacity, Animated } from 'react-native'
 import { ThemedText } from '@/components'
-import { CustomAlert, LoadingContainer } from '@/components/ui'
+import { useAlert, LoadingContainer } from '@/components/ui'
 import { ScreenContainer } from '@/components/ScreenContainer'
 import { useSelector } from 'react-redux'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -20,13 +20,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
-import {
-  EncounterModal,
-  HuntingControls,
-  HuntingSessionHeader,
-  useCaptureAnimation,
-  CaptureState,
-} from './components'
+import { HuntingControls, HuntingSessionHeader } from './components'
+import { InlineEventCard, EventState } from './components/InlineEventCard'
 
 // Backend encounter type
 interface BackendEncounter {
@@ -60,6 +55,7 @@ export const HuntingSessionScreen: React.FC = () => {
   const router = useRouter()
   const dispatch = useAppDispatch()
   const insets = useSafeAreaInsets()
+  const alert = useAlert()
   const currency = useSelector(getUserCurrency)
   const profile = useSelector(getUserProfile)
 
@@ -71,11 +67,8 @@ export const HuntingSessionScreen: React.FC = () => {
 
   const [movesLeft, setMovesLeft] = useState(10)
   const [currentEncounter, setCurrentEncounter] = useState<BackendEncounter | null>(null)
-  const [showEncounter, setShowEncounter] = useState(false)
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [captureState, setCaptureState] = useState<CaptureState>('idle')
+  const [eventState, setEventState] = useState<EventState>('scouting')
   const [isMoving, setIsMoving] = useState(false)
-  const [sessionStarted, setSessionStarted] = useState(false)
   const [sessionRewards, setSessionRewards] = useState({
     totalXp: 0,
     totalCoins: 0,
@@ -83,33 +76,9 @@ export const HuntingSessionScreen: React.FC = () => {
     itemsFound: 0,
   })
 
-  // Custom alert
-  const [showAlert, setShowAlert] = useState(false)
-  const [alertConfig, setAlertConfig] = useState<{
-    title: string
-    message?: string
-    buttons?: Array<{ text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }>
-  }>({ title: '' })
-
   const [moveAnimation] = useState(new Animated.Value(0))
 
-  const {
-    pokeballAnim,
-    pokemonOpacity,
-    pokemonScale,
-    sparkleAnim,
-    resetCaptureAnimations,
-    getAnimationInterpolations,
-  } = useCaptureAnimation()
-
-  const showCustomAlert = useCallback((
-    title: string,
-    message?: string,
-    buttons?: Array<{ text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }>
-  ) => {
-    setAlertConfig({ title, message, buttons })
-    setShowAlert(true)
-  }, [])
+  const refreshProfile = useCallback(() => { dispatch(gameActions.loadUserData()) }, [dispatch])
 
   // Load or start session
   useEffect(() => {
@@ -159,7 +128,7 @@ export const HuntingSessionScreen: React.FC = () => {
             if (loadedMovesLeft === 0) {
               const caughtCount = (result.data.encounters || []).filter((e: any) => e.caught).length
               try { await huntApi.completeSession(result.data.session.id) } catch {}
-              Alert.alert(
+              alert.show(
                 'Hunt Complete!',
                 `Session Summary:\n• Region: ${result.data.session.region.name}\n• Encounters: ${result.data.encounters?.length || 0}\n• Pets Captured: ${caughtCount}`,
                 [{ text: 'OK', onPress: () => router.back() }]
@@ -177,7 +146,7 @@ export const HuntingSessionScreen: React.FC = () => {
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize hunt session')
-        Alert.alert('Error', 'Failed to start hunt session', [
+        alert.show('Error', 'Failed to start hunt session', [
           { text: 'Go Back', onPress: () => router.back() },
         ])
       } finally {
@@ -187,35 +156,21 @@ export const HuntingSessionScreen: React.FC = () => {
     initSession()
   }, [params.sessionId, params.regionId, router])
 
-  useEffect(() => {
-    if (!sessionStarted && params.regionId) setSessionStarted(true)
-  }, [params.sessionId, sessionStarted, params.regionId])
-
-  const closeEncounter = useCallback(() => {
-    setShowEncounter(false)
-    setCurrentEncounter(null)
-    resetCaptureAnimations()
-  }, [resetCaptureAnimations])
-
   const exitSession = useCallback(() => { router.back() }, [router])
 
-  const refreshProfile = useCallback(() => { dispatch(gameActions.loadUserData()) }, [dispatch])
+  // ── Inline event handlers ────────────────────────────
 
   const attemptCapture = useCallback(async () => {
-    if (!currentEncounter || currentEncounter.caught || !session || isCapturing) return
-    setIsCapturing(true)
-    setCaptureState('throwing')
+    if (!currentEncounter || currentEncounter.caught || !session) return
+    setEventState('capturing')
     const speciesName = currentEncounter.species
     const encounterId = currentEncounter.id
-    const encounterData = { ...currentEncounter }
 
     try {
       const [result] = await Promise.all([
         huntApi.attemptCatch(session.id, encounterId, 'pokeball'),
         new Promise(resolve => setTimeout(resolve, 1500)),
       ])
-      setIsCapturing(false)
-      setCaptureState('idle')
       refreshProfile()
 
       if (result.success && result.data) {
@@ -223,48 +178,27 @@ export const HuntingSessionScreen: React.FC = () => {
         if (catchSuccess) {
           setEncounters(prev => prev.map(e => e.id === encounterId ? { ...e, caught: true } : e))
           setSessionRewards(prev => ({ ...prev, petsFound: prev.petsFound + 1 }))
-          setShowEncounter(false)
-          setCurrentEncounter(null)
-          resetCaptureAnimations()
-          Alert.alert('🎉 Capture Successful!', `You caught ${speciesName}!`, [{ text: 'Awesome!' }])
+          setEventState('caught')
         } else {
-          setShowEncounter(false)
-          resetCaptureAnimations()
-          Alert.alert('💨 It Escaped!', result.data.message || `${speciesName} broke free!`, [
-            { text: 'Try Again', onPress: () => { if (encounterData && !encounterData.caught) { setCurrentEncounter(encounterData); setShowEncounter(true) } } },
-            { text: 'Give Up', style: 'cancel', onPress: () => setCurrentEncounter(null) },
-          ])
+          setEventState('escaped')
         }
       } else {
-        Alert.alert('Error', 'Something went wrong.')
+        setEventState('escaped')
       }
     } catch (err) {
-      setIsCapturing(false)
-      setCaptureState('idle')
-      resetCaptureAnimations()
       refreshProfile()
       const errorMessage = err instanceof Error ? err.message : 'Failed to catch'
       if (errorMessage.toLowerCase().includes('pokeball')) {
-        setShowEncounter(false)
-        setCurrentEncounter(null)
-        Alert.alert('Out of Pokéballs!', 'Visit the Shop to purchase more.', [
-          { text: 'Continue Hunting' },
-          { text: 'Go to Shop', onPress: () => router.replace('/shop') },
-        ])
+        setEventState('no_balls')
       } else {
-        Alert.alert('Error', errorMessage)
+        setEventState('escaped')
       }
     }
-  }, [currentEncounter, session, isCapturing, encounters, refreshProfile, resetCaptureAnimations, router])
+  }, [currentEncounter, session, refreshProfile])
 
   const fleeEncounter = useCallback(() => {
-    const encounterData = currentEncounter ? { ...currentEncounter } : null
-    setShowEncounter(false)
-    Alert.alert('Run Away?', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel', onPress: () => { if (encounterData) { setCurrentEncounter(encounterData); setShowEncounter(true) } } },
-      { text: 'Run Away', style: 'destructive', onPress: () => setCurrentEncounter(null) },
-    ])
-  }, [currentEncounter])
+    setEventState('fled')
+  }, [])
 
   const completeSession = useCallback(async () => {
     if (!session) return
@@ -272,21 +206,23 @@ export const HuntingSessionScreen: React.FC = () => {
       const result = await huntApi.completeSession(session.id)
       const caughtCount = encounters.filter(e => e.caught).length
       let summaryMessage = `• Region: ${session.region.name}\n• Encounters: ${encounters.length}\n• Pets Captured: ${caughtCount}`
-      if (result.data?.xpEarned) summaryMessage += `\n\n⭐ ${result.data.xpEarned} XP earned!`
-      if (result.data?.user?.leveledUp) summaryMessage += `\n\n🎉 LEVEL UP! Lv.${result.data.user.level}!`
+      if (result.data?.xpEarned) summaryMessage += `\n\n${result.data.xpEarned} XP earned!`
+      if (result.data?.user?.leveledUp) summaryMessage += `\n\nLEVEL UP! Lv.${result.data.user.level}!`
       dispatch(gameActions.loadUserData())
-      showCustomAlert('Hunting Session Complete!', summaryMessage, [
+      alert.show('Hunting Session Complete!', summaryMessage, [
         { text: 'Return to Hunting Grounds', onPress: () => router.back() },
       ])
     } catch {
-      Alert.alert('Error', 'Failed to complete session', [
+      alert.show('Error', 'Failed to complete session', [
         { text: 'Go Back Anyway', onPress: () => router.back() },
       ])
     }
-  }, [session, encounters, dispatch, showCustomAlert, router])
+  }, [session, encounters, dispatch, alert, router])
 
   const makeMove = useCallback(async (direction: 'up' | 'down' | 'left' | 'right') => {
-    if (!session || isMoving || movesLeft <= 0) return
+    if (!session || isMoving || movesLeft <= 0 || eventState === 'encounter' || eventState === 'capturing') return
+    setEventState('scouting')
+    setCurrentEncounter(null)
     setIsMoving(true)
     Animated.sequence([
       Animated.timing(moveAnimation, { toValue: 1, duration: 200, useNativeDriver: true }),
@@ -301,24 +237,22 @@ export const HuntingSessionScreen: React.FC = () => {
           const newEncounter = result.data.encounter
           setEncounters(prev => [...prev, newEncounter])
           setCurrentEncounter(newEncounter)
-          setShowEncounter(true)
+          setEventState('encounter')
+        } else {
+          setEventState('nothing')
         }
-        if (result.data.movesLeft === 0) {
-          setTimeout(() => {
-            showCustomAlert('Out of Moves!', 'Time to complete the session.', [
-              { text: 'Complete Session', onPress: completeSession },
-            ])
-          }, 1000)
+        if (result.data.movesLeft === 0 && !result.data.encounter) {
+          setTimeout(completeSession, AUTO_DISMISS_DELAY)
         }
       }
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to move')
+      alert.show('Error', err instanceof Error ? err.message : 'Failed to move')
     } finally {
       setIsMoving(false)
     }
-  }, [session, isMoving, movesLeft, moveAnimation, showCustomAlert, completeSession])
+  }, [session, isMoving, movesLeft, eventState, moveAnimation, completeSession, alert])
 
-  const { pokeballTranslateY, pokeballScale, shakeRotate, sparkleScale } = getAnimationInterpolations()
+  const controlsDisabled = eventState === 'encounter' || eventState === 'capturing'
 
   if (isLoading) {
     return (
@@ -333,7 +267,7 @@ export const HuntingSessionScreen: React.FC = () => {
       <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
         <View style={[styles.errorContainer, { paddingTop: insets.top }]}>
           <View style={styles.errorPanel}>
-            <ThemedText style={styles.errorTitle}>⚠️ Error</ThemedText>
+            <ThemedText style={styles.errorTitle}>Error</ThemedText>
             <ThemedText style={styles.errorText}>{error}</ThemedText>
             <TouchableOpacity style={styles.errorButton} onPress={() => router.back()}>
               <ThemedText style={styles.errorButtonText}>Go Back</ThemedText>
@@ -353,42 +287,28 @@ export const HuntingSessionScreen: React.FC = () => {
           sessionRewards={sessionRewards}
         />
 
+        {/* Inline event area — replaces modal encounters */}
+        <InlineEventCard
+          eventState={eventState}
+          encounter={currentEncounter}
+          onThrow={attemptCapture}
+          onRun={fleeEncounter}
+          onGoToShop={() => router.replace('/shop')}
+        />
+
         <HuntingControls
-          actionsLeft={movesLeft}
+          actionsLeft={controlsDisabled ? 0 : movesLeft}
           isMoving={isMoving}
           moveAnimation={moveAnimation}
           onMove={makeMove}
           onExit={exitSession}
         />
-
-        <EncounterModal
-          visible={showEncounter}
-          encounter={currentEncounter}
-          isCapturing={isCapturing}
-          captureState={captureState}
-          pokemonOpacity={pokemonOpacity}
-          pokemonScale={pokemonScale}
-          pokeballAnim={pokeballAnim}
-          shakeRotate={shakeRotate}
-          pokeballTranslateY={pokeballTranslateY}
-          pokeballScaleInterp={pokeballScale}
-          sparkleAnim={sparkleAnim}
-          sparkleScale={sparkleScale}
-          onCapture={attemptCapture}
-          onFlee={fleeEncounter}
-        />
-
-        <CustomAlert
-          visible={showAlert}
-          title={alertConfig.title}
-          message={alertConfig.message}
-          buttons={alertConfig.buttons}
-          onDismiss={() => setShowAlert(false)}
-        />
       </ScrollView>
     </ScreenContainer>
   )
 }
+
+const AUTO_DISMISS_DELAY = 2500
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

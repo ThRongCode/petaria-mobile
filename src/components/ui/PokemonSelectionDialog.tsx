@@ -153,7 +153,7 @@ export const PokemonSelectionDialog: React.FC<PokemonSelectionDialogProps> = ({
           ) : (
             <View style={styles.emptyContainer}>
               <Panel variant="dark" style={styles.emptyPanel}>
-                <ThemedText style={styles.emptyIcon}>🎒</ThemedText>
+                <Ionicons name="bag-handle-outline" size={56} color={colors.outline} />
                 <ThemedText style={styles.emptyTitle}>No Pokemon Available</ThemedText>
                 <ThemedText style={styles.emptyText}>
                   You need to catch Pokemon first!

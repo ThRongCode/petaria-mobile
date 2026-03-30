@@ -28,6 +28,7 @@ import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import type { Pet, Item } from '@/stores/types/game'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
@@ -157,7 +158,7 @@ export const ItemUseScreen: React.FC = () => {
   }
 
   return (
-    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+    <ScreenContainer backgroundImage={backgrounds.itemUse}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -210,7 +211,7 @@ export const ItemUseScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <ThemedText style={styles.emptyIcon}>🎒</ThemedText>
+              <Ionicons name="bag-handle-outline" size={56} color={colors.outline} />
               <ThemedText style={styles.emptyTitle}>No Pokemon</ThemedText>
               <ThemedText style={styles.emptyText}>You need Pokemon to use items on!</ThemedText>
             </View>

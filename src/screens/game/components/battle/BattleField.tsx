@@ -10,6 +10,7 @@ import { ThemedText } from '@/components'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPokemonImage } from '@/assets/images'
 import { getHpColor } from './battleUtils'
+import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
@@ -98,7 +99,7 @@ export const BattleField: React.FC<BattleFieldProps> = ({
   <View style={styles.arena}>
     {/* VS divider */}
     <View style={styles.vsContainer}>
-      <ThemedText style={styles.vsText}>⚔️</ThemedText>
+      <Ionicons name="flash" size={28} color={colors.secondaryContainer} />
     </View>
     <View style={styles.row}>
       <PokemonDisplay pet={playerPet} hpAnim={playerHpAnim} hpPercentage={playerHpPercentage} showHpNumbers />

@@ -5,14 +5,17 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native'
 import { ScreenContainer, ThemedText } from '@/components'
+import { CurrencyBar } from '@/components/ui'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSelector } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { Ionicons } from '@expo/vector-icons'
 import { battleApi } from '@/services/api'
+import { backgrounds, battleCardBackgrounds } from '@/assets/images/backgrounds'
 import {
   colors,
   fonts,
@@ -98,6 +101,8 @@ export const EventScreen: React.FC = () => {
       ? [battleType.gradient[0] || theme.accent, (battleType.gradient[1] || theme.accent) + '66']
       : ['rgba(100, 100, 100, 0.3)', 'rgba(50, 50, 50, 0.3)']
 
+    const cardBg = battleCardBackgrounds[battleType.id as keyof typeof battleCardBackgrounds]
+
     return (
       <TouchableOpacity
         key={battleType.id}
@@ -106,7 +111,16 @@ export const EventScreen: React.FC = () => {
         disabled={!battleType.available}
         activeOpacity={0.85}
       >
-        {/* Card background gradient */}
+        {/* Card background image (if available) */}
+        {cardBg && (
+          <Image
+            source={cardBg}
+            style={s.battleCardBg}
+            resizeMode="cover"
+          />
+        )}
+
+        {/* Dark gradient overlay for text readability */}
         <LinearGradient
           colors={['rgba(15, 19, 31, 0.85)', 'rgba(15, 19, 31, 0.5)', 'transparent']}
           start={{ x: 0, y: 0 }}
@@ -184,7 +198,7 @@ export const EventScreen: React.FC = () => {
 
   return (
     <ScreenContainer
-      backgroundImage={require('@/assets/images/background/mobile_background.png')}
+      backgroundImage={backgrounds.battleHub}
       backgroundOverlay
     >
       <ScrollView
@@ -192,6 +206,14 @@ export const EventScreen: React.FC = () => {
         contentContainerStyle={[s.scrollContent, { paddingTop: insets.top + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* ════════════ HEADER BAR ════════════ */}
+        <View style={s.headerBar}>
+          <ThemedText style={s.headerTitle}>Battle Hub</ThemedText>
+        </View>
+        <View style={s.currencyRow}>
+          <CurrencyBar coins={profile.currency?.coins} gems={profile.currency?.gems} />
+        </View>
+
         {/* ════════════ BATTLE CARDS ════════════ */}
         <View style={s.battlesList}>
           {loading ? (
@@ -215,6 +237,23 @@ const s = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: spacing['4xl'] },
 
+  // ── Header Bar ────────────────────────────────────────────
+  headerBar: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  headerTitle: {
+    fontSize: fontSizes.heading,
+    fontFamily: fonts.extraBold,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+  currencyRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+
   // ── Battle Cards ───────────────────────────────────────────
   battlesList: {
     paddingHorizontal: spacing.lg,
@@ -227,6 +266,10 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     position: 'relative',
+  },
+  battleCardBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: radii.xl,
   },
   battleOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -5,7 +5,8 @@
  */
 
 import React from 'react'
-import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native'
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { globalAlert } from '@/components/ui/AlertProvider'
 import { ThemedText } from '@/components/ThemedText'
 import { colors, fonts, spacing, radii } from '@/themes'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -21,7 +22,7 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
 }) => {
   const handleCopyFriendId = () => {
     // Simple alert for now - can add clipboard later
-    Alert.alert('Friend ID', friendId, [{ text: 'OK' }])
+    globalAlert.show('Friend ID', friendId, [{ text: 'OK' }])
   }
 
   return (

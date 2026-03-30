@@ -199,7 +199,7 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
                       <ThemedText style={styles.priceAmount}>
                         {item.price.coins}
                       </ThemedText>
-                      <ThemedText style={styles.priceIcon}>💰</ThemedText>
+                      <Ionicons name="cash" size={16} color={colors.secondaryContainer} />
                       <ThemedText style={styles.priceCurrency}>Coins</ThemedText>
                     </View>
                   )}
@@ -208,7 +208,7 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
                       <ThemedText style={styles.priceAmount}>
                         {item.price.gems}
                       </ThemedText>
-                      <ThemedText style={styles.priceIcon}>💎</ThemedText>
+                      <Ionicons name="diamond" size={16} color={colors.primary} />
                       <ThemedText style={styles.priceCurrency}>Gems</ThemedText>
                     </View>
                   )}

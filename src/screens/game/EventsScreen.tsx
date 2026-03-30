@@ -18,6 +18,7 @@ import { eventApi, GameEvent, UpcomingEvent } from '@/services/api/eventApi'
 import { getPokemonImage } from '@/assets/images'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { colors, rarityColors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
@@ -158,7 +159,7 @@ export default function EventsScreen() {
   }
 
   return (
-    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+    <ScreenContainer backgroundImage={backgrounds.default}>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}

@@ -107,7 +107,10 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <ThemedText style={styles.runText}>🏃 Run</ThemedText>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="exit-outline" size={18} color={colors.onSurface} />
+                  <ThemedText style={styles.runText}>Run</ThemedText>
+                </View>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -120,7 +123,7 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
         /* ── Battle Over ── */
         <View style={styles.battleOver}>
           <ThemedText style={styles.battleOverTitle}>
-            {winner === 'player' ? '🏆 Victory!' : '💀 Defeat!'}
+            {winner === 'player' ? 'Victory!' : 'Defeat!'}
           </ThemedText>
 
           {battleResult && (

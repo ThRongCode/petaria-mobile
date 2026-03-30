@@ -6,18 +6,19 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native'
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ThemedText } from '@/components/ThemedText'
 import { ScreenContainer } from '@/components/ScreenContainer'
-import { LoadingContainer } from '@/components/ui'
+import { LoadingContainer, useAlert } from '@/components/ui'
 import { useSelector, useDispatch } from 'react-redux'
 import { getUserProfile } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers/game'
 import { questApi, Quest } from '@/services/api/questApi'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { backgrounds } from '@/assets/images/backgrounds'
 import { colors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
@@ -41,6 +42,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 export default function QuestScreen() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const alert = useAlert()
   const insets = useSafeAreaInsets()
   const userProfile = useSelector(getUserProfile)
 
@@ -57,7 +59,7 @@ export default function QuestScreen() {
       }
     } catch (error) {
       console.error('Failed to fetch quests:', error)
-      Alert.alert('Error', 'Failed to load quests')
+      alert.show('Error', 'Failed to load quests')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -77,18 +79,18 @@ export default function QuestScreen() {
       const response = await questApi.claimReward(quest.id)
       if (response.success && response.data) {
         let rewardsMessage = 'You received:\n'
-        if (response.data.rewards.coins > 0) rewardsMessage += `💰 ${response.data.rewards.coins} Coins\n`
-        if (response.data.rewards.gems > 0) rewardsMessage += `💎 ${response.data.rewards.gems} Gems\n`
-        if (response.data.rewards.xp > 0) rewardsMessage += `⭐ ${response.data.rewards.xp} XP\n`
-        if (response.data.rewards.item) rewardsMessage += `🎁 ${response.data.rewards.item.quantity}x ${response.data.rewards.item.item.name}\n`
-        if (response.data.user?.leveledUp) rewardsMessage += `\n🎉 LEVEL UP! You are now Lv.${response.data.user.newLevel}!`
+        if (response.data.rewards.coins > 0) rewardsMessage += `${response.data.rewards.coins} Coins\n`
+        if (response.data.rewards.gems > 0) rewardsMessage += `${response.data.rewards.gems} Gems\n`
+        if (response.data.rewards.xp > 0) rewardsMessage += `${response.data.rewards.xp} XP\n`
+        if (response.data.rewards.item) rewardsMessage += `${response.data.rewards.item.quantity}x ${response.data.rewards.item.item.name}\n`
+        if (response.data.user?.leveledUp) rewardsMessage += `\nLEVEL UP! You are now Lv.${response.data.user.newLevel}!`
 
-        Alert.alert('🎉 Rewards Claimed!', rewardsMessage, [{ text: 'Awesome!' }])
+        alert.show('Rewards Claimed!', rewardsMessage, [{ text: 'Awesome!' }])
         fetchQuests()
         dispatch(gameActions.loadUserData())
       }
     } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to claim reward')
+      alert.show('Error', error?.message || 'Failed to claim reward')
     } finally {
       setClaimingId(null)
     }
@@ -203,7 +205,7 @@ export default function QuestScreen() {
   const claimedQuests = quests.filter(q => q.status === 'claimed')
 
   return (
-    <ScreenContainer backgroundImage={require('@/assets/images/background/mobile_background.png')}>
+    <ScreenContainer backgroundImage={backgrounds.quests}>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}

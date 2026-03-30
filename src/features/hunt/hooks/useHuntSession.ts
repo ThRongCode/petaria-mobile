@@ -9,8 +9,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
+import { globalAlert } from '@/components/ui/AlertProvider'
 import { huntApi } from '@/services/api'
 import { HuntSession, Encounter, HuntSessionParams, SessionRewards, Direction } from '../types'
 import { formatSessionSummary } from '../utils'
@@ -91,7 +91,7 @@ export const useHuntSession = ({
         console.error('❌ Error initializing session:', err)
         const errorMessage = err instanceof Error ? err.message : 'Failed to initialize hunt session'
         setError(errorMessage)
-        Alert.alert('Error', 'Failed to start hunt session', [
+        globalAlert.show('Error', 'Failed to start hunt session', [
           { text: 'Go Back', onPress: () => router.back() },
         ])
       } finally {
@@ -170,7 +170,7 @@ export const useHuntSession = ({
           console.log('⚠️ Could not complete session:', e)
         }
 
-        Alert.alert(
+        globalAlert.show(
           'Hunt Complete!',
           formatSessionSummary(
             result.data.session.region.name,
@@ -222,7 +222,7 @@ export const useHuntSession = ({
       return null
     } catch (err) {
       console.error('❌ Error moving:', err)
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to move')
+      globalAlert.show('Error', err instanceof Error ? err.message : 'Failed to move')
       return null
     } finally {
       setIsMoving(false)
@@ -238,7 +238,7 @@ export const useHuntSession = ({
       await huntApi.completeSession(session.id)
       const caughtCount = encounters.filter(e => e.caught).length
 
-      Alert.alert(
+      globalAlert.show(
         'Hunting Session Complete!',
         formatSessionSummary(session.region.name, encounters.length, caughtCount),
         [{ text: 'Return to Hunting Grounds', onPress: () => router.back() }]
@@ -247,7 +247,7 @@ export const useHuntSession = ({
       onSessionComplete?.()
     } catch (err) {
       console.error('❌ Error completing session:', err)
-      Alert.alert('Error', 'Failed to complete session', [
+      globalAlert.show('Error', 'Failed to complete session', [
         { text: 'Go Back Anyway', onPress: () => router.back() },
       ])
     }

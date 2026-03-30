@@ -10,8 +10,9 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
-import { Alert, Animated } from 'react-native'
+import { Animated } from 'react-native'
 import { useRouter } from 'expo-router'
+import { globalAlert } from '@/components/ui/AlertProvider'
 import { useAppDispatch } from '@/stores/store'
 import { gameActions } from '@/stores/reducers'
 import { huntApi } from '@/services/api'
@@ -115,8 +116,8 @@ export const useCapture = ({
           onCaptureSuccess(encounterId)
           onEncounterClose()
 
-          Alert.alert(
-            '🎉 Capture Successful!',
+          globalAlert.show(
+            'Capture Successful!',
             `You caught ${speciesName}!\nIt has been added to your collection.`,
             [{ text: 'Awesome!' }]
           )
@@ -127,7 +128,7 @@ export const useCapture = ({
           return false
         }
       } else {
-        Alert.alert('Error', 'Something went wrong. Please try again.')
+        globalAlert.show('Error', 'Something went wrong. Please try again.')
         return false
       }
     } catch (error) {
@@ -152,8 +153,8 @@ export const useCapture = ({
   ) => {
     onEncounterClose()
 
-    Alert.alert(
-      '💨 It Ran Away!',
+    globalAlert.show(
+      'It Ran Away!',
       message || `${speciesName} broke free and escaped! The wild Pokemon fled.`,
       [{ text: 'Continue Hunting' }]
     )
@@ -165,7 +166,7 @@ export const useCapture = ({
       console.log('ℹ️ User has no pokeballs')
       onEncounterClose()
 
-      Alert.alert(
+      globalAlert.show(
         'Out of Pokéballs!',
         'You need Pokéballs to catch Pokémon. Visit the Shop to purchase more.',
         [
@@ -179,7 +180,7 @@ export const useCapture = ({
     } else {
       console.error('❌ Error attempting catch:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to catch Pokemon'
-      Alert.alert('Error', errorMessage)
+      globalAlert.show('Error', errorMessage)
     }
   }, [router, onEncounterClose])
 
