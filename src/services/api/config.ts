@@ -5,9 +5,6 @@
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL
   || (__DEV__ ? 'http://localhost:3000/api' : 'https://api.vnpeteria.com/api')
 
-console.log('🔍 [DEBUG] EXPO_PUBLIC_API_URL:', process.env.EXPO_PUBLIC_API_URL)
-console.log('🔍 [DEBUG] API_BASE_URL resolved to:', API_BASE_URL)
-
 export const API_CONFIG = {
   baseURL: API_BASE_URL,
 

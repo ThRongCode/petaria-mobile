@@ -12,7 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { getItemImage } from '@/assets/images'
 import type { Item } from '@/stores/types/game'
-import { colors, rarityColors, rarityGradients } from '@/themes/colors'
+import { colors, rarityGradients } from '@/themes/colors'
+import { getRarityColor } from '@/features/hunt/utils'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
 
@@ -20,9 +21,6 @@ interface ItemGridCardProps {
   item: Item & { quantity?: number }
   onPress: (item: Item) => void
 }
-
-const getRarityColor = (rarity: string): string =>
-  rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
 
 const getRarityGradient = (rarity: string): readonly [string, string] =>
   rarityGradients[rarity.toLowerCase() as keyof typeof rarityGradients] ?? rarityGradients.common

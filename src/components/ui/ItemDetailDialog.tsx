@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getItemImage } from '@/assets/images'
 import { colors, fonts, spacing, radii } from '@/themes'
+import { getRarityColor } from '@/features/hunt/utils'
 import type { Item } from '@/stores/types/game'
 
 interface ItemDetailDialogProps {
@@ -37,15 +38,6 @@ export const ItemDetailDialog: React.FC<ItemDetailDialogProps> = ({
   const userOwnsItem = (userInventory[item.id] || 0) > 0
   const itemQuantity = userInventory[item.id] || 0
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'Common': return colors.rarityColors.common
-      case 'Rare': return colors.rarityColors.rare
-      case 'Epic': return colors.rarityColors.epic
-      case 'Legendary': return colors.rarityColors.legendary
-      default: return colors.rarityColors.common
-    }
-  }
 
   const getTypeIcon = (type: string) => {
     switch (type) {

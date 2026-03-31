@@ -1,11 +1,6 @@
 /**
  * useHuntSession Hook
- * Single Responsibility: Manage hunt session state and API calls
- * 
- * This hook handles:
- * - Session initialization (start new or resume existing)
- * - Movement in the hunt
- * - Session completion
+ * Manages hunt session state and API calls
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -21,7 +16,6 @@ interface UseHuntSessionOptions {
 }
 
 interface UseHuntSessionReturn {
-  // State
   session: HuntSession | null
   encounters: Encounter[]
   movesLeft: number
@@ -29,40 +23,28 @@ interface UseHuntSessionReturn {
   isMoving: boolean
   error: string | null
   sessionRewards: SessionRewards
-  
-  // Actions
   makeMove: (direction: Direction) => Promise<Encounter | null>
   completeSession: () => Promise<void>
   exitSession: () => void
-  
-  // Encounter management
   currentEncounter: Encounter | null
   setCurrentEncounter: (encounter: Encounter | null) => void
-  showEncounter: boolean
-  setShowEncounter: (show: boolean) => void
   updateEncounterAsCaught: (encounterId: string) => void
   incrementPetsFound: () => void
 }
 
-export const useHuntSession = ({ 
-  params, 
-  onSessionComplete 
+export const useHuntSession = ({
+  params,
+  onSessionComplete
 }: UseHuntSessionOptions): UseHuntSessionReturn => {
   const router = useRouter()
-  
-  // Session state
+
   const [session, setSession] = useState<HuntSession | null>(null)
   const [encounters, setEncounters] = useState<Encounter[]>([])
   const [movesLeft, setMovesLeft] = useState(10)
   const [isLoading, setIsLoading] = useState(true)
   const [isMoving, setIsMoving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
-  // Encounter state
   const [currentEncounter, setCurrentEncounter] = useState<Encounter | null>(null)
-  const [showEncounter, setShowEncounter] = useState(false)
-  
-  // Rewards tracking
   const [sessionRewards, setSessionRewards] = useState<SessionRewards>({
     totalXp: 0,
     totalCoins: 0,
@@ -70,25 +52,20 @@ export const useHuntSession = ({
     itemsFound: 0,
   })
 
-  // Initialize session
   useEffect(() => {
     const initSession = async () => {
-      console.log('🎯 Initializing hunt session...')
       setIsLoading(true)
       setError(null)
 
       try {
         if (params.regionId) {
-          // Start new session
           await startNewSession(params.regionId)
         } else if (params.sessionId) {
-          // Resume existing session
           await resumeSession()
         } else {
           throw new Error('No region or session specified')
         }
       } catch (err) {
-        console.error('❌ Error initializing session:', err)
         const errorMessage = err instanceof Error ? err.message : 'Failed to initialize hunt session'
         setError(errorMessage)
         globalAlert.show('Error', 'Failed to start hunt session', [
@@ -103,11 +80,9 @@ export const useHuntSession = ({
   }, [params.sessionId, params.regionId])
 
   const startNewSession = async (regionId: string) => {
-    console.log('🚀 Starting new hunt session for region:', regionId)
-
     try {
       const startResult = await huntApi.startHunt(regionId)
-      
+
       if (startResult.success && startResult.data) {
         setSession(startResult.data.session)
         setEncounters(startResult.data.encounters || [])
@@ -116,10 +91,8 @@ export const useHuntSession = ({
       }
       throw new Error('Failed to start hunt session')
     } catch (startError: any) {
-      // Handle existing session conflict
       const errorMsg = startError?.message || ''
       if (errorMsg.toLowerCase().includes('already have an active')) {
-        console.log('⚠️ Existing session found, auto-completing it...')
         await handleExistingSessionConflict(regionId)
       } else {
         throw startError
@@ -129,18 +102,14 @@ export const useHuntSession = ({
 
   const handleExistingSessionConflict = async (regionId: string) => {
     const existingResult = await huntApi.getSession()
-    
+
     if (existingResult.success && existingResult.data) {
-      // Auto-complete the old session
       try {
         await huntApi.completeSession(existingResult.data.session.id)
-        console.log('✅ Auto-completed old session')
       } catch {
-        console.log('⚠️ Could not complete old session, canceling it...')
         await huntApi.cancelSession(existingResult.data.session.id)
       }
 
-      // Now start the new session
       const newStartResult = await huntApi.startHunt(regionId)
       if (newStartResult.success && newStartResult.data) {
         setSession(newStartResult.data.session)
@@ -153,21 +122,18 @@ export const useHuntSession = ({
   }
 
   const resumeSession = async () => {
-    console.log('🔄 Resuming existing session:', params.sessionId)
     const result = await huntApi.getSession()
 
     if (result.success && result.data) {
       const loadedMovesLeft = result.data.movesLeft ?? 0
 
-      // If session has 0 moves, auto-complete it
       if (loadedMovesLeft === 0) {
-        console.log('🏁 Session has 0 moves, auto-completing...')
         const caughtCount = (result.data.encounters || []).filter((e: any) => e.caught).length
 
         try {
           await huntApi.completeSession(result.data.session.id)
-        } catch (e) {
-          console.log('⚠️ Could not complete session:', e)
+        } catch {
+          // Session may already be completed
         }
 
         globalAlert.show(
@@ -191,12 +157,8 @@ export const useHuntSession = ({
   }
 
   const makeMove = useCallback(async (direction: Direction): Promise<Encounter | null> => {
-    if (!session || isMoving || movesLeft <= 0) {
-      console.log('❌ Move blocked:', { hasSession: !!session, isMoving, movesLeft })
-      return null
-    }
+    if (!session || isMoving || movesLeft <= 0) return null
 
-    console.log('✅ Move allowed, calling API...')
     setIsMoving(true)
 
     try {
@@ -209,19 +171,11 @@ export const useHuntSession = ({
           const newEncounter = result.data.encounter
           setEncounters(prev => [...prev, newEncounter])
           setCurrentEncounter(newEncounter)
-          setShowEncounter(true)
           return newEncounter
-        }
-
-        // Check if out of moves
-        if (result.data.movesLeft === 0) {
-          // Will be handled by the calling component
-          return null
         }
       }
       return null
     } catch (err) {
-      console.error('❌ Error moving:', err)
       globalAlert.show('Error', err instanceof Error ? err.message : 'Failed to move')
       return null
     } finally {
@@ -232,8 +186,6 @@ export const useHuntSession = ({
   const completeSession = useCallback(async () => {
     if (!session) return
 
-    console.log('🏁 Completing hunt session')
-
     try {
       await huntApi.completeSession(session.id)
       const caughtCount = encounters.filter(e => e.caught).length
@@ -243,10 +195,9 @@ export const useHuntSession = ({
         formatSessionSummary(session.region.name, encounters.length, caughtCount),
         [{ text: 'Return to Hunting Grounds', onPress: () => router.back() }]
       )
-      
+
       onSessionComplete?.()
     } catch (err) {
-      console.error('❌ Error completing session:', err)
       globalAlert.show('Error', 'Failed to complete session', [
         { text: 'Go Back Anyway', onPress: () => router.back() },
       ])
@@ -258,7 +209,7 @@ export const useHuntSession = ({
   }, [router])
 
   const updateEncounterAsCaught = useCallback((encounterId: string) => {
-    setEncounters(prev => 
+    setEncounters(prev =>
       prev.map(e => (e.id === encounterId ? { ...e, caught: true } : e))
     )
   }, [])
@@ -283,8 +234,6 @@ export const useHuntSession = ({
     exitSession,
     currentEncounter,
     setCurrentEncounter,
-    showEncounter,
-    setShowEncounter,
     updateEncounterAsCaught,
     incrementPetsFound,
   }

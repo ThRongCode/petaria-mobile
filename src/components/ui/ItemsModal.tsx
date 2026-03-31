@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { apiClient } from '@/services/api'
 import { getItemImage } from '@/assets/images'
 import { colors, fonts, spacing, radii } from '@/themes'
+import { getRarityColor } from '@/features/hunt/utils'
 import type { Item, Pet } from '@/stores/types/game'
 
 interface ItemsModalProps {
@@ -74,15 +75,6 @@ export const ItemsModal: React.FC<ItemsModalProps> = ({
     }
   }
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'Common': return colors.rarityColors.common
-      case 'Rare': return colors.rarityColors.rare
-      case 'Epic': return colors.rarityColors.epic
-      case 'Legendary': return colors.rarityColors.legendary
-      default: return colors.rarityColors.common
-    }
-  }
 
   const getTypeIcon = (type: string) => {
     switch (type) {

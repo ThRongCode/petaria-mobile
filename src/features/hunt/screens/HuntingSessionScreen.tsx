@@ -51,7 +51,6 @@ export const HuntingSessionScreen: React.FC = () => {
     exitSession,
     currentEncounter,
     setCurrentEncounter,
-    setShowEncounter,
     updateEncounterAsCaught,
     incrementPetsFound,
   } = useHuntSession({ params })

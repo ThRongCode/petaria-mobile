@@ -18,7 +18,7 @@ interface CurrencyBarProps {
   gems?: number
 }
 
-export const CurrencyBar: React.FC<CurrencyBarProps> = ({ coins = 0, gems = 0 }) => {
+export const CurrencyBar: React.FC<CurrencyBarProps> = React.memo(({ coins = 0, gems = 0 }) => {
   return (
     <View style={styles.row}>
       {/* Coins pill */}
@@ -38,7 +38,7 @@ export const CurrencyBar: React.FC<CurrencyBarProps> = ({ coins = 0, gems = 0 })
       </View>
     </View>
   )
-}
+})
 
 function formatCurrency(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`

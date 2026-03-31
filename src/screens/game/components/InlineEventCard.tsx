@@ -26,7 +26,8 @@ import { ThemedText } from '@/components/ThemedText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { getPokemonImage } from '@/assets/images'
-import { colors, rarityColors } from '@/themes/colors'
+import { colors } from '@/themes/colors'
+import { getRarityColor } from '@/features/hunt/utils'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
 
@@ -61,11 +62,7 @@ interface InlineEventCardProps {
   onGoToShop?: () => void
 }
 
-function getRarityColor(rarity: string): string {
-  return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
-}
-
-export const InlineEventCard: React.FC<InlineEventCardProps> = ({
+export const InlineEventCard: React.FC<InlineEventCardProps> = React.memo(({
   eventState,
   encounter,
   onThrow,
@@ -274,7 +271,7 @@ export const InlineEventCard: React.FC<InlineEventCardProps> = ({
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

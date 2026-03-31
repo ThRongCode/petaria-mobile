@@ -16,7 +16,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { huntApi } from '@/services/api'
 import { getPokemonImage } from '@/assets/images'
 import { backgrounds } from '@/assets/images/backgrounds'
-import { colors, rarityColors } from '@/themes/colors'
+import { colors } from '@/themes/colors'
+import { getRarityColor } from '@/features/hunt/utils'
 import { fonts } from '@/themes/fonts'
 import {
   spacing,
@@ -212,10 +213,6 @@ export const HuntScreen: React.FC = () => {
       case 'Expert': return 'diamond'
       default: return 'map'
     }
-  }
-
-  const getRarityColor = (rarity: string) => {
-    return rarityColors[rarity.toLowerCase() as keyof typeof rarityColors] ?? rarityColors.common
   }
 
   return (
