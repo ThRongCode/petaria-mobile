@@ -20,7 +20,8 @@ export class GameConfigService {
       // Tickets
       maxBattleTickets: gc.tickets.maxBattleTickets,
       maxHuntTickets: gc.tickets.maxHuntTickets,
-      ticketResetIntervalHours: gc.tickets.resetIntervalHours,
+      huntRegenMinutes: gc.tickets.huntRegenMinutes,
+      battleRegenMinutes: gc.tickets.battleRegenMinutes,
 
       // Limits
       maxPetSlots: gc.limits.maxPetSlots,

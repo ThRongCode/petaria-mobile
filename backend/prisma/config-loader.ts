@@ -112,6 +112,8 @@ export interface QuestConfig {
   rewardCoins?: number;
   rewardGems?: number;
   rewardXp?: number;
+  rewardHuntTickets?: number;
+  rewardBattleTickets?: number;
   difficulty: string;
   sortOrder: number;
 }

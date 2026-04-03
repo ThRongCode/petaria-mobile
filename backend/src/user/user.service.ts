@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketResetUtil } from '../utils/ticketReset';
+import { DailyLoginUtil } from '../utils/dailyLogin';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { ConfigLoaderService } from '../config/config-loader.service';
 
@@ -22,7 +23,11 @@ export class UserService {
         pokeballs: true,
         huntTickets: true,
         battleTickets: true,
-        lastTicketReset: true,
+        lastHuntTicketRegen: true,
+        lastBattleTicketRegen: true,
+        loginStreak: true,
+        lastLoginDate: true,
+        totalLogins: true,
         petCount: true,
         itemCount: true,
         battlesWon: true,
@@ -47,14 +52,22 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
+    // Run ticket regen check
+    const ticketInfo = await TicketResetUtil.checkAndResetTickets(this.prisma, userId);
+
     const loader = ConfigLoaderService.getInstance();
     const gc = loader?.getGameConstants();
 
     return {
       ...user,
-      // Game constants bundled with profile for convenience
-      maxBattleTickets: gc?.tickets?.maxBattleTickets ?? 20,
-      maxHuntTickets: gc?.tickets?.maxHuntTickets ?? 5,
+      huntTickets: ticketInfo.huntTickets,
+      battleTickets: ticketInfo.battleTickets,
+      maxBattleTickets: ticketInfo.maxBattleTickets,
+      maxHuntTickets: ticketInfo.maxHuntTickets,
+      nextHuntTicketAt: ticketInfo.nextHuntTicketAt,
+      nextBattleTicketAt: ticketInfo.nextBattleTicketAt,
+      huntRegenMinutes: ticketInfo.huntRegenMinutes,
+      battleRegenMinutes: ticketInfo.battleRegenMinutes,
       maxPetSlots: gc?.limits?.maxPetSlots ?? 100,
       maxItemSlots: gc?.limits?.maxItemSlots ?? 500,
       xpToNext: user.level * (gc?.levels?.userXpPerLevel ?? 200),
@@ -241,5 +254,13 @@ export class UserService {
       musicEnabled: updated.settingsMusicEnabled,
       language: updated.settingsLanguage,
     };
+  }
+
+  async claimDailyLogin(userId: string) {
+    return DailyLoginUtil.claimDailyLogin(this.prisma, userId);
+  }
+
+  async getDailyLoginStatus(userId: string) {
+    return DailyLoginUtil.getStreakStatus(this.prisma, userId);
   }
 }

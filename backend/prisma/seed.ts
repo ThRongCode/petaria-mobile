@@ -113,7 +113,7 @@ async function main() {
       teachesMove: i.teachesMove,
       priceCoins: i.priceCoins,
       priceGems: i.priceGems,
-      imageUrl: i.imageUrl,
+      imageUrl: i.imageUrl ?? '',
     })),
   });
   console.log(`✅ Seeded ${itemsConfig.length} items from items.json`);

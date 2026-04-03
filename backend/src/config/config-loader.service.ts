@@ -69,7 +69,8 @@ export interface GameConstants {
   tickets: {
     maxHuntTickets: number;
     maxBattleTickets: number;
-    resetIntervalHours: number;
+    huntRegenMinutes: number;
+    battleRegenMinutes: number;
   };
   limits: {
     maxPetSlots: number;
@@ -99,6 +100,17 @@ export interface GameConstants {
     startingPokeballs: number;
     startingHuntTickets: number;
     startingBattleTickets: number;
+  };
+  dailyLogin: {
+    streakLength: number;
+    rewards: Array<{
+      day: number;
+      coins: number;
+      gems: number;
+      huntTickets: number;
+      battleTickets: number;
+      label: string;
+    }>;
   };
 }
 
