@@ -22,9 +22,18 @@ export const authApi = {
         gems: number
         huntTickets: number
         battleTickets: number
-        lastTicketReset: string
+        lastHuntTicketRegen: string
+        lastBattleTicketRegen: string
         petCount: number
         itemCount: number
+      }
+      dailyLogin?: {
+        claimed: boolean
+        alreadyClaimed: boolean
+        currentStreak: number
+        reward: { day: number; coins: number; gems: number; huntTickets: number; battleTickets: number; label: string } | null
+        nextReward: { day: number; coins: number; gems: number; huntTickets: number; battleTickets: number; label: string } | null
+        totalLogins: number
       }
     }>('/auth/login', credentials)
 
@@ -39,6 +48,7 @@ export const authApi = {
         username: response.user.username,
         email: response.user.email,
         user: response.user,
+        dailyLogin: response.dailyLogin,
       },
     }
   },
@@ -59,7 +69,8 @@ export const authApi = {
         gems: number
         huntTickets: number
         battleTickets: number
-        lastTicketReset: string
+        lastHuntTicketRegen: string
+        lastBattleTicketRegen: string
         petCount: number
         itemCount: number
       }
@@ -98,7 +109,8 @@ export const authApi = {
         gems: number
         huntTickets: number
         battleTickets: number
-        lastTicketReset: string
+        lastHuntTicketRegen: string
+        lastBattleTicketRegen: string
         petCount: number
         itemCount: number
         battlesWon: number

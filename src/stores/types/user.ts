@@ -8,7 +8,8 @@ export interface IUserInfo {
   gems: number
   huntTickets: number
   battleTickets: number
-  lastTicketReset: string
+  lastHuntTicketRegen: string
+  lastBattleTicketRegen: string
   petCount: number
   itemCount: number
 }

@@ -25,6 +25,7 @@ import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
 import { gradientPrimary } from '@/themes/styles'
 import { useAlert } from '@/components/ui'
+import { getRarityColor } from '@/features/hunt/utils'
 import {
   AboutTab,
   StatsTab,
@@ -178,9 +179,9 @@ export default function PetDetailsScreen() {
           <View style={styles.heroGlow} />
 
           <View style={styles.heroBadgeRow}>
-            <View style={styles.idBadge}>
+            <View style={[styles.idBadge, { backgroundColor: getRarityColor(pet.rarity) }]}>
               <ThemedText style={styles.idText}>
-                #{pet.id.toString().padStart(3, '0')}
+                {pet.rarity.toUpperCase()}
               </ThemedText>
             </View>
             <View style={styles.levelBadge}>
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
   idText: {
     fontSize: fontSizes.xs,
     fontFamily: fonts.bold,
-    color: colors.onSurfaceVariant,
+    color: '#FFFFFF',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },

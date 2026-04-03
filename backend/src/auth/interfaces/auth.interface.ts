@@ -16,8 +16,17 @@ export interface AuthResponse {
     gems: number;
     huntTickets: number;
     battleTickets: number;
-    lastTicketReset: Date;
+    lastHuntTicketRegen: Date;
+    lastBattleTicketRegen: Date;
     petCount: number;
     itemCount: number;
+  };
+  dailyLogin?: {
+    claimed: boolean;
+    alreadyClaimed: boolean;
+    currentStreak: number;
+    reward: { day: number; coins: number; gems: number; huntTickets: number; battleTickets: number; label: string } | null;
+    nextReward: { day: number; coins: number; gems: number; huntTickets: number; battleTickets: number; label: string } | null;
+    totalLogins: number;
   };
 }

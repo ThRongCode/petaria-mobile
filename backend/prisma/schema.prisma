@@ -22,9 +22,10 @@ model User {
   coins           Int       @default(1000)
   gems            Int       @default(50)
   pokeballs       Int       @default(5)
-  huntTickets     Int       @default(5) @map("hunt_tickets")
-  battleTickets   Int       @default(20) @map("battle_tickets")
-  lastTicketReset DateTime  @default(now()) @map("last_ticket_reset")
+  huntTickets           Int       @default(5) @map("hunt_tickets")
+  battleTickets         Int       @default(20) @map("battle_tickets")
+  lastHuntTicketRegen   DateTime  @default(now()) @map("last_hunt_ticket_regen")
+  lastBattleTicketRegen DateTime  @default(now()) @map("last_battle_ticket_regen")
   lastQuestReset  DateTime  @default(now()) @map("last_quest_reset")
   petCount        Int       @default(0) @map("pet_count")
   itemCount       Int       @default(0) @map("item_count")
@@ -41,6 +42,10 @@ model User {
   settingsSoundEnabled  Boolean @default(true) @map("settings_sound_enabled")
   settingsMusicEnabled  Boolean @default(true) @map("settings_music_enabled")
   settingsLanguage      String  @default("en") @map("settings_language")
+  // Daily Login Streak
+  loginStreak           Int       @default(0) @map("login_streak")
+  lastLoginDate         DateTime? @map("last_login_date") // Date-only comparison (UTC midnight)
+  totalLogins           Int       @default(0) @map("total_logins")
   // Password Reset
   passwordResetHash     String?  @map("password_reset_hash")
   passwordResetExpires  DateTime? @map("password_reset_expires")
@@ -118,13 +123,14 @@ model Item {
   id              String    @id
   name            String
   description     String
-  type            String    // Consumable, StatBoost, Evolution, Cosmetic
+  type            String    // Consumable, StatBoost, Evolution, Cosmetic, Pokeball, MoveBook, TicketRefill
   rarity          String
   effectHp        Int?      @map("effect_hp")
   effectAttack    Int?      @map("effect_attack")
   effectDefense   Int?      @map("effect_defense")
   effectSpeed     Int?      @map("effect_speed")
   effectXpBoost   Int?      @map("effect_xp_boost")
+  teachesMove     String?   @map("teaches_move") // For MoveBook items: the move ID this TM teaches
   isPermanent     Boolean   @default(false) @map("is_permanent")
   priceCoins      Int?      @map("price_coins")
   priceGems       Int?      @map("price_gems")
@@ -345,6 +351,8 @@ model QuestTemplate {
   rewardCoins     Int       @default(0) @map("reward_coins")
   rewardGems      Int       @default(0) @map("reward_gems")
   rewardXp        Int       @default(0) @map("reward_xp")
+  rewardHuntTickets  Int    @default(0) @map("reward_hunt_tickets")
+  rewardBattleTickets Int   @default(0) @map("reward_battle_tickets")
   rewardItemId    String?   @map("reward_item_id") // Optional item reward
   rewardItemQty   Int?      @map("reward_item_qty")
   difficulty      String    @default("normal") // easy, normal, hard

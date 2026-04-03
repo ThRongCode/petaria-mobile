@@ -1,68 +1,135 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { ConfigLoaderService } from '../config/config-loader.service';
 
 /**
- * Utility class for handling daily ticket resets
+ * Time-based ticket regeneration utility.
+ *
+ * Instead of a hard daily reset, tickets regenerate over time:
+ *   Hunt:   1 ticket every 3 hours (configurable), cap at 5
+ *   Battle: 1 ticket every 1 hour (configurable), cap at 20
+ *
+ * On any API call that touches tickets, we compute how many have regenerated
+ * since the last regen timestamp, clamp to max, update the DB, and return
+ * the current count + next-regen timestamp.
  */
+
+export interface TicketRegenResult {
+  huntTickets: number;
+  battleTickets: number;
+  maxHuntTickets: number;
+  maxBattleTickets: number;
+  /** ISO timestamp when the next hunt ticket will be available (null if full) */
+  nextHuntTicketAt: string | null;
+  /** ISO timestamp when the next battle ticket will be available (null if full) */
+  nextBattleTicketAt: string | null;
+  /** Minutes per hunt ticket regen */
+  huntRegenMinutes: number;
+  /** Minutes per battle ticket regen */
+  battleRegenMinutes: number;
+}
+
+function getConfig() {
+  const loader = ConfigLoaderService.getInstance();
+  const gc = loader?.getGameConstants();
+  return {
+    maxHunt: gc?.tickets?.maxHuntTickets ?? 5,
+    maxBattle: gc?.tickets?.maxBattleTickets ?? 20,
+    huntRegenMin: gc?.tickets?.huntRegenMinutes ?? 180,
+    battleRegenMin: gc?.tickets?.battleRegenMinutes ?? 60,
+  };
+}
+
+/**
+ * Calculate how many tickets have regenerated since `lastRegen`,
+ * and what the new lastRegen timestamp should be.
+ */
+function computeRegen(
+  currentTickets: number,
+  maxTickets: number,
+  lastRegen: Date,
+  regenMinutes: number,
+  now: Date,
+): { tickets: number; newLastRegen: Date } {
+  if (currentTickets >= maxTickets) {
+    return { tickets: maxTickets, newLastRegen: now };
+  }
+
+  const elapsedMs = now.getTime() - lastRegen.getTime();
+  const elapsedMinutes = elapsedMs / (1000 * 60);
+  const ticketsEarned = Math.floor(elapsedMinutes / regenMinutes);
+
+  if (ticketsEarned <= 0) {
+    return { tickets: currentTickets, newLastRegen: lastRegen };
+  }
+
+  const newTickets = Math.min(currentTickets + ticketsEarned, maxTickets);
+  // Advance lastRegen by the number of tickets actually earned (not clamped extras)
+  const ticketsActuallyAdded = newTickets - currentTickets;
+  const newLastRegen = new Date(lastRegen.getTime() + ticketsActuallyAdded * regenMinutes * 60 * 1000);
+
+  return { tickets: newTickets, newLastRegen };
+}
+
+function getNextTicketAt(
+  currentTickets: number,
+  maxTickets: number,
+  lastRegen: Date,
+  regenMinutes: number,
+): string | null {
+  if (currentTickets >= maxTickets) return null;
+  return new Date(lastRegen.getTime() + regenMinutes * 60 * 1000).toISOString();
+}
+
 export class TicketResetUtil {
   /**
-   * Check if tickets need to be reset and perform the reset if needed
-   * Resets occur if the last reset was before today (UTC)
-   * 
-   * @param prisma - PrismaService instance
-   * @param userId - User ID to check/reset tickets for
-   * @returns Object containing reset status and message
+   * Regenerate tickets based on elapsed time, update DB, return current state.
+   * Call this before any operation that reads or consumes tickets.
    */
   static async checkAndResetTickets(
     prisma: PrismaService,
     userId: string,
-  ): Promise<{ reset: boolean; message: string }> {
+  ): Promise<TicketRegenResult> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
-        lastTicketReset: true,
         huntTickets: true,
         battleTickets: true,
+        lastHuntTicketRegen: true,
+        lastBattleTicketRegen: true,
       },
     });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
+    if (!user) throw new Error('User not found');
 
-    // Get start of today (UTC)
+    const cfg = getConfig();
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Get start of last reset day (UTC)
-    const lastReset = new Date(user.lastTicketReset);
-    const lastResetStart = new Date(
-      lastReset.getFullYear(),
-      lastReset.getMonth(),
-      lastReset.getDate(),
-    );
+    const hunt = computeRegen(user.huntTickets, cfg.maxHunt, user.lastHuntTicketRegen, cfg.huntRegenMin, now);
+    const battle = computeRegen(user.battleTickets, cfg.maxBattle, user.lastBattleTicketRegen, cfg.battleRegenMin, now);
 
-    // Check if last reset was before today
-    if (lastResetStart < todayStart) {
-      // Reset tickets
+    const huntChanged = hunt.tickets !== user.huntTickets;
+    const battleChanged = battle.tickets !== user.battleTickets;
+
+    if (huntChanged || battleChanged) {
       await prisma.user.update({
         where: { id: userId },
         data: {
-          huntTickets: 5,
-          battleTickets: 20,
-          lastTicketReset: now,
+          ...(huntChanged && { huntTickets: hunt.tickets, lastHuntTicketRegen: hunt.newLastRegen }),
+          ...(battleChanged && { battleTickets: battle.tickets, lastBattleTicketRegen: battle.newLastRegen }),
         },
       });
-
-      return {
-        reset: true,
-        message: 'Tickets have been reset! You now have 5 hunt tickets and 20 battle tickets.',
-      };
     }
 
     return {
-      reset: false,
-      message: 'Tickets are still valid for today.',
+      huntTickets: hunt.tickets,
+      battleTickets: battle.tickets,
+      maxHuntTickets: cfg.maxHunt,
+      maxBattleTickets: cfg.maxBattle,
+      nextHuntTicketAt: getNextTicketAt(hunt.tickets, cfg.maxHunt, hunt.newLastRegen, cfg.huntRegenMin),
+      nextBattleTicketAt: getNextTicketAt(battle.tickets, cfg.maxBattle, battle.newLastRegen, cfg.battleRegenMin),
+      huntRegenMinutes: cfg.huntRegenMin,
+      battleRegenMinutes: cfg.battleRegenMin,
     };
   }
 }

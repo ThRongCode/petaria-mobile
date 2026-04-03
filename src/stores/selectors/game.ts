@@ -236,6 +236,7 @@ export const getTotalPetValue = createSelector(
       const baseValue = pet.level * 100
       const rarityMultiplier = {
         'Common': 1,
+        'Uncommon': 1.5,
         'Rare': 2,
         'Epic': 4,
         'Legendary': 8

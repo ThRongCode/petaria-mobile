@@ -6,18 +6,45 @@ export class GameConfigService {
   constructor(private readonly configLoader: ConfigLoaderService) {}
 
   /**
-   * Returns global game configuration constants
+   * Returns global game configuration constants from game-constants.json
    */
   getGameConfig() {
+    const gc = this.configLoader.getGameConstants();
     return {
-      healCost: 200,
-      maxBattleTickets: 20,
-      maxHuntTickets: 5,
-      maxPetSlots: 20,
-      maxItemSlots: 100,
-      ticketResetIntervalHours: 24,
-      xpFormula: 'level * 200',
-      maxEvolutionStage: 3,
+      // Levels & XP
+      maxPetLevel: gc.levels.maxPetLevel,
+      maxUserLevel: gc.levels.maxUserLevel,
+      petXpFormula: 'level^2 * 10',
+      userXpFormula: 'level^2 * 20',
+
+      // Tickets
+      maxBattleTickets: gc.tickets.maxBattleTickets,
+      maxHuntTickets: gc.tickets.maxHuntTickets,
+      ticketResetIntervalHours: gc.tickets.resetIntervalHours,
+
+      // Limits
+      maxPetSlots: gc.limits.maxPetSlots,
+      maxItemSlots: gc.limits.maxItemSlots,
+
+      // Hunting
+      huntMovesPerSession: gc.hunting.movesPerSession,
+      encounterChance: gc.hunting.encounterChance,
+      huntSessionExpiryHours: gc.hunting.sessionExpiryHours,
+
+      // Catching
+      catchRates: gc.catching.ballRates,
+      rarityCatchModifiers: gc.catching.rarityModifiers,
+
+      // Battle
+      battleLossRewardPercent: gc.battle.lossRewardPercent,
+
+      // Healing
+      healAllCost: gc.healing.healAllCost,
+
+      // Rarity
+      rarityMultipliers: gc.rarityMultipliers,
+
+      // Currencies
       currencies: ['coins', 'gems', 'pokeballs'],
     };
   }

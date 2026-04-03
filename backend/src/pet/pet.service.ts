@@ -12,6 +12,7 @@ import {
   getRarityMultiplier,
   getSpeciesType,
 } from '../config/species-stats.config';
+import { ConfigLoaderService } from '../config/config-loader.service';
 
 @Injectable()
 export class PetService {
@@ -143,21 +144,26 @@ export class PetService {
   async feed(id: string, userId: string) {
     const pet = await this.findOne(id, userId);
 
-    if (pet.mood >= 100) {
+    const loader = ConfigLoaderService.getInstance();
+    const gc = loader?.getGameConstants();
+    const feedMoodIncrease = gc?.healing?.feedMoodIncrease ?? 20;
+    const maxMood = gc?.healing?.maxMood ?? 100;
+
+    if (pet.mood >= maxMood) {
       throw new BadRequestException('Pet is already at maximum mood');
     }
 
     const updated = await this.prisma.pet.update({
       where: { id },
       data: {
-        mood: Math.min(pet.mood + 20, 100),
+        mood: Math.min(pet.mood + feedMoodIncrease, maxMood),
         lastFed: new Date(),
       },
     });
 
     return {
       ...updated,
-      moodIncreased: Math.min(pet.mood + 20, 100) - pet.mood,
+      moodIncreased: Math.min(pet.mood + feedMoodIncrease, maxMood) - pet.mood,
     };
   }
 
@@ -201,7 +207,8 @@ export class PetService {
   }
 
   async healAll(userId: string) {
-    const HEAL_COST = 200;
+    const loaderHeal = ConfigLoaderService.getInstance();
+    const HEAL_COST = loaderHeal?.getGameConstants()?.healing?.healAllCost ?? 200;
 
     // Get user to check coins
     const user = await this.prisma.user.findUnique({

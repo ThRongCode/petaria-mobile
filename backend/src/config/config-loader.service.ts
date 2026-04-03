@@ -52,6 +52,68 @@ export interface EvolutionItem {
   description: string;
 }
 
+export interface GameConstants {
+  levels: {
+    maxPetLevel: number;
+    maxUserLevel: number;
+    petXpFormula: string;
+    userXpFormula: string;
+  };
+  stats: {
+    ivMin: number;
+    ivMax: number;
+    levelMultiplierBase: number;
+    levelMultiplierPerLevel: number;
+  };
+  rarityMultipliers: Record<string, number>;
+  tickets: {
+    maxHuntTickets: number;
+    maxBattleTickets: number;
+    huntRegenMinutes: number;
+    battleRegenMinutes: number;
+  };
+  dailyLogin: {
+    streakLength: number;
+    rewards: Array<{
+      day: number;
+      coins: number;
+      gems: number;
+      huntTickets: number;
+      battleTickets: number;
+      label: string;
+    }>;
+  };
+  limits: {
+    maxPetSlots: number;
+    maxItemSlots: number;
+  };
+  hunting: {
+    movesPerSession: number;
+    encounterChance: number;
+    sessionExpiryHours: number;
+  };
+  catching: {
+    ballRates: Record<string, number>;
+    rarityModifiers: Record<string, number>;
+  };
+  battle: {
+    lossRewardPercent: number;
+    maxDamageMultiplier: number;
+  };
+  healing: {
+    healAllCost: number;
+    feedMoodIncrease: number;
+    maxMood: number;
+  };
+  newUser: {
+    startingCoins: number;
+    startingGems: number;
+    startingPokeballs: number;
+    startingHuntTickets: number;
+    startingBattleTickets: number;
+  };
+}
+
 // Singleton instance for static access
 let configInstance: ConfigLoaderService | null = null;
 
@@ -62,6 +124,7 @@ export class ConfigLoaderService implements OnModuleInit {
   private regionsConfig: RegionConfig[] = [];
   private evolutionChains: EvolutionChain[] = [];
   private evolutionItems: Record<string, EvolutionItem> = {};
+  private gameConstants: GameConstants | null = null;
   private rarityMultipliers = {
     common: 1.0,
     uncommon: 1.1,
@@ -95,9 +158,27 @@ export class ConfigLoaderService implements OnModuleInit {
     this.loadSpeciesConfig(configDir);
     this.loadRegionsConfig(configDir);
     this.loadEvolutionsConfig(configDir);
+    this.loadGameConstants(configDir);
 
     this.isLoaded = true;
     this.logger.log('All game configurations loaded successfully');
+  }
+
+  private loadGameConstants(configDir: string) {
+    try {
+      const constantsPath = path.join(configDir, 'game-constants.json');
+      this.gameConstants = JSON.parse(fs.readFileSync(constantsPath, 'utf-8'));
+
+      // Also sync rarity multipliers from constants
+      if (this.gameConstants?.rarityMultipliers) {
+        this.rarityMultipliers = this.gameConstants.rarityMultipliers as any;
+      }
+
+      this.logger.log('Loaded game constants');
+    } catch (error) {
+      this.logger.error('Failed to load game constants', error);
+      throw error;
+    }
   }
 
   private loadSpeciesConfig(configDir: string) {
@@ -278,8 +359,45 @@ export class ConfigLoaderService implements OnModuleInit {
     return { ...this.evolutionItems };
   }
 
+  // Game Constants methods
+  getGameConstants(): GameConstants {
+    if (!this.gameConstants) {
+      throw new Error('Game constants not loaded');
+    }
+    return this.gameConstants;
+  }
+
+  getDefaultStats(): { hp: number; attack: number; defense: number; speed: number } {
+    return { hp: 50, attack: 50, defense: 50, speed: 50 };
+  }
+
+  /**
+   * Calculate final stat based on base stat, IV, level, and rarity
+   * Formula: ((baseStat + IV) * (1 + level * 0.1)) * rarityMultiplier
+   */
+  calculateFinalStat(baseStat: number, iv: number, level: number, rarityMultiplier: number): number {
+    const gc = this.getGameConstants();
+    const levelMultiplier = gc.stats.levelMultiplierBase + level * gc.stats.levelMultiplierPerLevel;
+    return Math.floor((baseStat + iv) * levelMultiplier * rarityMultiplier);
+  }
+
+  /**
+   * Generate random IVs for a captured Pokemon
+   */
+  generateRandomIVs(): { ivHp: number; ivAttack: number; ivDefense: number; ivSpeed: number } {
+    const gc = this.getGameConstants();
+    const randomIV = () => Math.floor(Math.random() * (gc.stats.ivMax + 1));
+    return {
+      ivHp: randomIV(),
+      ivAttack: randomIV(),
+      ivDefense: randomIV(),
+      ivSpeed: randomIV(),
+    };
+  }
+
   // Reload configs (useful for hot-reloading in development)
   reloadConfigs() {
+    this.isLoaded = false;
     this.loadAllConfigs();
     this.logger.log('Configurations reloaded');
   }

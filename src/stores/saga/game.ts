@@ -22,7 +22,7 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         avatar: p.avatarUrl || `https://ui-avatars.com/api/?name=${p.username}&background=random`,
         level: p.level,
         xp: p.xp,
-        xpToNext: p.xpToNext ?? p.level * 200,
+        xpToNext: p.xpToNext,
         currency: {
           coins: p.coins,
           gems: p.gems,
@@ -30,7 +30,12 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         },
         huntTickets: p.huntTickets,
         battleTickets: p.battleTickets,
-        lastTicketReset: p.lastTicketReset,
+        maxHuntTickets: p.maxHuntTickets ?? 5,
+        maxBattleTickets: p.maxBattleTickets ?? 20,
+        nextHuntTicketAt: p.nextHuntTicketAt ?? null,
+        nextBattleTicketAt: p.nextBattleTicketAt ?? null,
+        huntRegenMinutes: p.huntRegenMinutes ?? 180,
+        battleRegenMinutes: p.battleRegenMinutes ?? 60,
         petCount: p.petCount,
         itemCount: p.itemCount,
         stats: {
@@ -65,10 +70,10 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
         name: backendPet.nickname || backendPet.species,
         species: backendPet.species,
         type: backendPet.type || 'Normal', // Type from backend (Fire, Water, etc.)
-        rarity: backendPet.rarity as 'Common' | 'Rare' | 'Epic' | 'Legendary',
+        rarity: backendPet.rarity as 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary',
         level: backendPet.level,
         xp: backendPet.xp,
-        xpToNext: backendPet.level * 100,
+        xpToNext: backendPet.xpToNext ?? backendPet.level * backendPet.level * 10, // quadratic: level² × 10
         stats: {
           hp: backendPet.hp,
           maxHp: backendPet.maxHp,
@@ -186,6 +191,24 @@ function* loadUserDataSaga(): IterableIterator<AnyAction> {
       }))
       yield put(gameActions.setOpponents(opponents))
       console.log(`✅ Loaded ${opponents.length} opponents`)
+    }
+
+    // Load daily login status
+    try {
+      const dailyLoginResponse: Awaited<ReturnType<typeof userApi.getDailyLoginStatus>> = yield call([userApi, userApi.getDailyLoginStatus])
+      if (dailyLoginResponse.success && dailyLoginResponse.data) {
+        const dl = dailyLoginResponse.data
+        yield put(gameActions.setDailyLogin({
+          currentStreak: dl.currentStreak,
+          currentDay: dl.currentDay,
+          claimedToday: dl.claimedToday,
+          totalLogins: dl.totalLogins,
+          rewards: dl.rewards,
+          lastClaimedReward: null,
+        }))
+      }
+    } catch (e) {
+      if (__DEV__) console.error('Daily login status fetch failed:', e)
     }
 
     if (__DEV__) console.log('🎉 User data loading complete!')

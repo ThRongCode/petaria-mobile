@@ -20,7 +20,14 @@ export const userApi = {
       pokeballs: number
       huntTickets: number
       battleTickets: number
-      lastTicketReset: string
+      lastHuntTicketRegen: string
+      lastBattleTicketRegen: string
+      maxBattleTickets: number
+      maxHuntTickets: number
+      nextHuntTicketAt: string | null
+      nextBattleTicketAt: string | null
+      huntRegenMinutes: number
+      battleRegenMinutes: number
       petCount: number
       itemCount: number
       battlesWon: number
@@ -29,8 +36,6 @@ export const userApi = {
       avatarUrl: string | null
       title: string | null
       lastHealTime: string | null
-      maxBattleTickets: number
-      maxHuntTickets: number
       maxPetSlots: number
       maxItemSlots: number
       xpToNext: number
@@ -116,8 +121,14 @@ export const userApi = {
    */
   async checkTickets() {
     const response = await realApiClient.post<{
-      reset: boolean
-      message: string
+      huntTickets: number
+      battleTickets: number
+      maxHuntTickets: number
+      maxBattleTickets: number
+      nextHuntTicketAt: string | null
+      nextBattleTicketAt: string | null
+      huntRegenMinutes: number
+      battleRegenMinutes: number
     }>('/user/check-tickets')
 
     return {
@@ -149,6 +160,43 @@ export const userApi = {
       message: string
       huntTickets: number
     }>('/user/dev/add-hunt-tickets')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
+   * Claim daily login reward
+   */
+  async claimDailyLogin() {
+    const response = await realApiClient.post<{
+      claimed: boolean
+      alreadyClaimed: boolean
+      currentStreak: number
+      reward: { day: number; coins: number; gems: number; huntTickets: number; battleTickets: number; label: string } | null
+      nextReward: { day: number; coins: number; gems: number; huntTickets: number; battleTickets: number; label: string } | null
+      totalLogins: number
+    }>('/user/daily-login')
+
+    return {
+      success: true,
+      data: response,
+    }
+  },
+
+  /**
+   * Get daily login streak status
+   */
+  async getDailyLoginStatus() {
+    const response = await realApiClient.get<{
+      currentStreak: number
+      currentDay: number
+      totalLogins: number
+      claimedToday: boolean
+      rewards: Array<{ day: number; coins: number; gems: number; huntTickets: number; battleTickets: number; label: string }>
+    }>('/user/daily-login')
 
     return {
       success: true,

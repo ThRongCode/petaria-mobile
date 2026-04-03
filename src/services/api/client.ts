@@ -266,7 +266,7 @@ class ApiClient {
         error: { code: 'NOT_FOUND', message: `API endpoint not found: ${method} ${endpoint}` },
       }
     } catch (error) {
-      console.error('API request error:', error)
+      if (__DEV__) console.error('API request error:', error)
       if (error instanceof Error) {
         return {
           success: false,

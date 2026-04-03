@@ -15,6 +15,7 @@ import {
   getRarityMultiplier,
 } from '../config/species-stats.config';
 import { QuestService } from '../quest/quest.service';
+import { ConfigLoaderService } from '../config/config-loader.service';
 
 export interface Encounter {
   id: string;
@@ -31,11 +32,47 @@ export interface Encounter {
 
 @Injectable()
 export class HuntService {
+  /** Hunt sessions expire based on game-constants.json */
+  private get SESSION_EXPIRY_MS(): number {
+    const loader = ConfigLoaderService.getInstance();
+    const hours = loader?.getGameConstants()?.hunting?.sessionExpiryHours ?? 24;
+    return hours * 60 * 60 * 1000;
+  }
+
   constructor(
     private prisma: PrismaService,
     @Inject(forwardRef(() => QuestService))
     private questService: QuestService,
   ) {}
+
+  /**
+   * Check if a hunt session has expired (older than 24 hours).
+   * If expired, auto-cancels the session and refunds the ticket.
+   * Returns true if the session was expired and cleaned up.
+   */
+  private async checkAndExpireSession(session: any): Promise<boolean> {
+    const createdAt = new Date(session.createdAt).getTime();
+    const now = Date.now();
+
+    if (now - createdAt > this.SESSION_EXPIRY_MS) {
+      // Delete the expired session
+      await this.prisma.huntSession.delete({
+        where: { id: session.id },
+      });
+
+      // Refund the hunt ticket
+      await this.prisma.user.update({
+        where: { id: session.userId },
+        data: {
+          huntTickets: { increment: 1 },
+        },
+      });
+
+      return true;
+    }
+
+    return false;
+  }
 
   /**
    * Update quest progress with error handling
@@ -78,7 +115,7 @@ export class HuntService {
     // Check if user has enough hunt tickets
     if (updatedUser.huntTickets < 1) {
       throw new BadRequestException(
-        'Not enough hunt tickets (need 1, resets daily)',
+        'Not enough hunt tickets (need 1, regenerates every 3h)',
       );
     }
 
@@ -110,9 +147,14 @@ export class HuntService {
     });
 
     if (existingSession) {
-      throw new BadRequestException(
-        'You already have an active hunt session. Complete or cancel it first.',
-      );
+      // If the existing session has expired, auto-clean it
+      const expired = await this.checkAndExpireSession(existingSession);
+      if (!expired) {
+        throw new BadRequestException(
+          'You already have an active hunt session. Complete or cancel it first.',
+        );
+      }
+      // If expired, it was cleaned up — we can proceed
     }
 
     // Get spawn data for region
@@ -125,9 +167,13 @@ export class HuntService {
     }
 
     // Initialize session data with move tracking
+    const loader = ConfigLoaderService.getInstance();
+    const gc = loader?.getGameConstants();
+    const movesPerSession = gc?.hunting?.movesPerSession ?? 10;
+
     const sessionData = {
       encounters: [] as Encounter[],
-      movesLeft: 10, // 10 moves per session
+      movesLeft: movesPerSession,
       regionSpawns: spawns.map((s) => ({
         species: s.species,
         rarity: s.rarity,
@@ -178,6 +224,12 @@ export class HuntService {
 
     if (!session) {
       throw new NotFoundException('No active hunt session found');
+    }
+
+    // Check if session has expired (24h)
+    const expired = await this.checkAndExpireSession(session);
+    if (expired) {
+      throw new NotFoundException('Hunt session expired (24h limit). Your ticket has been refunded.');
     }
 
     const sessionData = session.encountersData as any;
@@ -233,6 +285,12 @@ export class HuntService {
       throw new NotFoundException('Hunt session not found');
     }
 
+    // Check if session has expired (24h)
+    const expired = await this.checkAndExpireSession(session);
+    if (expired) {
+      throw new NotFoundException('Hunt session expired (24h limit). Your ticket has been refunded.');
+    }
+
     const sessionData = session.encountersData as any;
 
     // Check if moves left
@@ -242,11 +300,13 @@ export class HuntService {
       );
     }
 
-    // Random chance to encounter a Pokemon (50% chance)
+    // Random chance to encounter a Pokemon (from config)
     const encounterChance = Math.random();
+    const loader2 = ConfigLoaderService.getInstance();
+    const encounterThreshold = loader2?.getGameConstants()?.hunting?.encounterChance ?? 0.5;
     let newEncounter: Encounter | null = null;
 
-    if (encounterChance < 0.5 && sessionData.regionSpawns?.length > 0) {
+    if (encounterChance < encounterThreshold && sessionData.regionSpawns?.length > 0) {
       // Generate new encounter
       newEncounter = this.generateEncounterFromSpawns(
         sessionData.regionSpawns,
@@ -357,6 +417,12 @@ export class HuntService {
       throw new NotFoundException('Hunt session not found');
     }
 
+    // Check if session has expired (24h)
+    const catchExpired = await this.checkAndExpireSession(session);
+    if (catchExpired) {
+      throw new NotFoundException('Hunt session expired (24h limit). Your ticket has been refunded.');
+    }
+
     const sessionData = session.encountersData as any;
     const encounters = sessionData.encounters || [];
     const encounter = encounters.find((e: Encounter) => e.id === encounterId);
@@ -369,22 +435,25 @@ export class HuntService {
       throw new BadRequestException('This pet has already been caught');
     }
 
-    // Calculate catch rate based on ball type and rarity
-    const ballRates = {
-      pokeball: 0.4,
-      greatball: 0.6,
-      ultraball: 0.8,
+    // Calculate catch rate based on ball type and rarity (from config)
+    const configLoader = ConfigLoaderService.getInstance();
+    const gcCatch = configLoader?.getGameConstants()?.catching;
+    const ballRates: Record<string, number> = gcCatch?.ballRates ?? {
+      'pokeball': 0.4,
+      'great-ball': 0.6,
+      'ultra-ball': 0.8,
     };
 
-    const rarityModifier = {
+    const rarityModifiers: Record<string, number> = gcCatch?.rarityModifiers ?? {
       common: 1.2,
       uncommon: 1.0,
       rare: 0.7,
       epic: 0.5,
       legendary: 0.3,
-    }[encounter.rarity.toLowerCase()] || 1.0;
+    };
 
-    const catchRate = (ballRates[ballType] || 0.4) * rarityModifier;
+    const rarityModifier = rarityModifiers[encounter.rarity.toLowerCase()] || 1.0;
+    const catchRate = (ballRates[ballType] || ballRates['pokeball'] || 0.4) * rarityModifier;
     const success = Math.random() < catchRate;
 
     if (success) {

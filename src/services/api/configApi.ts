@@ -10,14 +10,23 @@ export const configApi = {
    */
   async getGameConfig() {
     const response = await realApiClient.get<{
-      healCost: number
+      maxPetLevel: number
+      maxUserLevel: number
+      petXpFormula: string
+      userXpFormula: string
       maxBattleTickets: number
       maxHuntTickets: number
       maxPetSlots: number
       maxItemSlots: number
       ticketResetIntervalHours: number
-      xpFormula: string
-      maxEvolutionStage: number
+      huntMovesPerSession: number
+      encounterChance: number
+      huntSessionExpiryHours: number
+      catchRates: Record<string, number>
+      rarityCatchModifiers: Record<string, number>
+      battleLossRewardPercent: number
+      healAllCost: number
+      rarityMultipliers: Record<string, number>
       currencies: string[]
     }>('/config/game')
 

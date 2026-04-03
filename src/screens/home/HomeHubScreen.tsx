@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   StyleSheet,
   View,
@@ -11,9 +11,10 @@ import { Panel, useAlert, CurrencyBar } from '@/components/ui'
 import { ScreenContainer, ThemedText } from '@/components'
 import { useRouter } from 'expo-router'
 import { useSelector, useDispatch } from 'react-redux'
-import { getUserProfile } from '@/stores/selectors'
+import { getUserProfile, getAllPets } from '@/stores/selectors'
 import { gameActions } from '@/stores/reducers'
 import { apiClient } from '@/services/api/client'
+import { userApi } from '@/services/api'
 import { Ionicons } from '@expo/vector-icons'
 import { AppIcons } from '@/constants/icons'
 import { backgrounds } from '@/assets/images/backgrounds'
@@ -26,6 +27,7 @@ import {
   glowHero,
 } from '@/themes'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { RootState } from '@/stores/store'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const HERO_SIZE = SCREEN_WIDTH * 0.38
@@ -60,7 +62,50 @@ export const HomeHubScreen: React.FC = () => {
   const alert = useAlert()
   const insets = useSafeAreaInsets()
   const profile = useSelector(getUserProfile)
+  const pets = useSelector(getAllPets)
+  const dailyLogin = useSelector((state: RootState) => state.game.dailyLogin)
   const [healingLoading, setHealingLoading] = useState(false)
+  const [loginClaimed, setLoginClaimed] = useState(dailyLogin.claimedToday)
+
+  // Count unique species owned
+  const uniqueSpecies = new Set(pets.map(p => p.species)).size
+  const TOTAL_SPECIES = 51 // Gen 1 roster
+
+  // Auto-claim daily login on first visit
+  useEffect(() => {
+    if (!dailyLogin.claimedToday && !loginClaimed) {
+      userApi.claimDailyLogin().then(res => {
+        if (res.success && res.data?.claimed) {
+          setLoginClaimed(true)
+          const r = res.data.reward
+          dispatch(gameActions.setDailyLogin({
+            ...dailyLogin,
+            claimedToday: true,
+            currentStreak: res.data.currentStreak,
+            currentDay: ((res.data.currentStreak - 1) % 7) + 1,
+            totalLogins: res.data.totalLogins,
+            lastClaimedReward: r,
+          }))
+          // Refresh profile to get updated coins/gems/tickets
+          dispatch({ type: 'game/loadUserData' })
+          if (r) {
+            const parts = []
+            if (r.coins) parts.push(`${r.coins} coins`)
+            if (r.gems) parts.push(`${r.gems} gems`)
+            if (r.huntTickets) parts.push(`${r.huntTickets} hunt tickets`)
+            if (r.battleTickets) parts.push(`${r.battleTickets} battle tickets`)
+            alert.show(
+              `${r.label || 'Daily Login'} (Day ${res.data.currentStreak})`,
+              `Streak: ${res.data.currentStreak} days!\n\nRewards: ${parts.join(', ')}`,
+              [{ text: 'Awesome!' }],
+            )
+          }
+        } else {
+          setLoginClaimed(true)
+        }
+      }).catch(() => setLoginClaimed(true))
+    }
+  }, [])
 
   // ── Healing handler (preserved from original) ───────────────────────────
   const handleHealAllPets = async () => {
@@ -149,7 +194,7 @@ export const HomeHubScreen: React.FC = () => {
       key: 'quests',
       icon: 'clipboard',
       label: 'Daily Quests',
-      subtitle: '3 Pending',
+      subtitle: 'Check Rewards',
       tintColor: colors.tertiary,
       tintBg: 'rgba(0, 218, 243, 0.15)',
       route: '/quests',
@@ -211,6 +256,37 @@ export const HomeHubScreen: React.FC = () => {
         {/* Currency row */}
         <View style={s.currencyRow}>
           <CurrencyBar coins={profile.currency?.coins} gems={profile.currency?.gems} />
+        </View>
+
+        {/* ════════════ STATUS CARDS ════════════ */}
+        <View style={s.statusCards}>
+          {/* Daily Login Streak */}
+          <Panel variant="glass" intensity="default" flush style={s.statusCard}>
+            <Ionicons name="flame" size={18} color="#FFD700" />
+            <View style={{ flex: 1 }}>
+              <ThemedText style={s.statusLabel}>Login Streak</ThemedText>
+              <ThemedText style={s.statusValue}>
+                {dailyLogin.currentStreak || 0} day{dailyLogin.currentStreak !== 1 ? 's' : ''}
+              </ThemedText>
+            </View>
+            <View style={s.streakBadge}>
+              <ThemedText style={s.streakBadgeText}>
+                Day {dailyLogin.currentDay || 0}/7
+              </ThemedText>
+            </View>
+          </Panel>
+
+          {/* Collection Progress */}
+          <Panel variant="glass" intensity="default" flush style={s.statusCard}>
+            <Ionicons name="albums" size={18} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <ThemedText style={s.statusLabel}>Pokédex</ThemedText>
+              <View style={s.collectionBarTrack}>
+                <View style={[s.collectionBarFill, { width: `${Math.min((uniqueSpecies / TOTAL_SPECIES) * 100, 100)}%` as any }]} />
+              </View>
+            </View>
+            <ThemedText style={s.statusValue}>{uniqueSpecies}/{TOTAL_SPECIES}</ThemedText>
+          </Panel>
         </View>
 
         {/* ════════════ HERO SECTION ════════════ */}
@@ -332,6 +408,58 @@ const s = StyleSheet.create({
   notifBtn: {
     padding: spacing.sm,
     borderRadius: radii.full,
+  },
+
+  // ── Status Cards ───────────────────────────────────────────
+  statusCards: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  statusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.lg,
+  },
+  statusLabel: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.semiBold,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  statusValue: {
+    fontSize: fontSizes.span,
+    fontFamily: fonts.bold,
+    color: colors.onSurface,
+  },
+  streakBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+  },
+  streakBadgeText: {
+    fontSize: 10,
+    fontFamily: fonts.bold,
+    color: '#FFD700',
+  },
+  collectionBarTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceVariant,
+    overflow: 'hidden',
+    marginTop: 3,
+  },
+  collectionBarFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
   },
 
   // ── Hero Section ───────────────────────────────────────────

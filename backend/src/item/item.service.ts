@@ -1,6 +1,8 @@
 import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestService } from '../quest/quest.service';
+import { PetStatsUtil, getMaxPetLevel } from '../utils/petStats';
+import { ConfigLoaderService } from '../config/config-loader.service';
 
 @Injectable()
 export class ItemService {
@@ -100,9 +102,11 @@ export class ItemService {
     }
 
     // Check item limit
-    if (user.itemCount + quantity > 500) {
+    const loaderItem = ConfigLoaderService.getInstance();
+    const maxItems = loaderItem?.getGameConstants()?.limits?.maxItemSlots ?? 500;
+    if (user.itemCount + quantity > maxItems) {
       throw new BadRequestException(
-        `Item limit reached. Can only add ${500 - user.itemCount} more items (500 max)`,
+        `Item limit reached. Can only add ${maxItems - user.itemCount} more items (${maxItems} max)`,
       );
     }
 
@@ -204,8 +208,39 @@ export class ItemService {
 
     const item = userItem.item;
 
+    // ===== TicketRefill: Refill hunt/battle tickets =====
+    if (item.type === 'TicketRefill') {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new NotFoundException('User not found');
+
+      const gc = ConfigLoaderService.getInstance()?.getGameConstants();
+      const maxHunt = gc?.tickets?.maxHuntTickets ?? 5;
+      const maxBattle = gc?.tickets?.maxBattleTickets ?? 20;
+
+      const updateData: Record<string, number> = {};
+      if (itemId === 'hunt-ticket-refill' || itemId === 'all-ticket-refill') {
+        updateData.huntTickets = maxHunt;
+      }
+      if (itemId === 'battle-ticket-refill' || itemId === 'all-ticket-refill') {
+        updateData.battleTickets = maxBattle;
+      }
+
+      await this.prisma.user.update({ where: { id: userId }, data: updateData });
+      await this.decrementUserItem(userId, itemId, 1);
+      await this.prisma.user.update({ where: { id: userId }, data: { itemCount: { decrement: 1 } } });
+      await this.updateQuestProgress(userId, 'use_item', 1);
+
+      return {
+        message: `Tickets refilled!`,
+        itemUsed: item.name,
+        huntTickets: updateData.huntTickets ?? user.huntTickets,
+        battleTickets: updateData.battleTickets ?? user.battleTickets,
+      };
+    }
+
     // If item affects a pet, petId is required
-    if ((item.effectHp || item.effectAttack || item.effectDefense || item.effectSpeed) && !petId) {
+    const needsPet = item.effectHp || item.effectAttack || item.effectDefense || item.effectSpeed || item.id === 'rare-candy' || item.type === 'MoveBook';
+    if (needsPet && !petId) {
       throw new BadRequestException('Pet ID is required to use this item');
     }
 
@@ -225,6 +260,117 @@ export class ItemService {
 
       if (!pet) {
         throw new NotFoundException('Pet not found');
+      }
+
+      // ===== Rare Candy: Level up by 1 =====
+      if (item.id === 'rare-candy') {
+        const maxLevel = getMaxPetLevel();
+        if (pet.level >= maxLevel) {
+          throw new BadRequestException(`Pet is already at max level (${maxLevel})`);
+        }
+
+        const newLevel = pet.level + 1;
+        const newStats = PetStatsUtil.calculateStats(
+          pet.species,
+          newLevel,
+          pet.rarity,
+          {
+            ivHp: pet.ivHp,
+            ivAttack: pet.ivAttack,
+            ivDefense: pet.ivDefense,
+            ivSpeed: pet.ivSpeed,
+          },
+        );
+
+        const updatedPet = await this.prisma.pet.update({
+          where: { id: petId },
+          data: {
+            level: newLevel,
+            xp: 0, // Reset XP on rare candy level-up
+            hp: newStats.maxHp, // Full heal on level up
+            maxHp: newStats.maxHp,
+            attack: newStats.attack,
+            defense: newStats.defense,
+            speed: newStats.speed,
+          },
+        });
+
+        // Consume the rare candy
+        await this.decrementUserItem(userId, itemId, 1);
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { itemCount: { decrement: 1 } },
+        });
+
+        // Update quest progress for using items
+        await this.updateQuestProgress(userId, 'use_item', 1);
+
+        return {
+          message: `${pet.species} grew to level ${newLevel}!`,
+          itemUsed: item.name,
+          pet: updatedPet,
+          leveledUp: true,
+          newLevel,
+          statChanges: {
+            maxHp: { from: pet.maxHp, to: newStats.maxHp },
+            attack: { from: pet.attack, to: newStats.attack },
+            defense: { from: pet.defense, to: newStats.defense },
+            speed: { from: pet.speed, to: newStats.speed },
+          },
+        };
+      }
+
+      // ===== MoveBook (TM): Teach a move to pet =====
+      if (item.type === 'MoveBook' && item.teachesMove) {
+        const MAX_MOVES = 4;
+
+        // Check move exists
+        const move = await this.prisma.move.findUnique({ where: { id: item.teachesMove } });
+        if (!move) {
+          throw new BadRequestException(`Move "${item.teachesMove}" not found`);
+        }
+
+        // Check if pet already knows this move
+        const existingMove = await this.prisma.petMove.findUnique({
+          where: { petId_moveId: { petId: pet.id, moveId: item.teachesMove } },
+        });
+        if (existingMove) {
+          throw new BadRequestException(`${pet.species} already knows ${move.name}`);
+        }
+
+        // Check move count — if at max, the first move is replaced
+        const currentMoves = await this.prisma.petMove.findMany({
+          where: { petId: pet.id },
+        });
+
+        if (currentMoves.length >= MAX_MOVES) {
+          // Delete the first move to make room
+          const oldest = currentMoves[0];
+          await this.prisma.petMove.delete({
+            where: { petId_moveId: { petId: pet.id, moveId: oldest.moveId } },
+          });
+        }
+
+        // Add the new move
+        await this.prisma.petMove.create({
+          data: { petId: pet.id, moveId: item.teachesMove, pp: 0, maxPp: 0 },
+        });
+
+        // Consume the TM
+        await this.decrementUserItem(userId, itemId, 1);
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { itemCount: { decrement: 1 } },
+        });
+
+        await this.updateQuestProgress(userId, 'use_item', 1);
+
+        return {
+          message: `${pet.species} learned ${move.name}!`,
+          itemUsed: item.name,
+          moveLearned: move.name,
+          replacedMove: currentMoves.length >= MAX_MOVES ? currentMoves[0].moveId : null,
+        };
       }
 
       const updates: any = {};

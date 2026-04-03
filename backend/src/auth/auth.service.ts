@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponse, JwtPayload } from './interfaces/auth.interface';
 import { TicketResetUtil } from '../utils/ticketReset';
+import { DailyLoginUtil } from '../utils/dailyLogin';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -47,7 +48,8 @@ export class AuthService {
         gems: 50,
         huntTickets: 5,
         battleTickets: 20,
-        lastTicketReset: new Date(),
+        lastHuntTicketRegen: new Date(),
+        lastBattleTicketRegen: new Date(),
         petCount: 0,
         itemCount: 0,
         battlesWon: 0,
@@ -77,7 +79,8 @@ export class AuthService {
         gems: user.gems,
         huntTickets: user.huntTickets,
         battleTickets: user.battleTickets,
-        lastTicketReset: user.lastTicketReset,
+        lastHuntTicketRegen: user.lastHuntTicketRegen,
+        lastBattleTicketRegen: user.lastBattleTicketRegen,
         petCount: user.petCount,
         itemCount: user.itemCount,
       },
@@ -103,16 +106,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Check and reset tickets if needed
+    // Regenerate tickets based on elapsed time
     await TicketResetUtil.checkAndResetTickets(this.prisma, user.id);
 
-    // Fetch updated user data after potential ticket reset
+    // Auto-claim daily login reward
+    const dailyLoginResult = await DailyLoginUtil.claimDailyLogin(this.prisma, user.id);
+
+    // Fetch updated user data after ticket regen + daily login
     const updatedUser = await this.prisma.user.findUnique({
       where: { id: user.id },
     });
 
     if (!updatedUser) {
-      throw new UnauthorizedException('User not found after ticket reset');
+      throw new UnauthorizedException('User not found after login processing');
     }
 
     // Generate JWT token
@@ -136,10 +142,12 @@ export class AuthService {
         gems: updatedUser.gems,
         huntTickets: updatedUser.huntTickets,
         battleTickets: updatedUser.battleTickets,
-        lastTicketReset: updatedUser.lastTicketReset,
+        lastHuntTicketRegen: updatedUser.lastHuntTicketRegen,
+        lastBattleTicketRegen: updatedUser.lastBattleTicketRegen,
         petCount: updatedUser.petCount,
         itemCount: updatedUser.itemCount,
       },
+      dailyLogin: dailyLoginResult,
     };
   }
 
@@ -156,7 +164,8 @@ export class AuthService {
         gems: true,
         huntTickets: true,
         battleTickets: true,
-        lastTicketReset: true,
+        lastHuntTicketRegen: true,
+        lastBattleTicketRegen: true,
         petCount: true,
         itemCount: true,
       },
@@ -195,8 +204,6 @@ export class AuthService {
     });
 
     // In production: send email with the reset code
-    // For now, we log it and return success
-    console.log(`[ForgotPassword] Reset code for ${email}: ${resetCode}`);
 
     return {
       message: 'If an account with that email exists, a reset code has been sent.',

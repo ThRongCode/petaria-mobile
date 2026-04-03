@@ -57,6 +57,24 @@ export interface RegisterRequest {
   username: string
 }
 
+export interface DailyLoginReward {
+  day: number
+  coins: number
+  gems: number
+  huntTickets: number
+  battleTickets: number
+  label: string
+}
+
+export interface DailyLoginResult {
+  claimed: boolean
+  alreadyClaimed: boolean
+  currentStreak: number
+  reward: DailyLoginReward | null
+  nextReward: DailyLoginReward | null
+  totalLogins: number
+}
+
 export interface AuthResponse {
   token: string
   userId: string
@@ -72,10 +90,12 @@ export interface AuthResponse {
     gems: number
     huntTickets: number
     battleTickets: number
-    lastTicketReset: string
+    lastHuntTicketRegen: string
+    lastBattleTicketRegen: string
     petCount: number
     itemCount: number
   }
+  dailyLogin?: DailyLoginResult
 }
 
 // Hunt types

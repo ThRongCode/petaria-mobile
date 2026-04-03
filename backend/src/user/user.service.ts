@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketResetUtil } from '../utils/ticketReset';
+import { DailyLoginUtil } from '../utils/dailyLogin';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
+import { ConfigLoaderService } from '../config/config-loader.service';
 
 @Injectable()
 export class UserService {
@@ -21,7 +23,8 @@ export class UserService {
         pokeballs: true,
         huntTickets: true,
         battleTickets: true,
-        lastTicketReset: true,
+        lastHuntTicketRegen: true,
+        lastBattleTicketRegen: true,
         petCount: true,
         itemCount: true,
         battlesWon: true,
@@ -30,6 +33,10 @@ export class UserService {
         avatarUrl: true,
         title: true,
         lastHealTime: true,
+        // Login streak
+        loginStreak: true,
+        lastLoginDate: true,
+        totalLogins: true,
         // Settings
         settingsNotifications: true,
         settingsAutoFeed: true,
@@ -46,14 +53,28 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
+    // Regenerate tickets based on elapsed time
+    const ticketRegen = await TicketResetUtil.checkAndResetTickets(this.prisma, userId);
+
+    const loader = ConfigLoaderService.getInstance();
+    const gc = loader?.getGameConstants();
+
     return {
       ...user,
-      // Game constants bundled with profile for convenience
-      maxBattleTickets: 20,
-      maxHuntTickets: 5,
-      maxPetSlots: 20,
-      maxItemSlots: 100,
-      xpToNext: user.level * 200,
+      // Override with regenerated ticket counts
+      huntTickets: ticketRegen.huntTickets,
+      battleTickets: ticketRegen.battleTickets,
+      // Ticket regen info for FE countdown timers
+      maxBattleTickets: ticketRegen.maxBattleTickets,
+      maxHuntTickets: ticketRegen.maxHuntTickets,
+      nextHuntTicketAt: ticketRegen.nextHuntTicketAt,
+      nextBattleTicketAt: ticketRegen.nextBattleTicketAt,
+      huntRegenMinutes: ticketRegen.huntRegenMinutes,
+      battleRegenMinutes: ticketRegen.battleRegenMinutes,
+      // Game constants
+      maxPetSlots: gc?.limits?.maxPetSlots ?? 100,
+      maxItemSlots: gc?.limits?.maxItemSlots ?? 500,
+      xpToNext: user.level * user.level * 20, // quadratic: level² × 20
       settings: {
         notifications: user.settingsNotifications,
         autoFeed: user.settingsAutoFeed,
@@ -95,6 +116,14 @@ export class UserService {
       quantity: inv.quantity,
       item: inv.item,
     }));
+  }
+
+  async claimDailyLogin(userId: string) {
+    return DailyLoginUtil.claimDailyLogin(this.prisma, userId);
+  }
+
+  async getDailyLoginStatus(userId: string) {
+    return DailyLoginUtil.getStreakStatus(this.prisma, userId);
   }
 
   async checkTicketReset(userId: string) {

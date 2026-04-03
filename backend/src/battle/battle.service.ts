@@ -10,6 +10,7 @@ import { TicketResetUtil } from '../utils/ticketReset';
 import { PetStatsUtil } from '../utils/petStats';
 import { UserStatsUtil } from '../utils/userStats';
 import { QuestService } from '../quest/quest.service';
+import { ConfigLoaderService } from '../config/config-loader.service';
 
 @Injectable()
 export class BattleService {
@@ -128,7 +129,7 @@ export class BattleService {
     // Check if user has enough battle tickets
     if (updatedUser.battleTickets < 1) {
       throw new BadRequestException(
-        'Not enough battle tickets (need 1, resets daily)',
+        'Not enough battle tickets (need 1, regenerates every 1h)',
       );
     }
 
@@ -242,9 +243,11 @@ export class BattleService {
       xpReward = opponent.rewardXp;
       coinReward = opponent.rewardCoins;
     } else {
-      // Give partial rewards even on loss
-      xpReward = Math.floor(opponent.rewardXp * 0.3);
-      coinReward = Math.floor(opponent.rewardCoins * 0.3);
+      // Give partial rewards even on loss (from config)
+      const loader = ConfigLoaderService.getInstance();
+      const lossRewardPercent = loader?.getGameConstants()?.battle?.lossRewardPercent ?? 0.3;
+      xpReward = Math.floor(opponent.rewardXp * lossRewardPercent);
+      coinReward = Math.floor(opponent.rewardCoins * lossRewardPercent);
     }
 
     // Use finalHp from frontend (accurate after battle)
@@ -253,51 +256,49 @@ export class BattleService {
     let newLevel = pet.level;
     let statChanges = {};
 
-    // Add XP and check for level up
+    // Add XP and check for level up (supports multi-level-up via while loop)
     const newXp = pet.xp + xpReward;
-    const xpForNextLevel = PetStatsUtil.calculateXpForNextLevel(pet.level);
+    const levelUpResult = PetStatsUtil.checkLevelUp(
+      newXp,
+      pet.level,
+      pet.species,
+      pet.rarity,
+      {
+        ivHp: pet.ivHp,
+        ivAttack: pet.ivAttack,
+        ivDefense: pet.ivDefense,
+        ivSpeed: pet.ivSpeed,
+      },
+    );
 
-    if (newXp >= xpForNextLevel) {
-      newLevel = pet.level + 1;
-      leveledUp = true;
+    leveledUp = levelUpResult.leveledUp;
+    newLevel = levelUpResult.newLevel;
 
-      // Recalculate stats using deterministic formula (based on species, IVs, level)
-      const newStats = PetStatsUtil.calculateStats(
-        pet.species,
-        newLevel,
-        pet.rarity,
-        {
-          ivHp: pet.ivHp,
-          ivAttack: pet.ivAttack,
-          ivDefense: pet.ivDefense,
-          ivSpeed: pet.ivSpeed,
-        },
-      );
-
+    if (leveledUp && levelUpResult.newStats) {
       statChanges = {
-        maxHp: newStats.maxHp,
-        attack: newStats.attack,
-        defense: newStats.defense,
-        speed: newStats.speed,
+        maxHp: levelUpResult.newStats.maxHp,
+        attack: levelUpResult.newStats.attack,
+        defense: levelUpResult.newStats.defense,
+        speed: levelUpResult.newStats.speed,
       };
 
       await this.prisma.pet.update({
         where: { id: pet.id },
         data: {
           level: newLevel,
-          xp: newXp - xpForNextLevel,
-          hp: Math.min(newHp, newStats.maxHp), // Heal to new max if increased
-          maxHp: newStats.maxHp,
-          attack: newStats.attack,
-          defense: newStats.defense,
-          speed: newStats.speed,
+          xp: levelUpResult.remainingXp,
+          hp: Math.min(newHp, levelUpResult.newStats.maxHp),
+          maxHp: levelUpResult.newStats.maxHp,
+          attack: levelUpResult.newStats.attack,
+          defense: levelUpResult.newStats.defense,
+          speed: levelUpResult.newStats.speed,
         },
       });
     } else {
       await this.prisma.pet.update({
         where: { id: pet.id },
         data: {
-          xp: newXp,
+          xp: levelUpResult.remainingXp,
           hp: newHp,
         },
       });

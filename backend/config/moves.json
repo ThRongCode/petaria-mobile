@@ -1,0 +1,62 @@
+{
+  "_comment": "Move database. type: Physical/Special/Status. element: pokemon type. power: base damage (0 for status). accuracy: 0-100. pp: power points per battle.",
+
+  "moves": [
+    { "id": "tackle", "name": "Tackle", "type": "Physical", "element": "normal", "power": 40, "accuracy": 100, "pp": 35, "description": "A physical attack in which the user charges and slams into the target." },
+    { "id": "scratch", "name": "Scratch", "type": "Physical", "element": "normal", "power": 40, "accuracy": 100, "pp": 35, "description": "Hard, pointed, sharp claws rake the target to inflict damage." },
+    { "id": "quick-attack", "name": "Quick Attack", "type": "Physical", "element": "normal", "power": 40, "accuracy": 100, "pp": 30, "description": "The user lunges at the target at a speed that makes it almost invisible." },
+    { "id": "body-slam", "name": "Body Slam", "type": "Physical", "element": "normal", "power": 85, "accuracy": 100, "pp": 15, "description": "The user drops onto the target with its full body weight." },
+    { "id": "hyper-beam", "name": "Hyper Beam", "type": "Special", "element": "normal", "power": 150, "accuracy": 90, "pp": 5, "description": "The target is attacked with a powerful beam. The user can't move on the next turn." },
+    { "id": "slam", "name": "Slam", "type": "Physical", "element": "normal", "power": 80, "accuracy": 75, "pp": 20, "description": "The target is slammed with a long tail, vines, or the like." },
+
+    { "id": "ember", "name": "Ember", "type": "Special", "element": "fire", "power": 40, "accuracy": 100, "pp": 25, "description": "The target is attacked with small flames." },
+    { "id": "flame-burst", "name": "Flame Burst", "type": "Special", "element": "fire", "power": 70, "accuracy": 100, "pp": 15, "description": "The user attacks the target with a bursting flame." },
+    { "id": "flamethrower", "name": "Flamethrower", "type": "Special", "element": "fire", "power": 90, "accuracy": 100, "pp": 15, "description": "The target is scorched with an intense blast of fire." },
+    { "id": "fire-blast", "name": "Fire Blast", "type": "Special", "element": "fire", "power": 110, "accuracy": 85, "pp": 5, "description": "The target is attacked with an intense blast of all-consuming fire." },
+
+    { "id": "water-gun", "name": "Water Gun", "type": "Special", "element": "water", "power": 40, "accuracy": 100, "pp": 25, "description": "The target is blasted with a forceful shot of water." },
+    { "id": "bubble-beam", "name": "Bubble Beam", "type": "Special", "element": "water", "power": 65, "accuracy": 100, "pp": 20, "description": "A spray of bubbles is forcefully ejected at the target." },
+    { "id": "surf", "name": "Surf", "type": "Special", "element": "water", "power": 90, "accuracy": 100, "pp": 15, "description": "The user attacks everything around it by swamping its surroundings with a giant wave." },
+    { "id": "hydro-pump", "name": "Hydro Pump", "type": "Special", "element": "water", "power": 110, "accuracy": 80, "pp": 5, "description": "The target is blasted by a huge volume of water launched under great pressure." },
+
+    { "id": "vine-whip", "name": "Vine Whip", "type": "Physical", "element": "grass", "power": 45, "accuracy": 100, "pp": 25, "description": "The target is struck with slender, whiplike vines." },
+    { "id": "razor-leaf", "name": "Razor Leaf", "type": "Physical", "element": "grass", "power": 55, "accuracy": 95, "pp": 25, "description": "Sharp-edged leaves are launched to slash at opposing Pokemon." },
+    { "id": "solar-beam", "name": "Solar Beam", "type": "Special", "element": "grass", "power": 120, "accuracy": 100, "pp": 10, "description": "The user gathers light, then blasts a bundled beam on the next turn." },
+    { "id": "seed-bomb", "name": "Seed Bomb", "type": "Physical", "element": "grass", "power": 80, "accuracy": 100, "pp": 15, "description": "The user barrages the target with hard-shelled seeds from above." },
+
+    { "id": "thunder-shock", "name": "Thunder Shock", "type": "Special", "element": "electric", "power": 40, "accuracy": 100, "pp": 30, "description": "A jolt of electricity crashes down on the target." },
+    { "id": "thunderbolt", "name": "Thunderbolt", "type": "Special", "element": "electric", "power": 90, "accuracy": 100, "pp": 15, "description": "A strong electric blast crashes down on the target." },
+    { "id": "thunder", "name": "Thunder", "type": "Special", "element": "electric", "power": 110, "accuracy": 70, "pp": 10, "description": "A wicked thunderbolt is dropped on the target to inflict damage." },
+
+    { "id": "ice-beam", "name": "Ice Beam", "type": "Special", "element": "ice", "power": 90, "accuracy": 100, "pp": 10, "description": "The target is struck with an icy-cold beam of energy." },
+    { "id": "blizzard", "name": "Blizzard", "type": "Special", "element": "ice", "power": 110, "accuracy": 70, "pp": 5, "description": "A howling blizzard is summoned to strike opposing Pokemon." },
+    { "id": "ice-shard", "name": "Ice Shard", "type": "Physical", "element": "ice", "power": 40, "accuracy": 100, "pp": 30, "description": "The user flash-freezes chunks of ice and hurls them at the target." },
+
+    { "id": "karate-chop", "name": "Karate Chop", "type": "Physical", "element": "fighting", "power": 50, "accuracy": 100, "pp": 25, "description": "The target is attacked with a sharp chop." },
+    { "id": "cross-chop", "name": "Cross Chop", "type": "Physical", "element": "fighting", "power": 100, "accuracy": 80, "pp": 5, "description": "The user delivers a double chop with its forearms crossed." },
+    { "id": "brick-break", "name": "Brick Break", "type": "Physical", "element": "fighting", "power": 75, "accuracy": 100, "pp": 15, "description": "The user attacks with a swift chop. It can also break barriers." },
+
+    { "id": "poison-sting", "name": "Poison Sting", "type": "Physical", "element": "poison", "power": 15, "accuracy": 100, "pp": 35, "description": "The user stabs the target with a poisonous stinger." },
+    { "id": "sludge-bomb", "name": "Sludge Bomb", "type": "Special", "element": "poison", "power": 90, "accuracy": 100, "pp": 10, "description": "Unsanitary sludge is hurled at the target." },
+
+    { "id": "shadow-ball", "name": "Shadow Ball", "type": "Special", "element": "ghost", "power": 80, "accuracy": 100, "pp": 15, "description": "The user hurls a shadowy blob at the target." },
+    { "id": "shadow-claw", "name": "Shadow Claw", "type": "Physical", "element": "ghost", "power": 70, "accuracy": 100, "pp": 15, "description": "The user slashes with a sharp claw made from shadows." },
+
+    { "id": "psychic", "name": "Psychic", "type": "Special", "element": "psychic", "power": 90, "accuracy": 100, "pp": 10, "description": "The target is hit by a strong telekinetic force." },
+    { "id": "confusion", "name": "Confusion", "type": "Special", "element": "psychic", "power": 50, "accuracy": 100, "pp": 25, "description": "The target is hit by a weak telekinetic force." },
+
+    { "id": "bug-bite", "name": "Bug Bite", "type": "Physical", "element": "bug", "power": 60, "accuracy": 100, "pp": 20, "description": "The user bites the target." },
+    { "id": "x-scissor", "name": "X-Scissor", "type": "Physical", "element": "bug", "power": 80, "accuracy": 100, "pp": 15, "description": "The user slashes at the target by crossing its scythes or claws." },
+
+    { "id": "wing-attack", "name": "Wing Attack", "type": "Physical", "element": "flying", "power": 60, "accuracy": 100, "pp": 35, "description": "The target is struck with large, imposing wings spread wide." },
+    { "id": "aerial-ace", "name": "Aerial Ace", "type": "Physical", "element": "flying", "power": 60, "accuracy": 100, "pp": 20, "description": "The user confounds the target with speed, then slashes." },
+    { "id": "hurricane", "name": "Hurricane", "type": "Special", "element": "flying", "power": 110, "accuracy": 70, "pp": 10, "description": "The user attacks by wrapping its opponent in a fierce wind." },
+
+    { "id": "dragon-claw", "name": "Dragon Claw", "type": "Physical", "element": "dragon", "power": 80, "accuracy": 100, "pp": 15, "description": "The user slashes the target with huge sharp claws." },
+    { "id": "dragon-pulse", "name": "Dragon Pulse", "type": "Special", "element": "dragon", "power": 85, "accuracy": 100, "pp": 10, "description": "The target is attacked with a shock wave generated by the user's gaping mouth." },
+    { "id": "outrage", "name": "Outrage", "type": "Physical", "element": "dragon", "power": 120, "accuracy": 100, "pp": 10, "description": "The user rampages and attacks for two to three turns." },
+
+    { "id": "bite", "name": "Bite", "type": "Physical", "element": "dark", "power": 60, "accuracy": 100, "pp": 25, "description": "The target is bitten with viciously sharp fangs." },
+    { "id": "dark-pulse", "name": "Dark Pulse", "type": "Special", "element": "dark", "power": 80, "accuracy": 100, "pp": 15, "description": "The user releases a horrible aura imbued with dark thoughts." }
+  ]
+}

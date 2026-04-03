@@ -1,16 +1,23 @@
+import { ConfigLoaderService } from '../config/config-loader.service';
+
+/** Maximum level a user can reach — reads from game-constants.json, fallback 100 */
+export function getMaxUserLevel(): number {
+  const loader = ConfigLoaderService.getInstance();
+  return loader?.getGameConstants()?.levels?.maxUserLevel ?? 100;
+}
+
+
 /**
  * Utility class for user stat calculations
  */
 export class UserStatsUtil {
   /**
-   * Calculate XP required for next user level
-   * Formula: level * 200
-   * 
-   * @param currentLevel - Current user level
-   * @returns XP required to reach next level
+   * Calculate XP required for next user level: level² × 20
    */
   static calculateXpForNextLevel(currentLevel: number): number {
-    return currentLevel * 200;
+    // Quadratic curve: level² × 20
+    // Lv1→20, Lv10→2000, Lv25→12500, Lv50→50000, Lv100→200000
+    return currentLevel * currentLevel * 20;
   }
 
   /**
@@ -28,20 +35,28 @@ export class UserStatsUtil {
     newLevel: number;
     remainingXp: number;
   } {
-    const xpRequired = this.calculateXpForNextLevel(currentLevel);
+    let level = currentLevel;
+    let xp = currentXp;
+    const maxLevel = getMaxUserLevel();
 
-    if (currentXp >= xpRequired) {
-      return {
-        leveledUp: true,
-        newLevel: currentLevel + 1,
-        remainingXp: currentXp - xpRequired,
-      };
+    // Allow multiple level-ups in one go, capped at max level
+    while (level < maxLevel) {
+      const xpRequired = this.calculateXpForNextLevel(level);
+      if (xp < xpRequired) break;
+      xp -= xpRequired;
+      level += 1;
+    }
+
+    // If at max level, XP stays at 0
+    if (level >= maxLevel) {
+      level = maxLevel;
+      xp = 0;
     }
 
     return {
-      leveledUp: false,
-      newLevel: currentLevel,
-      remainingXp: currentXp,
+      leveledUp: level > currentLevel,
+      newLevel: level,
+      remainingXp: xp,
     };
   }
 

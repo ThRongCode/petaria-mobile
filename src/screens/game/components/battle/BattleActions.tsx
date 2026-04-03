@@ -1,20 +1,88 @@
 /**
  * BattleActions — "Lapis Glassworks" glass battle controls
  *
- * Battle log box, 2×2 move grid with gradient buttons, run button,
+ * Battle log box with rich text (damage, effectiveness, move names),
+ * 2×2 move grid colored by element type, run button,
  * battle-over result panel with rewards summary.
  */
 
 import React from 'react'
-import { StyleSheet, View, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native'
 import { ThemedText } from '@/components'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { Move } from '@/stores/types/game'
-import { colors } from '@/themes/colors'
+import { colors, typeColors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
 import { gradientPrimary, gradientGold, gradientError } from '@/themes/styles'
+
+// Darken a hex color for gradient end
+function darkenColor(hex: string, amount: number = 0.3): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgb(${Math.floor(r * (1 - amount))}, ${Math.floor(g * (1 - amount))}, ${Math.floor(b * (1 - amount))})`
+}
+
+// Get gradient colors for a move's element type
+function getMoveGradient(element?: string): [string, string] {
+  if (!element) return [...gradientPrimary] as [string, string]
+  const base = typeColors[element.toLowerCase()]
+  if (!base) return [...gradientPrimary] as [string, string]
+  return [base, darkenColor(base, 0.35)]
+}
+
+// Render a battle log message with rich text highlighting
+function renderLogMessage(msg: string, idx: number) {
+  // Damage numbers: "It dealt 42 damage!"
+  const damageMatch = msg.match(/^It dealt (\d+) damage!$/)
+  if (damageMatch) {
+    return (
+      <Text key={idx} style={styles.logText}>
+        It dealt <Text style={styles.logDamage}>{damageMatch[1]}</Text> damage!
+      </Text>
+    )
+  }
+
+  // Super effective
+  if (msg === "It's super effective!") {
+    return <Text key={idx} style={[styles.logText, styles.logSuperEffective]}>{msg}</Text>
+  }
+
+  // Not very effective
+  if (msg === "It's not very effective...") {
+    return <Text key={idx} style={[styles.logText, styles.logNotEffective]}>{msg}</Text>
+  }
+
+  // Miss
+  if (msg === 'But it missed!') {
+    return <Text key={idx} style={[styles.logText, styles.logMiss]}>{msg}</Text>
+  }
+
+  // Immune
+  if (msg.includes("doesn't affect")) {
+    return <Text key={idx} style={[styles.logText, styles.logImmune]}>{msg}</Text>
+  }
+
+  // Fainted
+  if (msg.includes('fainted!')) {
+    return <Text key={idx} style={[styles.logText, styles.logFainted]}>{msg}</Text>
+  }
+
+  // Move usage: "Name used MoveName!"
+  const moveMatch = msg.match(/^(.+) used (.+)!$/)
+  if (moveMatch) {
+    return (
+      <Text key={idx} style={styles.logText}>
+        {moveMatch[1]} used <Text style={styles.logMoveName}>{moveMatch[2]}</Text>!
+      </Text>
+    )
+  }
+
+  // Default
+  return <ThemedText key={idx} style={styles.logText}>{msg}</ThemedText>
+}
 
 interface BattleResult {
   won: boolean
@@ -61,9 +129,7 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
   <View style={styles.container}>
     {/* Battle Log */}
     <View style={styles.logBox}>
-      {battleLog.slice(-3).map((msg, i) => (
-        <ThemedText key={i} style={styles.logText}>{msg}</ThemedText>
-      ))}
+      {battleLog.slice(-3).map((msg, i) => renderLogMessage(msg, i))}
     </View>
 
     {/* Action Panel */}
@@ -77,22 +143,31 @@ export const BattleActions: React.FC<BattleActionsProps> = ({
             <View style={styles.movesGrid}>
               {moves.map((move, i) => {
                 const isSelected = selectedMove?.name === move.name
+                const typeGrad = getMoveGradient(move.element)
+                const elementColor = typeColors[move.element?.toLowerCase() ?? ''] ?? colors.primary
                 return (
                   <TouchableOpacity
                     key={i}
-                    style={styles.moveBtn}
+                    style={[styles.moveBtn, isSelected && { borderColor: '#fff', borderWidth: 2 }]}
                     onPress={() => onMoveSelect(move)}
                     disabled={isAnimating}
                     activeOpacity={0.8}
                   >
                     <LinearGradient
-                      colors={isSelected ? [colors.success, '#2E7D32'] : [...gradientPrimary] as [string, string]}
+                      colors={typeGrad}
                       style={styles.moveGradient}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                     >
                       <ThemedText style={styles.moveName}>{move.name}</ThemedText>
-                      <ThemedText style={styles.movePP}>PP {move.pp}/{move.maxPp}</ThemedText>
+                      <View style={styles.moveMetaRow}>
+                        <View style={[styles.moveTypeBadge, { backgroundColor: 'rgba(0,0,0,0.25)' }]}>
+                          <ThemedText style={styles.moveTypeText}>{move.element || 'Normal'}</ThemedText>
+                        </View>
+                        <ThemedText style={styles.movePower}>
+                          {move.power > 0 ? `${move.power} PWR` : 'Status'}
+                        </ThemedText>
+                      </View>
                     </LinearGradient>
                   </TouchableOpacity>
                 )
@@ -186,7 +261,39 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.span,
     fontFamily: fonts.medium,
     color: colors.onSurface,
-    lineHeight: 20,
+    lineHeight: 22,
+  },
+  logDamage: {
+    fontFamily: fonts.extraBold,
+    color: '#FF6B6B',
+    fontSize: fontSizes.body,
+  },
+  logSuperEffective: {
+    fontFamily: fonts.bold,
+    color: '#FFD700',
+  },
+  logNotEffective: {
+    fontFamily: fonts.medium,
+    color: '#999',
+    fontStyle: 'italic',
+  },
+  logMiss: {
+    fontFamily: fonts.medium,
+    color: '#888',
+    fontStyle: 'italic',
+  },
+  logImmune: {
+    fontFamily: fonts.medium,
+    color: '#735797',
+    fontStyle: 'italic',
+  },
+  logFainted: {
+    fontFamily: fonts.bold,
+    color: '#FF6B6B',
+  },
+  logMoveName: {
+    fontFamily: fonts.bold,
+    color: colors.primary,
   },
 
   // ── Action Panel ───────────────────────────────
@@ -216,8 +323,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   moveGradient: { padding: spacing.md, alignItems: 'center', borderRadius: radii.md },
-  moveName: { fontSize: fontSizes.span, fontFamily: fonts.bold, color: colors.onPrimary },
-  movePP: { fontSize: fontSizes.xs, fontFamily: fonts.regular, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  moveName: { fontSize: fontSizes.span, fontFamily: fonts.bold, color: '#fff' },
+  moveMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  moveTypeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radii.sm,
+  },
+  moveTypeText: {
+    fontSize: 9,
+    fontFamily: fonts.bold,
+    color: '#fff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  movePower: { fontSize: 9, fontFamily: fonts.bold, color: 'rgba(255,255,255,0.8)' },
 
   runBtn: { borderRadius: radii.md, overflow: 'hidden' },
   runGradient: { padding: spacing.md, alignItems: 'center', borderRadius: radii.md },

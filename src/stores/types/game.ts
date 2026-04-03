@@ -52,7 +52,7 @@ export interface Pet {
   name: string
   species: string
   type?: 'Normal' | 'Fire' | 'Water' | 'Grass' | 'Electric' | 'Ice' | 'Fighting' | 'Poison' | 'Ground' | 'Flying' | 'Psychic' | 'Bug' | 'Rock' | 'Ghost' | 'Dragon' | 'Dark' | 'Steel' | 'Fairy'
-  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary'
+  rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
   level: number
   xp: number
   xpToNext: number
@@ -93,8 +93,9 @@ export interface Item {
   id: string
   name: string
   description: string
-  type: 'StatBoost' | 'Evolution' | 'Consumable' | 'Cosmetic' | 'Pokeball'
-  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary'
+  type: 'StatBoost' | 'Evolution' | 'Consumable' | 'Cosmetic' | 'Pokeball' | 'MoveBook' | 'TicketRefill'
+  rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
+  teachesMove?: string // For MoveBook items: the move ID this TM teaches
   effects: {
     hp?: number
     attack?: number
@@ -156,7 +157,7 @@ export interface Region {
   legendOwnerId?: string
   availablePets: {
     petSpecies: string
-    rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary'
+    rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
     spawnRate: number
   }[]
   exclusivePets: string[]
@@ -205,7 +206,12 @@ export interface UserProfile {
   // Ticket system for hunts and battles
   huntTickets: number
   battleTickets: number
-  lastTicketReset: string
+  maxHuntTickets: number
+  maxBattleTickets: number
+  nextHuntTicketAt: string | null
+  nextBattleTicketAt: string | null
+  huntRegenMinutes: number
+  battleRegenMinutes: number
   // Inventory tracking
   petCount: number
   itemCount: number
@@ -240,6 +246,24 @@ export interface UserInventory {
   maxItemSlots: number
 }
 
+export interface DailyLoginReward {
+  day: number
+  coins: number
+  gems: number
+  huntTickets: number
+  battleTickets: number
+  label: string
+}
+
+export interface DailyLoginState {
+  currentStreak: number
+  currentDay: number
+  claimedToday: boolean
+  totalLogins: number
+  rewards: DailyLoginReward[]
+  lastClaimedReward: DailyLoginReward | null
+}
+
 // Game State Types
 export interface GameState {
   profile: UserProfile
@@ -253,6 +277,7 @@ export interface GameState {
   huntingCooldowns: {
     [regionId: string]: number
   }
+  dailyLogin: DailyLoginState
   notifications: GameNotification[]
   isLoading: boolean
   isLoadingPets: boolean

@@ -1,10 +1,22 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { StyleSheet, View, TouchableOpacity, Image, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ThemedText } from '@/components/ThemedText'
 import { Ionicons } from '@expo/vector-icons'
 import { Panel } from './Panel'
 import { colors, fonts, radii, spacing } from '@/themes'
+
+/** Format remaining ms as "Xh Ym" or "Xm Ys" */
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return 'Ready!'
+  const totalSec = Math.floor(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
 
 interface TopBarProps {
   username: string
@@ -15,6 +27,8 @@ interface TopBarProps {
   huntTickets?: number
   maxBattleTickets?: number
   maxHuntTickets?: number
+  nextBattleTicketAt?: string | null
+  nextHuntTicketAt?: string | null
   avatar?: any
   onSettingsPress?: () => void
 }
@@ -32,10 +46,36 @@ export const TopBar: React.FC<TopBarProps> = ({
   huntTickets,
   maxBattleTickets = 20,
   maxHuntTickets = 5,
+  nextBattleTicketAt,
+  nextHuntTicketAt,
   avatar,
   onSettingsPress,
 }) => {
   const insets = useSafeAreaInsets()
+
+  // Countdown timers — tick every second when there's a next-ticket timestamp
+  const [battleCountdown, setBattleCountdown] = useState('')
+  const [huntCountdown, setHuntCountdown] = useState('')
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    const tick = () => {
+      const now = Date.now()
+      if (nextBattleTicketAt) {
+        setBattleCountdown(formatCountdown(new Date(nextBattleTicketAt).getTime() - now))
+      } else {
+        setBattleCountdown('')
+      }
+      if (nextHuntTicketAt) {
+        setHuntCountdown(formatCountdown(new Date(nextHuntTicketAt).getTime() - now))
+      } else {
+        setHuntCountdown('')
+      }
+    }
+    tick()
+    intervalRef.current = setInterval(tick, 1000)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [nextBattleTicketAt, nextHuntTicketAt])
   
   return (
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
@@ -101,6 +141,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               <Ionicons name="shield" size={16} color="#FF6B6B" />
               <ThemedText style={styles.ticketLabel}>Battle</ThemedText>
               <ThemedText style={styles.ticketText}>{battleTickets}/{maxBattleTickets}</ThemedText>
+              {battleCountdown !== '' && battleCountdown !== 'Ready!' && (
+                <ThemedText style={styles.ticketTimer}>{battleCountdown}</ThemedText>
+              )}
             </Panel>
           )}
 
@@ -110,6 +153,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               <Ionicons name="leaf" size={16} color="#4CAF50" />
               <ThemedText style={styles.ticketLabel}>Hunt</ThemedText>
               <ThemedText style={styles.ticketText}>{huntTickets}/{maxHuntTickets}</ThemedText>
+              {huntCountdown !== '' && huntCountdown !== 'Ready!' && (
+                <ThemedText style={styles.ticketTimer}>{huntCountdown}</ThemedText>
+              )}
             </Panel>
           )}
         </View>
@@ -219,6 +265,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.bold,
     color: colors.onSurface,
+  },
+  ticketTimer: {
+    fontSize: 9,
+    fontFamily: fonts.semiBold,
+    color: colors.warning,
+    marginLeft: 2,
   },
   pokeballIcon: {
     fontSize: 14,

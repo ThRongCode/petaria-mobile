@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateQuestProgressDto } from './dto/quest.dto';
 import { UserStatsUtil } from '../utils/userStats';
+import { ConfigLoaderService } from '../config/config-loader.service';
 
 // Quest target types
 export const QUEST_TARGET_TYPES = {
@@ -13,6 +14,7 @@ export const QUEST_TARGET_TYPES = {
   BUY_ITEM: 'buy_item',
   USE_ITEM: 'use_item',
   CATCH_RARITY: 'catch_rarity', // Catch X pokemon of specific rarity
+  COMPLETE_ALL_DAILIES: 'complete_all_dailies',
   CATCH_SPECIES: 'catch_species', // Catch specific species
   LEVEL_UP_PET: 'level_up_pet',
 } as const;
@@ -81,6 +83,8 @@ export class QuestService {
         coins: uq.quest.rewardCoins,
         gems: uq.quest.rewardGems,
         xp: uq.quest.rewardXp,
+        huntTickets: uq.quest.rewardHuntTickets,
+        battleTickets: uq.quest.rewardBattleTickets,
         itemId: uq.quest.rewardItemId,
         itemQty: uq.quest.rewardItemQty,
       },
@@ -250,7 +254,51 @@ export class QuestService {
       await Promise.all(updates);
     }
 
+    // Check if all non-special dailies are completed → auto-complete "complete_all_dailies" quest
+    if (targetType !== QUEST_TARGET_TYPES.COMPLETE_ALL_DAILIES) {
+      await this.checkAllDailiesComplete(userId);
+    }
+
     return { updatedCount: updates.length };
+  }
+
+  /**
+   * Check if all regular daily quests are completed/claimed.
+   * If so, mark the "complete_all_dailies" quest as completed.
+   */
+  private async checkAllDailiesComplete(userId: string) {
+    const allDailyQuests = await this.prisma.userQuest.findMany({
+      where: {
+        userId,
+        quest: { type: 'daily' },
+        assignedAt: { gte: this.getStartOfDayUTC() },
+      },
+      include: { quest: true },
+    });
+
+    const completionistQuest = allDailyQuests.find(
+      (uq) => uq.quest.targetType === QUEST_TARGET_TYPES.COMPLETE_ALL_DAILIES,
+    );
+    if (!completionistQuest || completionistQuest.status !== 'active') return;
+
+    const regularDailies = allDailyQuests.filter(
+      (uq) => uq.quest.targetType !== QUEST_TARGET_TYPES.COMPLETE_ALL_DAILIES,
+    );
+
+    const allDone = regularDailies.length > 0 && regularDailies.every(
+      (uq) => uq.status === 'completed' || uq.status === 'claimed',
+    );
+
+    if (allDone) {
+      await this.prisma.userQuest.update({
+        where: { id: completionistQuest.id },
+        data: {
+          progress: 1,
+          status: 'completed',
+          completedAt: new Date(),
+        },
+      });
+    }
   }
 
   /**
@@ -277,7 +325,7 @@ export class QuestService {
     }
 
     // Get rewards
-    const { rewardCoins, rewardGems, rewardXp, rewardItemId, rewardItemQty } = userQuest.quest;
+    const { rewardCoins, rewardGems, rewardXp, rewardHuntTickets, rewardBattleTickets, rewardItemId, rewardItemQty } = userQuest.quest;
 
     // Start transaction to give rewards
     const result = await this.prisma.$transaction(async (tx) => {
@@ -304,6 +352,18 @@ export class QuestService {
       const levelUpResult = UserStatsUtil.checkLevelUp(newXp, currentUser.level);
 
       // Give currency rewards and handle level up
+      const gc = ConfigLoaderService.getInstance()?.getGameConstants();
+      const maxHuntTickets = gc?.tickets?.maxHuntTickets ?? 5;
+      const maxBattleTickets = gc?.tickets?.maxBattleTickets ?? 20;
+
+      const ticketData: Record<string, number> = {};
+      if (rewardHuntTickets > 0) {
+        ticketData.huntTickets = Math.min(currentUser.huntTickets + rewardHuntTickets, maxHuntTickets);
+      }
+      if (rewardBattleTickets > 0) {
+        ticketData.battleTickets = Math.min(currentUser.battleTickets + rewardBattleTickets, maxBattleTickets);
+      }
+
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
@@ -311,6 +371,7 @@ export class QuestService {
           gems: { increment: rewardGems },
           xp: levelUpResult.remainingXp,
           level: levelUpResult.newLevel,
+          ...ticketData,
         },
       });
 
@@ -352,13 +413,15 @@ export class QuestService {
     });
 
     return {
-      message: result.leveledUp 
-        ? `Quest rewards claimed! You leveled up to ${result.newLevel}!` 
+      message: result.leveledUp
+        ? `Quest rewards claimed! You leveled up to ${result.newLevel}!`
         : 'Quest rewards claimed!',
       rewards: {
         coins: rewardCoins,
         gems: rewardGems,
         xp: rewardXp,
+        huntTickets: rewardHuntTickets,
+        battleTickets: rewardBattleTickets,
         item: result.itemReward,
       },
       user: {

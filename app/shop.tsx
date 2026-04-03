@@ -27,10 +27,11 @@ import { gameActions } from '@/stores/reducers'
 import { Ionicons } from '@expo/vector-icons'
 import { itemApi } from '@/services/api'
 import { getItemImage } from '@/assets/images'
+import { getRarityColor } from '@/features/hunt/utils'
 import type { Item } from '@/stores/types/game'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { backgrounds } from '@/assets/images/backgrounds'
-import { colors } from '@/themes/colors'
+import { colors, rarityGradients } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
 import { gradientPrimary } from '@/themes/styles'
@@ -41,25 +42,12 @@ const CATEGORIES = [
   { id: 'consumable' as const, label: 'Consumables', icon: 'flask' },
   { id: 'boost' as const, label: 'Stat Boosts', icon: 'trending-up' },
   { id: 'evolution' as const, label: 'Evolution', icon: 'sparkles' },
+  { id: 'movebook' as const, label: 'Move TMs', icon: 'book' },
+  { id: 'tickets' as const, label: 'Tickets', icon: 'ticket' },
 ] as const
 
 type CategoryId = typeof CATEGORIES[number]['id']
 
-const RARITY_COLORS: Record<string, string> = {
-  Common: '#9E9E9E',
-  Uncommon: '#4CAF50',
-  Rare: '#2196F3',
-  Epic: '#9C27B0',
-  Legendary: '#FFD700',
-}
-
-const RARITY_GRADIENT: Record<string, readonly [string, string]> = {
-  Common: ['#9E9E9E', '#757575'] as const,
-  Uncommon: ['#4CAF50', '#388E3C'] as const,
-  Rare: ['#2196F3', '#1976D2'] as const,
-  Epic: ['#A335EE', '#7B1FA2'] as const,
-  Legendary: ['#FFD700', '#FFA500'] as const,
-}
 
 export default function ShopScreen() {
   const router = useRouter()
@@ -124,13 +112,16 @@ export default function ShopScreen() {
     if (selectedCategory === 'consumable') return item.type === 'Consumable'
     if (selectedCategory === 'boost') return item.type === 'StatBoost'
     if (selectedCategory === 'evolution') return item.type === 'Evolution'
+    if (selectedCategory === 'movebook') return item.type === 'MoveBook'
+    if (selectedCategory === 'tickets') return item.type === 'TicketRefill'
     return true
   })
 
   const renderItemCard = ({ item }: { item: Item }) => {
     const quantity = inventory.items[item.id] || 0
-    const rarityColor = RARITY_COLORS[item.rarity] || RARITY_COLORS.Common
-    const rarityGrad = RARITY_GRADIENT[item.rarity] || RARITY_GRADIENT.Common
+    const rarityColor = getRarityColor(item.rarity || 'common')
+    const rarityKey = (item.rarity || 'common').toLowerCase()
+    const rarityGrad = rarityGradients[rarityKey as keyof typeof rarityGradients] ?? rarityGradients.common
 
     return (
       <TouchableOpacity

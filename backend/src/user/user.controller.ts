@@ -42,6 +42,16 @@ export class UserController {
     return this.userService.updateSettings(userId, dto);
   }
 
+  @Post('daily-login')
+  claimDailyLogin(@CurrentUser('id') userId: string) {
+    return this.userService.claimDailyLogin(userId);
+  }
+
+  @Get('daily-login')
+  getDailyLoginStatus(@CurrentUser('id') userId: string) {
+    return this.userService.getDailyLoginStatus(userId);
+  }
+
   // DEV ONLY: Add battle tickets for testing
   @Post('dev/add-battle-tickets')
   addBattleTickets(@CurrentUser('id') userId: string) {

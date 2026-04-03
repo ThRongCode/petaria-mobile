@@ -1,0 +1,24 @@
+{
+  "_comment": "Quest templates. type: daily/weekly. targetType matches backend quest tracking events.",
+
+  "quests": [
+    { "id": "daily-catch-3", "name": "Catch 3 Pokemon", "description": "Catch any 3 Pokemon in the wild", "type": "daily", "category": "hunt", "targetType": "catch_pokemon", "targetCount": 3, "rewardCoins": 100, "rewardXp": 50, "rewardHuntTickets": 1, "difficulty": "easy", "sortOrder": 1 },
+    { "id": "daily-catch-5", "name": "Pokemon Hunter", "description": "Catch 5 Pokemon today", "type": "daily", "category": "hunt", "targetType": "catch_pokemon", "targetCount": 5, "rewardCoins": 200, "rewardXp": 100, "rewardHuntTickets": 1, "difficulty": "normal", "sortOrder": 2 },
+    { "id": "daily-catch-rare", "name": "Rare Find", "description": "Catch a Rare or better Pokemon", "type": "daily", "category": "hunt", "targetType": "catch_rarity", "targetCount": 1, "targetRarity": "Rare", "rewardCoins": 300, "rewardGems": 5, "rewardXp": 150, "rewardHuntTickets": 1, "difficulty": "hard", "sortOrder": 3 },
+    { "id": "daily-hunts-3", "name": "Explorer", "description": "Complete 3 hunts in any region", "type": "daily", "category": "hunt", "targetType": "complete_hunts", "targetCount": 3, "rewardCoins": 150, "rewardXp": 75, "rewardHuntTickets": 1, "difficulty": "easy", "sortOrder": 4 },
+
+    { "id": "daily-win-3", "name": "Battle Beginner", "description": "Win 3 battles", "type": "daily", "category": "battle", "targetType": "win_battles", "targetCount": 3, "rewardCoins": 150, "rewardXp": 75, "rewardBattleTickets": 3, "difficulty": "easy", "sortOrder": 5 },
+    { "id": "daily-win-5", "name": "Battle Champion", "description": "Win 5 battles today", "type": "daily", "category": "battle", "targetType": "win_battles", "targetCount": 5, "rewardCoins": 300, "rewardXp": 150, "rewardBattleTickets": 5, "difficulty": "normal", "sortOrder": 6 },
+
+    { "id": "daily-feed-3", "name": "Pet Caretaker", "description": "Feed your pets 3 times", "type": "daily", "category": "care", "targetType": "feed_pet", "targetCount": 3, "rewardCoins": 100, "rewardXp": 50, "difficulty": "easy", "sortOrder": 7 },
+    { "id": "daily-use-item", "name": "Item User", "description": "Use 2 items on your pets", "type": "daily", "category": "care", "targetType": "use_item", "targetCount": 2, "rewardCoins": 100, "rewardXp": 50, "difficulty": "easy", "sortOrder": 8 },
+
+    { "id": "daily-evolve-1", "name": "Evolution Master", "description": "Evolve a Pokemon", "type": "daily", "category": "evolution", "targetType": "evolve_pet", "targetCount": 1, "rewardCoins": 500, "rewardGems": 10, "rewardXp": 200, "rewardHuntTickets": 1, "rewardBattleTickets": 2, "difficulty": "hard", "sortOrder": 9 },
+    { "id": "daily-buy-item", "name": "Shopper", "description": "Buy 1 item from the shop", "type": "daily", "category": "shop", "targetType": "buy_item", "targetCount": 1, "rewardCoins": 50, "rewardXp": 25, "difficulty": "easy", "sortOrder": 10 },
+
+    { "id": "daily-all-complete", "name": "Daily Completionist", "description": "Complete all other daily quests", "type": "daily", "category": "special", "targetType": "complete_all_dailies", "targetCount": 1, "rewardCoins": 500, "rewardGems": 15, "rewardXp": 300, "rewardHuntTickets": 2, "rewardBattleTickets": 5, "difficulty": "hard", "sortOrder": 99 },
+
+    { "id": "weekly-catch-20", "name": "Weekly Collector", "description": "Catch 20 Pokemon this week", "type": "weekly", "category": "hunt", "targetType": "catch_pokemon", "targetCount": 20, "rewardCoins": 1000, "rewardGems": 20, "rewardXp": 500, "rewardHuntTickets": 3, "rewardBattleTickets": 10, "difficulty": "normal", "sortOrder": 100 },
+    { "id": "weekly-battles-15", "name": "Weekly Warrior", "description": "Win 15 battles this week", "type": "weekly", "category": "battle", "targetType": "win_battles", "targetCount": 15, "rewardCoins": 800, "rewardGems": 15, "rewardXp": 400, "rewardHuntTickets": 2, "rewardBattleTickets": 8, "difficulty": "normal", "sortOrder": 101 }
+  ]
+}

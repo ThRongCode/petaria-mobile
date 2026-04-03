@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { GameState, Pet, Item, Battle, HuntResult, UserProfile, UserInventory, GameNotification, Move, Opponent } from '../types/game'
+import { GameState, Pet, Item, Battle, HuntResult, UserProfile, UserInventory, GameNotification, Move, Opponent, DailyLoginState } from '../types/game'
 import { getPokemonImage } from '@/assets/images'
 
 export const gameInitialState: GameState = {
@@ -14,7 +14,12 @@ export const gameInitialState: GameState = {
     currency: { coins: 0, gems: 0 },
     huntTickets: 0,
     battleTickets: 0,
-    lastTicketReset: new Date().toISOString(),
+    maxHuntTickets: 5,
+    maxBattleTickets: 20,
+    nextHuntTicketAt: null,
+    nextBattleTicketAt: null,
+    huntRegenMinutes: 180,
+    battleRegenMinutes: 60,
     petCount: 0,
     itemCount: 0,
     stats: {
@@ -45,6 +50,14 @@ export const gameInitialState: GameState = {
   battles: [],
   activeBattle: undefined,
   huntingCooldowns: {},
+  dailyLogin: {
+    currentStreak: 0,
+    currentDay: 0,
+    claimedToday: false,
+    totalLogins: 0,
+    rewards: [],
+    lastClaimedReward: null,
+  },
   notifications: [],
   isLoading: false,
   isLoadingPets: false,
@@ -227,6 +240,11 @@ const gameSlice = createSlice({
         state.regions[regionIndex].legendPetId = action.payload.legendPetId
         state.regions[regionIndex].legendOwnerId = action.payload.legendOwnerId
       }
+    },
+
+    // Daily Login Actions
+    setDailyLogin: (state, action: PayloadAction<DailyLoginState>) => {
+      state.dailyLogin = action.payload
     },
 
     // Settings Actions

@@ -1,0 +1,51 @@
+{
+  "_comment": "Item catalog. Types: Consumable, StatBoost, Evolution, Cosmetic, Pokeball, MoveBook, TicketRefill. MoveBook items teach a specific move to a pet. TicketRefill items grant hunt/battle tickets.",
+
+  "items": [
+    { "id": "potion", "name": "Potion", "description": "Restores 20 HP to a pet.", "type": "Consumable", "rarity": "common", "effectHp": 20, "priceCoins": 50, "imageUrl": "/items/potion.png" },
+    { "id": "super-potion", "name": "Super Potion", "description": "Restores 50 HP to a pet.", "type": "Consumable", "rarity": "uncommon", "effectHp": 50, "priceCoins": 150, "imageUrl": "/items/super-potion.png" },
+    { "id": "hyper-potion", "name": "Hyper Potion", "description": "Restores 100 HP to a pet.", "type": "Consumable", "rarity": "rare", "effectHp": 100, "priceCoins": 300, "imageUrl": "/items/hyper-potion.png" },
+    { "id": "max-potion", "name": "Max Potion", "description": "Fully restores HP to a pet.", "type": "Consumable", "rarity": "epic", "effectHp": 9999, "priceCoins": 500, "imageUrl": "/items/max-potion.png" },
+
+    { "id": "attack-boost", "name": "Attack Boost", "description": "Permanently increases attack by 10.", "type": "StatBoost", "rarity": "uncommon", "effectAttack": 10, "priceCoins": 200, "imageUrl": "/items/attack-boost.png" },
+    { "id": "defense-boost", "name": "Defense Boost", "description": "Permanently increases defense by 10.", "type": "StatBoost", "rarity": "uncommon", "effectDefense": 10, "priceCoins": 200, "imageUrl": "/items/defense-boost.png" },
+    { "id": "speed-boost", "name": "Speed Boost", "description": "Permanently increases speed by 10.", "type": "StatBoost", "rarity": "uncommon", "effectSpeed": 10, "priceCoins": 200, "imageUrl": "/items/speed-boost.png" },
+
+    { "id": "rare-candy", "name": "Rare Candy", "description": "Instantly increases pet level by 1.", "type": "Evolution", "rarity": "epic", "effectXpBoost": 100, "priceGems": 20, "imageUrl": "/items/rare-candy.png" },
+
+    { "id": "fire-stone", "name": "Fire Stone", "description": "A peculiar stone that makes certain Fire-type Pokemon evolve. It has a fiery orange color.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/fire-stone.png" },
+    { "id": "water-stone", "name": "Water Stone", "description": "A peculiar stone that makes certain Water-type Pokemon evolve. It has a deep blue color.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/water-stone.png" },
+    { "id": "thunder-stone", "name": "Thunder Stone", "description": "A peculiar stone that makes certain Electric-type Pokemon evolve. It has a yellow color with lightning patterns.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/thunder-stone.png" },
+    { "id": "leaf-stone", "name": "Leaf Stone", "description": "A peculiar stone that makes certain Grass-type Pokemon evolve. It has a verdant green color.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/leaf-stone.png" },
+    { "id": "moon-stone", "name": "Moon Stone", "description": "A peculiar stone that makes certain Pokemon evolve. It glows softly with moonlight.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/moon-stone.png" },
+    { "id": "sun-stone", "name": "Sun Stone", "description": "A peculiar stone that makes certain Pokemon evolve. It radiates warmth like sunlight.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/sun-stone.png" },
+    { "id": "ice-stone", "name": "Ice Stone", "description": "A peculiar stone that makes certain Ice-type Pokemon evolve. It is cold to the touch.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/ice-stone.png" },
+    { "id": "dusk-stone", "name": "Dusk Stone", "description": "A peculiar stone that makes certain Dark-type Pokemon evolve. It holds shadows within.", "type": "Evolution", "rarity": "rare", "priceCoins": 1000, "priceGems": 15, "imageUrl": "/items/dusk-stone.png" },
+
+    { "id": "pet-shampoo", "name": "Pet Shampoo", "description": "Makes your pet sparkle and boosts mood.", "type": "Cosmetic", "rarity": "common", "priceCoins": 30, "imageUrl": "/items/shampoo.png" },
+
+    { "id": "pokeball", "name": "Pokeball", "description": "A standard device for catching wild Pokemon. Has a moderate catch rate.", "type": "Pokeball", "rarity": "common", "priceCoins": 100, "imageUrl": "/items/pokeball.png" },
+    { "id": "great-ball", "name": "Great Ball", "description": "An improved Pokeball with a higher catch rate than a standard Pokeball.", "type": "Pokeball", "rarity": "uncommon", "priceCoins": 300, "imageUrl": "/items/great-ball.png" },
+    { "id": "ultra-ball", "name": "Ultra Ball", "description": "A high-performance Pokeball with an excellent catch rate.", "type": "Pokeball", "rarity": "rare", "priceCoins": 800, "imageUrl": "/items/ultra-ball.png" },
+
+    { "id": "tm-flamethrower", "name": "TM Flamethrower", "description": "Teaches the move Flamethrower to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "flamethrower", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-fire.png" },
+    { "id": "tm-thunderbolt", "name": "TM Thunderbolt", "description": "Teaches the move Thunderbolt to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "thunderbolt", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-electric.png" },
+    { "id": "tm-surf", "name": "TM Surf", "description": "Teaches the move Surf to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "surf", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-water.png" },
+    { "id": "tm-solar-beam", "name": "TM Solar Beam", "description": "Teaches the move Solar Beam to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "solar-beam", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-grass.png" },
+    { "id": "tm-ice-beam", "name": "TM Ice Beam", "description": "Teaches the move Ice Beam to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "ice-beam", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-ice.png" },
+    { "id": "tm-psychic", "name": "TM Psychic", "description": "Teaches the move Psychic to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "psychic", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-psychic.png" },
+    { "id": "tm-shadow-ball", "name": "TM Shadow Ball", "description": "Teaches the move Shadow Ball to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "shadow-ball", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-ghost.png" },
+    { "id": "tm-dragon-claw", "name": "TM Dragon Claw", "description": "Teaches the move Dragon Claw to a Pokemon.", "type": "MoveBook", "rarity": "epic", "teachesMove": "dragon-claw", "priceCoins": 5000, "priceGems": 40, "imageUrl": "/items/tm-dragon.png" },
+    { "id": "tm-brick-break", "name": "TM Brick Break", "description": "Teaches the move Brick Break to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "brick-break", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-fighting.png" },
+    { "id": "tm-sludge-bomb", "name": "TM Sludge Bomb", "description": "Teaches the move Sludge Bomb to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "sludge-bomb", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-poison.png" },
+    { "id": "tm-aerial-ace", "name": "TM Aerial Ace", "description": "Teaches the move Aerial Ace to a Pokemon.", "type": "MoveBook", "rarity": "uncommon", "teachesMove": "aerial-ace", "priceCoins": 1500, "priceGems": 10, "imageUrl": "/items/tm-flying.png" },
+    { "id": "tm-x-scissor", "name": "TM X-Scissor", "description": "Teaches the move X-Scissor to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "x-scissor", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-bug.png" },
+    { "id": "tm-dark-pulse", "name": "TM Dark Pulse", "description": "Teaches the move Dark Pulse to a Pokemon.", "type": "MoveBook", "rarity": "rare", "teachesMove": "dark-pulse", "priceCoins": 3000, "priceGems": 25, "imageUrl": "/items/tm-dark.png" },
+    { "id": "tm-body-slam", "name": "TM Body Slam", "description": "Teaches the move Body Slam to a Pokemon.", "type": "MoveBook", "rarity": "uncommon", "teachesMove": "body-slam", "priceCoins": 1500, "priceGems": 10, "imageUrl": "/items/tm-normal.png" },
+    { "id": "tm-hyper-beam", "name": "TM Hyper Beam", "description": "Teaches the move Hyper Beam to a Pokemon.", "type": "MoveBook", "rarity": "epic", "teachesMove": "hyper-beam", "priceCoins": 8000, "priceGems": 50, "imageUrl": "/items/tm-normal2.png" },
+
+    { "id": "hunt-ticket-refill", "name": "Hunt Ticket Pack", "description": "Instantly refills all hunt tickets to maximum.", "type": "TicketRefill", "rarity": "rare", "effectHp": 0, "priceGems": 30, "imageUrl": "/items/hunt-ticket.png" },
+    { "id": "battle-ticket-refill", "name": "Battle Ticket Pack", "description": "Instantly refills all battle tickets to maximum.", "type": "TicketRefill", "rarity": "rare", "effectHp": 0, "priceGems": 20, "imageUrl": "/items/battle-ticket.png" },
+    { "id": "all-ticket-refill", "name": "Full Ticket Bundle", "description": "Refills both hunt and battle tickets to maximum. Best value!", "type": "TicketRefill", "rarity": "epic", "effectHp": 0, "priceGems": 40, "imageUrl": "/items/ticket-bundle.png" }
+  ]
+}

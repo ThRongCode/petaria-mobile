@@ -3,6 +3,14 @@ import {
   calculateFinalStat,
   getRarityMultiplier,
 } from '../config/species-stats.config';
+import { ConfigLoaderService } from '../config/config-loader.service';
+
+/** Maximum level a pet can reach — reads from game-constants.json, fallback 100 */
+export function getMaxPetLevel(): number {
+  const loader = ConfigLoaderService.getInstance();
+  return loader?.getGameConstants()?.levels?.maxPetLevel ?? 100;
+}
+
 
 /**
  * Utility class for pet stat calculations
@@ -12,14 +20,12 @@ import {
  */
 export class PetStatsUtil {
   /**
-   * Calculate XP required for next level
-   * Formula: level * 100
-   * 
-   * @param currentLevel - Current pet level
-   * @returns XP required to reach next level
+   * Calculate XP required for next level: level² × 10
    */
   static calculateXpForNextLevel(currentLevel: number): number {
-    return currentLevel * 100;
+    // Quadratic curve: level² × 10
+    // Lv1→10, Lv10→1000, Lv25→6250, Lv50→25000, Lv100→100000
+    return currentLevel * currentLevel * 10;
   }
 
   /**
@@ -92,18 +98,30 @@ export class PetStatsUtil {
       speed: number;
     };
   } {
-    const xpRequired = this.calculateXpForNextLevel(currentLevel);
+    let level = currentLevel;
+    let xp = currentXp;
+    const maxLevel = getMaxPetLevel();
 
-    if (currentXp >= xpRequired) {
-      const newLevel = currentLevel + 1;
-      
-      // Recalculate stats using deterministic formula
-      const newStats = this.calculateStats(species, newLevel, rarity, ivs);
+    // Allow multiple level-ups in one go, capped at max level
+    while (level < maxLevel) {
+      const xpRequired = this.calculateXpForNextLevel(level);
+      if (xp < xpRequired) break;
+      xp -= xpRequired;
+      level += 1;
+    }
 
+    // If at max level, XP stays at 0 (no further accumulation)
+    if (level >= maxLevel) {
+      level = maxLevel;
+      xp = 0;
+    }
+
+    if (level > currentLevel) {
+      const newStats = this.calculateStats(species, level, rarity, ivs);
       return {
         leveledUp: true,
-        newLevel,
-        remainingXp: currentXp - xpRequired,
+        newLevel: level,
+        remainingXp: xp,
         newStats,
       };
     }
@@ -111,7 +129,7 @@ export class PetStatsUtil {
     return {
       leveledUp: false,
       newLevel: currentLevel,
-      remainingXp: currentXp,
+      remainingXp: xp,
     };
   }
 }
