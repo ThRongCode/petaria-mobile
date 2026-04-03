@@ -11,6 +11,8 @@ export function getMaxPetLevel(): number {
   return loader?.getGameConstants()?.levels?.maxPetLevel ?? 100;
 }
 
+/** @deprecated Use getMaxPetLevel() — kept for backward compat */
+export const MAX_PET_LEVEL = 100;
 
 /**
  * Utility class for pet stat calculations
@@ -20,12 +22,16 @@ export function getMaxPetLevel(): number {
  */
 export class PetStatsUtil {
   /**
-   * Calculate XP required for next level: level² × 10
+   * Calculate XP required for next level
+   * Reads petXpPerLevel from game-constants.json (default: level * 100)
+   * 
+   * @param currentLevel - Current pet level
+   * @returns XP required to reach next level
    */
   static calculateXpForNextLevel(currentLevel: number): number {
-    // Quadratic curve: level² × 10
-    // Lv1→10, Lv10→1000, Lv25→6250, Lv50→25000, Lv100→100000
-    return currentLevel * currentLevel * 10;
+    const loader = ConfigLoaderService.getInstance();
+    const xpPerLevel = loader?.getGameConstants()?.levels?.petXpPerLevel ?? 100;
+    return currentLevel * xpPerLevel;
   }
 
   /**

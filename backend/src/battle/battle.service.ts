@@ -129,7 +129,7 @@ export class BattleService {
     // Check if user has enough battle tickets
     if (updatedUser.battleTickets < 1) {
       throw new BadRequestException(
-        'Not enough battle tickets (need 1, regenerates every 1h)',
+        'Not enough battle tickets (need 1, resets daily)',
       );
     }
 

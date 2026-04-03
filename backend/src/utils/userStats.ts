@@ -6,18 +6,24 @@ export function getMaxUserLevel(): number {
   return loader?.getGameConstants()?.levels?.maxUserLevel ?? 100;
 }
 
+/** @deprecated Use getMaxUserLevel() — kept for backward compat */
+export const MAX_USER_LEVEL = 100;
 
 /**
  * Utility class for user stat calculations
  */
 export class UserStatsUtil {
   /**
-   * Calculate XP required for next user level: level² × 20
+   * Calculate XP required for next user level
+   * Reads userXpPerLevel from game-constants.json (default: level * 200)
+   * 
+   * @param currentLevel - Current user level
+   * @returns XP required to reach next level
    */
   static calculateXpForNextLevel(currentLevel: number): number {
-    // Quadratic curve: level² × 20
-    // Lv1→20, Lv10→2000, Lv25→12500, Lv50→50000, Lv100→200000
-    return currentLevel * currentLevel * 20;
+    const loader = ConfigLoaderService.getInstance();
+    const xpPerLevel = loader?.getGameConstants()?.levels?.userXpPerLevel ?? 200;
+    return currentLevel * xpPerLevel;
   }
 
   /**

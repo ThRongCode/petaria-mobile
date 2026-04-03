@@ -12,8 +12,8 @@ export const configApi = {
     const response = await realApiClient.get<{
       maxPetLevel: number
       maxUserLevel: number
-      petXpFormula: string
-      userXpFormula: string
+      petXpPerLevel: number
+      userXpPerLevel: number
       maxBattleTickets: number
       maxHuntTickets: number
       maxPetSlots: number

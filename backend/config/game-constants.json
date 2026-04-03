@@ -4,9 +4,8 @@
   "levels": {
     "maxPetLevel": 100,
     "maxUserLevel": 100,
-    "petXpFormula": "level^2 * 10",
-    "userXpFormula": "level^2 * 20",
-    "_xpExamples": "Lv1→100, Lv10→1000, Lv25→6250, Lv50→25000, Lv100→100000"
+    "petXpPerLevel": 100,
+    "userXpPerLevel": 200
   },
 
   "stats": {
@@ -27,9 +26,7 @@
   "tickets": {
     "maxHuntTickets": 5,
     "maxBattleTickets": 20,
-    "huntRegenMinutes": 180,
-    "battleRegenMinutes": 60,
-    "_regenNotes": "Hunt: 1 ticket every 3h (full refill ~15h). Battle: 1 ticket every 1h (full refill ~20h)."
+    "resetIntervalHours": 24
   },
 
   "limits": {
@@ -67,20 +64,6 @@
     "healAllCost": 200,
     "feedMoodIncrease": 20,
     "maxMood": 100
-  },
-
-  "dailyLogin": {
-    "streakLength": 7,
-    "rewards": [
-      { "day": 1, "coins": 200, "gems": 0, "huntTickets": 1, "battleTickets": 2, "label": "Welcome Back!" },
-      { "day": 2, "coins": 300, "gems": 0, "huntTickets": 1, "battleTickets": 3, "label": "Day 2" },
-      { "day": 3, "coins": 400, "gems": 5, "huntTickets": 1, "battleTickets": 3, "label": "Day 3" },
-      { "day": 4, "coins": 500, "gems": 5, "huntTickets": 2, "battleTickets": 5, "label": "Day 4" },
-      { "day": 5, "coins": 600, "gems": 10, "huntTickets": 2, "battleTickets": 5, "label": "Halfway!" },
-      { "day": 6, "coins": 800, "gems": 10, "huntTickets": 2, "battleTickets": 8, "label": "Day 6" },
-      { "day": 7, "coins": 1500, "gems": 25, "huntTickets": 3, "battleTickets": 10, "label": "Weekly Bonus!" }
-    ],
-    "_notes": "7-day rotating calendar. Streak resets if player misses a day. After day 7, cycle restarts at day 1."
   },
 
   "newUser": {

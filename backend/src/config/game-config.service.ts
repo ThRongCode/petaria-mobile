@@ -14,8 +14,8 @@ export class GameConfigService {
       // Levels & XP
       maxPetLevel: gc.levels.maxPetLevel,
       maxUserLevel: gc.levels.maxUserLevel,
-      petXpFormula: 'level^2 * 10',
-      userXpFormula: 'level^2 * 20',
+      petXpPerLevel: gc.levels.petXpPerLevel,
+      userXpPerLevel: gc.levels.userXpPerLevel,
 
       // Tickets
       maxBattleTickets: gc.tickets.maxBattleTickets,

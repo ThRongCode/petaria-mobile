@@ -11,9 +11,8 @@ import { ThemedText } from '@/components'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPokemonImage } from '@/assets/images'
-import { getRarityColor } from '@/features/hunt/utils'
 import type { Pet } from '@/stores/types/game'
-import { colors, typeColors, rarityGradients, getColorOpacity } from '@/themes/colors'
+import { colors, typeColors } from '@/themes/colors'
 import { fonts } from '@/themes/fonts'
 import { spacing, radii, fontSizes } from '@/themes/metrics'
 import { gradientPrimary, gradientGold } from '@/themes/styles'
@@ -35,14 +34,6 @@ function getHpColor(current: number, max: number): string {
   return colors.error
 }
 
-const RARITY_GLOW: Record<string, { borderOpacity: number; shadow?: string }> = {
-  common:    { borderOpacity: 0.15 },
-  uncommon:  { borderOpacity: 0.30 },
-  rare:      { borderOpacity: 0.40, shadow: 'rgba(99,144,240,0.25)' },
-  epic:      { borderOpacity: 0.50, shadow: 'rgba(163,62,161,0.30)' },
-  legendary: { borderOpacity: 0.60, shadow: 'rgba(255,215,0,0.35)' },
-}
-
 export const PetGridCard: React.FC<PetGridCardProps> = ({
   pet,
   onPress,
@@ -50,35 +41,13 @@ export const PetGridCard: React.FC<PetGridCardProps> = ({
   isTogglingFavorite,
 }) => {
   const primaryType = (pet.type || 'Normal').split('/')[0]
-  const rarity = (pet.rarity || 'common').toLowerCase()
-  const rarityColor = getRarityColor(rarity)
-  const rarityGlow = RARITY_GLOW[rarity] || RARITY_GLOW.common
   const hpPct = Math.min((pet.stats.hp / pet.stats.maxHp) * 100, 100)
-  const xpMax = pet.xpToNext ?? pet.level * pet.level * 10
+  const xpMax = pet.xpToNext ?? pet.level * 100 // fallback matches petXpPerLevel in game-constants.json
   const xpPct = xpMax > 0 ? Math.min(((pet.xp ?? 0) / xpMax) * 100, 100) : 0
-
-  const cardGlowStyle = {
-    borderColor: getColorOpacity(rarityColor, rarityGlow.borderOpacity),
-    ...(rarityGlow.shadow && {
-      shadowColor: rarityGlow.shadow,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 1,
-      shadowRadius: 10,
-      elevation: 6,
-    }),
-  }
 
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(pet)} activeOpacity={0.7}>
-      <View style={[styles.card, cardGlowStyle]}>
-        {/* ── Rarity Strip ────────────────────────────────── */}
-        <LinearGradient
-          colors={[...(rarityGradients[rarity as keyof typeof rarityGradients] ?? rarityGradients.common)] as [string, string]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.rarityStrip}
-        />
-
+      <View style={styles.card}>
         {/* ── Pet Image ──────────────────────────────────── */}
         <View style={styles.imageSection}>
           <Image
@@ -123,16 +92,9 @@ export const PetGridCard: React.FC<PetGridCardProps> = ({
             </View>
           </View>
 
-          <View style={styles.speciesRow}>
-            <ThemedText style={styles.species} numberOfLines={1}>
-              {pet.species}
-            </ThemedText>
-            <View style={[styles.rarityBadge, { backgroundColor: getColorOpacity(rarityColor, 0.2) }]}>
-              <ThemedText style={[styles.rarityText, { color: rarityColor }]}>
-                {rarity.charAt(0).toUpperCase() + rarity.slice(1)}
-              </ThemedText>
-            </View>
-          </View>
+          <ThemedText style={styles.species} numberOfLines={1}>
+            {pet.species}
+          </ThemedText>
 
           {/* HP Bar */}
           <View style={styles.barRow}>
@@ -198,14 +160,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.glass.innerGlowSubtle,
     borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
+    padding: spacing.md,
     overflow: 'hidden',
-  },
-  rarityStrip: {
-    width: '100%',
-    height: 3,
-    marginBottom: spacing.sm,
   },
 
   // ── Image ──────────────────────────────────────
@@ -267,27 +223,11 @@ const styles = StyleSheet.create({
     color: colors.onSurface,
     textTransform: 'capitalize',
   },
-  speciesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
   species: {
     fontSize: fontSizes.xs,
     fontFamily: fonts.regular,
     color: colors.onSurfaceVariant,
-    flexShrink: 1,
-  },
-  rarityBadge: {
-    borderRadius: radii.sm,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  rarityText: {
-    fontSize: fontSizes.micro,
-    fontFamily: fonts.bold,
-    textTransform: 'capitalize',
+    marginBottom: 2,
   },
 
   // ── Bars ───────────────────────────────────────

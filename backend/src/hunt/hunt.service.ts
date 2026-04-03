@@ -115,7 +115,7 @@ export class HuntService {
     // Check if user has enough hunt tickets
     if (updatedUser.huntTickets < 1) {
       throw new BadRequestException(
-        'Not enough hunt tickets (need 1, regenerates every 3h)',
+        'Not enough hunt tickets (need 1, resets daily)',
       );
     }
 

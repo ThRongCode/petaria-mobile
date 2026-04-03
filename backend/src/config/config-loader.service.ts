@@ -56,8 +56,8 @@ export interface GameConstants {
   levels: {
     maxPetLevel: number;
     maxUserLevel: number;
-    petXpFormula: string;
-    userXpFormula: string;
+    petXpPerLevel: number;
+    userXpPerLevel: number;
   };
   stats: {
     ivMin: number;
@@ -69,19 +69,7 @@ export interface GameConstants {
   tickets: {
     maxHuntTickets: number;
     maxBattleTickets: number;
-    huntRegenMinutes: number;
-    battleRegenMinutes: number;
-  };
-  dailyLogin: {
-    streakLength: number;
-    rewards: Array<{
-      day: number;
-      coins: number;
-      gems: number;
-      huntTickets: number;
-      battleTickets: number;
-      label: string;
-    }>;
+    resetIntervalHours: number;
   };
   limits: {
     maxPetSlots: number;
